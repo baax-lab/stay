@@ -65,9 +65,14 @@ describe("Vorlagen", () => {
   it("Platzhalter, Bedingungen, Leerstellen", () => {
     const body = "Käufer: {{kaeufer.name}}\nHonorar: {{honorar.erfolg}}\n{{#if honorar.grund}}Grundhonorar: {{honorar.grund}}{{/if}}\nOrt: {{ort}}";
     const r = renderTemplate(body, { kaeufer: { name: "Anna Muster" }, honorar: { erfolg: "18.500 €", grund: "" } });
-    expect(r.text).toBe(`Käufer: Anna Muster\nHonorar: 18.500 €\n\nOrt: ${BLANK}`);
+    expect(r.text).toBe(`Käufer: Anna Muster\nHonorar: 18.500 €\nOrt: ${BLANK}`);
     expect(r.missing).toEqual(["ort"]);
     expect(placeholdersOf(body).sort()).toEqual(["honorar.erfolg", "honorar.grund", "kaeufer.name", "ort"]);
+  });
+
+  it("Bedingung innerhalb einer Zeile und über mehrere Zeilen", () => {
+    expect(renderTemplate("a {{#if x}}X={{x}}{{/if}} b", { x: 1 }).text).toBe("a X=1 b");
+    expect(renderTemplate("a\n{{#if x}}\nmehr\n{{/if}}\nb", {}).text).toBe("a\n\nb");
   });
 
   it("Markdown-Subset, HTML wird escaped", () => {

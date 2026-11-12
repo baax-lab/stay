@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { ActionForm } from "@/components/ui/action-form";
 import { Field, Input, Select } from "@/components/ui/field";
 import { ReferrerFields } from "@/components/partners/referrer-form";
+import { DocumentFromTemplate } from "@/components/templates/document-from-template";
 import { createRewardAction, setRewardDateAction, updateReferrerAction } from "@/app/(app)/partner/actions";
 
 export default async function ReferrerPage({ params }: { params: Promise<{ id: string }> }) {
@@ -35,6 +36,7 @@ export default async function ReferrerPage({ params }: { params: Promise<{ id: s
         ← Tippgeber
       </Link>
       <PageHeader title={r.name} subtitle={`${r.type}${r.company ? ` · ${r.company}` : ""}`} />
+      {can.viewBuyerDetails(user.role) && <DocumentFromTemplate kind="TIPPGEBERBESTAETIGUNG" entityId={r.id} canSave={false} />}
       <div className="grid gap-4 lg:grid-cols-[1fr_400px]">
         <div className="space-y-4">
           <Card>

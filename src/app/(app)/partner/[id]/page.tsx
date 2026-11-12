@@ -16,6 +16,7 @@ import { PartnerAccessButtons } from "@/components/partners/partner-access-butto
 import { accessState } from "@/lib/portal";
 import { averageRatings, hitRate, ratingScore } from "@/lib/partner-stats";
 import { mandateRef } from "@/lib/services/partner-access";
+import { DocumentFromTemplate } from "@/components/templates/document-from-template";
 
 export default async function PartnerPage({ params }: { params: Promise<{ id: string }> }) {
   const user = await requireUser();
@@ -46,6 +47,7 @@ export default async function PartnerPage({ params }: { params: Promise<{ id: st
         ← Partner
       </Link>
       <PageHeader title={p.name} subtitle={`${PARTNER_TYPE_LABEL[p.type]} · ${p.country}${p.company ? ` · ${p.company}` : ""}`} action={p.agreementAt ? <Badge tone="ok">Vereinbarung {p.agreementAt.toLocaleDateString("de-DE")}</Badge> : <Badge tone="warn">keine Partnervereinbarung</Badge>} />
+      {can.viewBuyerDetails(user.role) && <DocumentFromTemplate kind="PARTNERVEREINBARUNG" entityId={p.id} canSave={false} />}
       <Card className="mb-4">
         <CardTitle>Leistungsübersicht</CardTitle>
         <div className="grid grid-cols-2 gap-3 text-center sm:grid-cols-3 lg:grid-cols-6" data-testid="partner-stats">

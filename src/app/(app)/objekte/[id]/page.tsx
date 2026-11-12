@@ -21,6 +21,7 @@ import { MATCH_STATUS_LABEL } from "@/components/mandates/matches-table";
 import { deletePropertyAction, deletePropertyFileAction, markDuplicateAction, setAvailabilityAction, uploadPropertyFilesAction, type PropertyFormInput } from "../actions";
 import { cn } from "@/lib/cn";
 import { FiguresTab } from "@/components/properties/figures-tab";
+import { PrecheckPanel } from "@/components/properties/precheck-panel";
 
 const LIGHT: Record<string, string> = { GRUEN: "bg-ok", GELB: "bg-warn", ROT: "bg-danger", GRAU: "bg-muted" };
 
@@ -38,6 +39,8 @@ export default async function PropertyPage({ params, searchParams }: { params: P
       referrer: { select: { id: true, name: true } },
       duplicateOf: { select: { id: true, title: true, knownSince: true } },
       duplicates: { select: { id: true, title: true, knownSince: true } },
+      precheck: true,
+      inspections: { orderBy: { date: "desc" }, select: { id: true, date: true, status: true, rating: true, recommendation: true, createdByName: true, mandateId: true } },
     },
   });
   if (!property || !property.active) notFound();
@@ -67,6 +70,8 @@ export default async function PropertyPage({ params, searchParams }: { params: P
     ["uebersicht", "Übersicht"],
     ["bearbeiten", "Bearbeiten"],
     ["kosten", "Kosten & Rendite"],
+    ["vorpruefung", "Vorprüfung"],
+    ["besichtigungen", `Besichtigungen (${property.inspections.length})`],
     ["treffer", `Treffer (${property.matches.length})`],
     ["dateien", `Fotos & Unterlagen (${files.length})`],
   ] as const;
@@ -209,6 +214,41 @@ export default async function PropertyPage({ params, searchParams }: { params: P
           mandates={property.matches.map((x) => ({ id: x.mandate.id, title: x.mandate.title }))}
           canEdit={canEdit}
         />
+      )}
+
+      {tab === "vorpruefung" && <PrecheckPanel propertyId={property.id} precheck={property.precheck} canEdit={canEdit} segmentCountry={`${SEGMENT_LABEL[property.segment]}, ${property.country}`} />}
+
+      {tab === "besichtigungen" && (
+        <Card>
+          <CardTitle
+            action={
+              canEdit ? (
+                <Link href={`/besichtigungen/neu?property=${property.id}`} className="inline-flex h-9 items-center rounded-full bg-brand px-3.5 text-sm font-medium text-petrol">
+                  Besichtigung protokollieren
+                </Link>
+              ) : undefined
+            }
+          >
+            Besichtigungen
+          </CardTitle>
+          <ul className="space-y-2 text-sm">
+            {property.inspections.map((i) => (
+              <li key={i.id}>
+                <Link href={`/besichtigungen/${i.id}`} className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-line px-4 py-2 hover:border-brand">
+                  <span>
+                    {i.date.toLocaleDateString("de-DE")} · {i.createdByName ?? ""}
+                  </span>
+                  <span className="flex items-center gap-2">
+                    {i.rating != null && <span className="font-semibold text-petrol">{i.rating} / 5</span>}
+                    {i.recommendation && <Badge tone={i.recommendation === "EMPFEHLEN" ? "ok" : i.recommendation === "BEDINGT" ? "warn" : "danger"}>{i.recommendation === "EMPFEHLEN" ? "empfehlen" : i.recommendation === "BEDINGT" ? "bedingt" : "nicht empfehlen"}</Badge>}
+                    <Badge tone={i.status === "ABGESCHLOSSEN" ? "ok" : "warn"}>{i.status === "ABGESCHLOSSEN" ? "abgeschlossen" : "Entwurf"}</Badge>
+                  </span>
+                </Link>
+              </li>
+            ))}
+            {property.inspections.length === 0 && <li className="text-muted">Noch keine Besichtigung protokolliert.</li>}
+          </ul>
+        </Card>
       )}
 
       {tab === "bearbeiten" && (

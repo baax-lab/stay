@@ -133,7 +133,8 @@ async function settlePurchase(mandateId: string, purchasePrice: number, property
   const askingPrice = presentation?.askingPrice ?? (boughtPropertyId ? (await prisma.property.findUnique({ where: { id: boughtPropertyId } }))?.price ?? null : null);
 
   const fee = mandate.fee ?? (await ensureFeeAgreement(mandateId));
-  const calc = calculateFee({ ...fee, askingPrice, purchasePrice });
+  const trips = await prisma.trip.count({ where: { mandateId, billable: true } });
+  const calc = calculateFee({ ...fee, askingPrice, purchasePrice, trips });
   await prisma.feeAgreement.update({ where: { mandateId }, data: { purchasePrice, askingPrice, bonusAmount: calc.bonus } });
 
   if (boughtPropertyId) {

@@ -10,6 +10,7 @@ import { audit } from "@/lib/audit";
 import { createProperty, setAvailability, updateProperty, type PropertyInput } from "@/lib/services/properties";
 import { deleteFile, storeFile } from "@/lib/services/files";
 import type { ActionResult } from "@/components/ui/action-form";
+import { mergePrecheck, precheckStatus, precheckTemplate, type PrecheckItem, type PrecheckItemStatus } from "@/lib/precheck";
 
 const schema = z.object({
   title: z.string().trim().min(2, "Titel fehlt").max(200),
@@ -183,4 +184,41 @@ export async function saveDossierInputsAction(id: string, formData: FormData): P
   await audit({ userId: user.id, action: "PROPERTY_UPDATE", entity: "Property", entityId: id, meta: { fields: "dossier" } });
   revalidatePath(`/objekte/${id}`);
   return { ok: true, message: "Gespeichert. Gesamtkosten und Rendite neu berechnet." };
+}
+
+// ---------- Phase 2: Vorprüfung ----------
+
+const PRECHECK_STATES: PrecheckItemStatus[] = ["OFFEN", "OK", "BEDENKEN", "KO", "NA"];
+
+export async function startPrecheckAction(propertyId: string): Promise<ActionResult> {
+  const user = await requirePermission("editProperty");
+  const p = await prisma.property.findUniqueOrThrow({ where: { id: propertyId }, include: { precheck: true } });
+  const template = precheckTemplate(p.segment, p.country);
+  const items = p.precheck ? mergePrecheck(p.precheck.items as PrecheckItem[], template) : template;
+  await prisma.precheck.upsert({
+    where: { propertyId },
+    update: { items, status: precheckStatus(items), updatedById: user.id },
+    create: { propertyId, items, status: precheckStatus(items), updatedById: user.id },
+  });
+  await audit({ userId: user.id, action: "PRECHECK_UPDATE", entity: "Property", entityId: propertyId, meta: { template: `${p.segment}/${p.country}` } });
+  revalidatePath(`/objekte/${propertyId}`);
+  return { ok: true, message: p.precheck ? "Checkliste an Segment und Land angepasst; erfasste Punkte bleiben erhalten." : "Vorprüfung angelegt." };
+}
+
+export async function savePrecheckAction(propertyId: string, formData: FormData): Promise<ActionResult> {
+  const user = await requirePermission("editProperty");
+  const pc = await prisma.precheck.findUniqueOrThrow({ where: { propertyId } });
+  const now = new Date().toISOString();
+  const items = (pc.items as PrecheckItem[]).map((i) => {
+    const raw = String(formData.get(`status:${i.key}`) ?? i.status) as PrecheckItemStatus;
+    const status = PRECHECK_STATES.includes(raw) ? raw : i.status;
+    return { ...i, status, note: String(formData.get(`note:${i.key}`) ?? "").trim() || null, doneAt: status === "OFFEN" ? null : (i.status === status ? (i.doneAt ?? now) : now) };
+  });
+  const custom = String(formData.get("newItem") ?? "").trim();
+  if (custom) items.push({ key: `eigen_${Date.now().toString(36)}`, label: custom, group: "Allgemein", status: "OFFEN", note: null, doneAt: null });
+  const status = precheckStatus(items);
+  await prisma.precheck.update({ where: { propertyId }, data: { items, status, summary: String(formData.get("summary") ?? "").trim() || null, updatedById: user.id } });
+  await audit({ userId: user.id, action: "PRECHECK_UPDATE", entity: "Property", entityId: propertyId, meta: { status } });
+  revalidatePath(`/objekte/${propertyId}`);
+  return { ok: true, message: `Vorprüfung gespeichert (${status}).` };
 }

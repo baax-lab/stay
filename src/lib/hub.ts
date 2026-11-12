@@ -95,6 +95,16 @@ export async function createHubTask(task: { contactId?: string | null; title: st
   }
 }
 
+/** Termin im Hub anlegen (Annahme: POST {HUB_API_URL}/appointments), z. B. Reisen und Besichtigungen. */
+export async function createHubAppointment(a: { contactId?: string | null; title: string; start: string; end?: string | null; location?: string | null; description?: string | null; ownerId?: string | null; externalRef: string }): Promise<{ ok: boolean; id?: string; error?: string; configured: boolean }> {
+  try {
+    const r = await hubFetch<{ id: string }>("/appointments", a);
+    return { ok: true, id: r.id, configured: true };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : String(e), configured: !(e instanceof HubNotConfiguredError) };
+  }
+}
+
 export type SyncResult = { ok: true; hubContactId: string } | { ok: false; error: string; configured: boolean };
 
 /** Einen Lead an den Hub übergeben. Setzt hubSync und hubContactId. */

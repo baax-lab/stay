@@ -5,7 +5,7 @@ import { jwtVerify } from "jose/jwt/verify";
  * Kurzlebiges Druck-Token (5 Minuten) für die PDF-Erzeugung: Chromium ruft die Dossier- bzw. Berichtsseite
  * ohne Login auf; das Token erlaubt genau diese eine Ansicht.
  */
-export type PrintScope = { scope: "dossier" | "report"; id: string; mandateId?: string | null; lang: "de" | "en" };
+export type PrintScope = { scope: "dossier" | "report" | "template"; id: string; mandateId?: string | null; lang: "de" | "en" };
 
 const ISSUER = "baax-stay-print";
 
@@ -28,7 +28,7 @@ export async function verifyPrintToken(token: string | null | undefined): Promis
   if (!token) return null;
   try {
     const { payload } = await jwtVerify(token, key(), { issuer: ISSUER });
-    if ((payload.scope !== "dossier" && payload.scope !== "report") || typeof payload.id !== "string") return null;
+    if ((payload.scope !== "dossier" && payload.scope !== "report" && payload.scope !== "template") || typeof payload.id !== "string") return null;
     return { scope: payload.scope, id: payload.id, mandateId: typeof payload.mandateId === "string" ? payload.mandateId : null, lang: payload.lang === "en" ? "en" : "de" };
   } catch {
     return null;

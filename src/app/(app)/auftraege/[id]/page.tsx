@@ -28,6 +28,8 @@ import { DocumentsPanel } from "@/components/mandates/documents-panel";
 import { PartnerSendPanel } from "@/components/mandates/partner-send-panel";
 import { PortalPanel } from "@/components/mandates/portal-panel";
 import { ReportsPanel } from "@/components/mandates/reports-panel";
+import { TripsPanel } from "@/components/mandates/trips-panel";
+import { DocumentFromTemplate } from "@/components/templates/document-from-template";
 import { suggestProfileAdjustments } from "@/lib/portal";
 import { getCriteria } from "@/lib/services/criteria";
 import { saveHeaderAction, saveNoteAction, setGwgAction } from "../actions";
@@ -51,6 +53,7 @@ const TABS = [
   ["profil", "Suchprofil"],
   ["treffer", "Treffer"],
   ["angebote", "Angebote"],
+  ["reisen", "Reisen & Besichtigungen"],
   ["kauf", "Kaufabwicklung"],
   ["honorar", "Honorar"],
   ["dokumente", "Dokumente"],
@@ -324,9 +327,12 @@ export default async function MandatePage({ params, searchParams }: { params: Pr
 
       {tab === "honorar" && canFees && <FeeTab mandateId={mandate.id} userId={user.id} canEdit={canEdit} country={mandate.closing?.country ?? mandate.profile?.countries[0] ?? null} />}
 
+      {tab === "dokumente" && canDetails && <DocumentFromTemplate kind="SUCHAUFTRAG" entityId={mandate.id} canSave={canEdit} />}
       {tab === "dokumente" && <DocumentsTab mandateId={mandate.id} documents={mandate.documents} canEdit={canEdit} canSeeGwg={can.viewGwgDocuments(user.role)} />}
 
       {tab === "portal" && <PortalPanel mandate={mandate} canEdit={canEdit} canSend={can.sendExternal(user.role)} />}
+
+      {tab === "reisen" && <TripsPanel mandateId={mandate.id} canEdit={canEdit} showFees={canFees} />}
 
       {tab === "berichte" && <ReportsPanel mandateId={mandate.id} canEdit={canEdit} status={mandate.status} />}
 
@@ -403,10 +409,11 @@ async function MatchesTab({ mandate, canEdit, canApprove }: { mandate: Pick<Mand
 async function FeeTab({ mandateId, userId, canEdit, country }: { mandateId: string; userId: string; canEdit: boolean; country: string | null }) {
   const fee = await ensureFeeAgreement(mandateId);
   const bands = await prisma.feeBand.findMany({ orderBy: { volumeFrom: "asc" } });
+  const trips = await prisma.trip.count({ where: { mandateId, billable: true } });
   await audit({ userId, action: "FEE_VIEW", entity: "Mandate", entityId: mandateId });
   return (
     <Card>
-      <FeePanel mandateId={mandateId} fee={fee} bands={bands} country={country} canEdit={canEdit} />
+      <FeePanel mandateId={mandateId} fee={fee} bands={bands} country={country} canEdit={canEdit} trips={trips} />
     </Card>
   );
 }

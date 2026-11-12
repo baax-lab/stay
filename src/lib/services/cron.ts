@@ -22,6 +22,7 @@ export type CronReport = {
   deletedLeads: number;
   fxUpdated: number;
   reportDrafts: number;
+  reminderMails: number;
   errors: string[];
 };
 
@@ -36,7 +37,7 @@ function addBusinessDays(date: Date, days: number): Date {
 }
 
 export async function runDailyJobs(now = new Date()): Promise<CronReport> {
-  const report: CronReport = { leadFollowUpTasks: 0, digestMails: 0, digestMatches: 0, followUpTasks: 0, expiryTasks: 0, deletedLeads: 0, fxUpdated: 0, reportDrafts: 0, errors: [] };
+  const report: CronReport = { leadFollowUpTasks: 0, digestMails: 0, digestMatches: 0, followUpTasks: 0, expiryTasks: 0, deletedLeads: 0, fxUpdated: 0, reportDrafts: 0, reminderMails: 0, errors: [] };
 
   // 1. Lead ohne Kontakt nach 2 Werktagen → Aufgabe im Hub
   try {
@@ -156,6 +157,13 @@ export async function runDailyJobs(now = new Date()): Promise<CronReport> {
     }
   }
 
+  // 8. Erinnerungen per Mail (Phase 2): Laufzeitende 30 und 7 Tage vorher, Nachgespräch fällig – je Anlass einmalig
+  try {
+    report.reminderMails = await sendReminders(now);
+  } catch (e) {
+    report.errors.push(`Erinnerungen: ${e instanceof Error ? e.message : e}`);
+  }
+
   await audit({ userId: "cron", action: "CRON", entity: "Cron", meta: { ...report } });
 
   // Fehler an den Admin melden (Konzept §11)
@@ -163,4 +171,36 @@ export async function runDailyJobs(now = new Date()): Promise<CronReport> {
     await sendMail({ to: env.adminEmail, subject: `Baax Stay: ${report.errors.length} Fehler im Tagesjob`, text: report.errors.join("\n"), purpose: "cron-errors", entity: "Cron" });
   }
   return report;
+}
+
+export async function sendReminders(now: Date = new Date()): Promise<number> {
+  const day = 86400000;
+  const items: Array<{ key: string; to: string | null; line: string }> = [];
+  const mandates = await prisma.mandate.findMany({ where: { status: { in: ACTIVE_STATUSES }, endDate: { gte: now, lte: new Date(now.getTime() + 30 * day) } } });
+  for (const m of mandates) {
+    const days = Math.ceil((m.endDate!.getTime() - now.getTime()) / day);
+    const stage = days <= 7 ? "7" : "30";
+    items.push({ key: `expiry${stage}:${m.id}`, to: m.ownerEmail, line: `Laufzeitende in ${days} Tagen (${m.endDate!.toLocaleDateString("de-DE")}): ${m.title} – ${env.appUrl}/auftraege/${m.id}` });
+  }
+  const followUps = await prisma.followUp.findMany({ where: { doneAt: null, dueAt: { lte: new Date(now.getTime() + 7 * day) } }, include: { mandate: true } });
+  for (const f of followUps) {
+    items.push({ key: `followup:${f.id}`, to: f.mandate.ownerEmail, line: `Nachgespräch fällig am ${f.dueAt.toLocaleDateString("de-DE")}: ${f.mandate.title} – ${env.appUrl}/auftraege/${f.mandateId}?tab=nachbetreuung` });
+  }
+  const sentKeys = new Set((await prisma.reminderLog.findMany({ where: { key: { in: items.map((i) => i.key) } } })).map((r) => r.key));
+  const byTo = new Map<string, typeof items>();
+  for (const i of items) {
+    if (sentKeys.has(i.key)) continue;
+    const to = i.to ?? env.digestFallbackTo ?? env.adminEmail;
+    if (!to) continue;
+    byTo.set(to, [...(byTo.get(to) ?? []), i]);
+  }
+  let mails = 0;
+  for (const [to, list] of byTo) {
+    const mail = await sendMail({ to, subject: `Baax Stay: ${list.length} Erinnerung${list.length === 1 ? "" : "en"}`, text: ["Guten Morgen,", "", ...list.map((l) => `· ${l.line}`)].join("\n"), purpose: "reminder", entity: "Cron" });
+    if (mail.sent) {
+      await prisma.reminderLog.createMany({ data: list.map((l) => ({ key: l.key })), skipDuplicates: true });
+      mails++;
+    }
+  }
+  return mails;
 }

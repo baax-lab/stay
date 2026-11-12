@@ -1,6 +1,7 @@
 import "server-only";
 import { prisma } from "@/lib/db";
 import { criteriaLabels } from "./criteria";
+import { precheckProgress, type PrecheckItem } from "@/lib/precheck";
 import type { Lang } from "@/lib/i18n";
 import { propertyFigures, type PropertyFigures } from "./figures";
 
@@ -23,6 +24,7 @@ export type DossierData = {
   strengths: string[];
   risks: string[];
   precheck: string | null;
+  precheckState: { status: string; done: number; total: number; concerns: number; summary: string | null } | null;
   photoIds: string[];
   figures: PropertyFigures;
   buyerName: string | null;
@@ -33,7 +35,7 @@ const lines = (s: string | null | undefined) => (s ?? "").split(/\n+/).map((x) =
 
 /** Daten fürs Dossier (Konzept §9.5) – keine internen Angaben wie Adresse, Quelle oder Notizen. */
 export async function loadDossier(propertyId: string, mandateId: string | null, lang: Lang): Promise<DossierData | null> {
-  const p = await prisma.property.findUnique({ where: { id: propertyId } });
+  const p = await prisma.property.findUnique({ where: { id: propertyId }, include: { precheck: true } });
   if (!p || !p.active) return null;
   const mandate = mandateId ? await prisma.mandate.findUnique({ where: { id: mandateId }, select: { buyerName: true } }) : null;
   const figures = await propertyFigures(p, mandate ? mandateId : null);
@@ -59,6 +61,7 @@ export async function loadDossier(propertyId: string, mandateId: string | null, 
     strengths: lines((en && p.strengthsEn) || p.strengths),
     risks: lines((en && p.risksEn) || p.risks),
     precheck: p.precheckNote,
+    precheckState: p.precheck ? { status: p.precheck.status, ...precheckProgress(p.precheck.items as PrecheckItem[]), summary: p.precheck.summary } : null,
     photoIds,
     figures,
     buyerName: mandate?.buyerName ?? null,

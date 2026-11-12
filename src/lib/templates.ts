@@ -26,7 +26,15 @@ export function lookupPath(data: unknown, path: string): unknown {
 /** {{a.b}} ersetzen; {{#if a.b}}…{{/if}} nur ausgeben, wenn der Wert gesetzt ist. */
 export function renderTemplate(body: string, data: Record<string, unknown>): { text: string; missing: string[] } {
   const missing = new Set<string>();
-  const withIfs = body.replace(/\{\{#if\s+([\w.]+)\}\}([\s\S]*?)\{\{\/if\}\}/g, (_, path: string, inner: string) => {
+  const truthy = (path: string) => {
+    const v = lookupPath(data, path);
+    return v !== undefined && v !== null && v !== "" && v !== false;
+  };
+  // Bedingung über eine ganze Zeile: bei leerem Wert verschwindet die Zeile vollständig
+  const lines = body.replace(/\n?[ \t]*\{\{#if\s+([\w.]+)\}\}([^\n]*?)\{\{\/if\}\}[ \t]*(?=\n|$)/g, (m: string, path: string) =>
+    truthy(path) ? m.replace(/\{\{#if\s+[\w.]+\}\}/, "").replace("{{/if}}", "") : "",
+  );
+  const withIfs = lines.replace(/\{\{#if\s+([\w.]+)\}\}([\s\S]*?)\{\{\/if\}\}/g, (_, path: string, inner: string) => {
     const v = lookupPath(data, path);
     return v !== undefined && v !== null && v !== "" && v !== false ? inner : "";
   });

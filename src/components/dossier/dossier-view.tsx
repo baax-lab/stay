@@ -82,10 +82,17 @@ export function DossierView({ d, lang, photoUrl, print = false }: { d: DossierDa
         </div>
         <div>
           <LicenseBlock f={d.figures} lang={lang} print={print} />
-          {d.precheck && (
-            <div className="mt-4">
+          {(d.precheck || d.precheckState) && (
+            <div className="mt-4" data-testid="dossier-precheck">
               <h3 className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted">{t(lang, "dossier.precheck")}</h3>
-              <p className="text-sm">{d.precheck}</p>
+              {d.precheckState && (
+                <p className="text-sm">
+                  {t(lang, `dossier.precheck_${d.precheckState.status}`)} · {t(lang, "dossier.precheck_progress", { done: d.precheckState.done, total: d.precheckState.total })}
+                  {d.precheckState.concerns > 0 && ` · ${t(lang, "dossier.precheck_concerns", { count: d.precheckState.concerns })}`}
+                </p>
+              )}
+              {d.precheckState?.summary && <p className="mt-1 text-sm">{d.precheckState.summary}</p>}
+              {d.precheck && <p className="mt-1 text-sm">{d.precheck}</p>}
             </div>
           )}
         </div>

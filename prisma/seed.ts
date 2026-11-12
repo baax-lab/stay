@@ -1,6 +1,8 @@
 import { PrismaClient } from "@prisma/client";
 import { CRITERIA } from "../src/lib/criteria";
 import { EN_CRITERIA } from "../src/lib/profile-text";
+import { readFileSync } from "node:fs";
+import path from "node:path";
 
 const prisma = new PrismaClient();
 
@@ -117,6 +119,19 @@ async function main() {
   // Kriterienkatalog (Phase 2 pflegbar)
   for (const [i, c] of CRITERIA.entries()) {
     await prisma.criterion.upsert({ where: { key: c.key }, update: {}, create: { key: c.key, label: c.label, labelEn: EN_CRITERIA[c.key] ?? null, group: c.group, sort: i } });
+  }
+
+  // Vorlagen (Phase 2): nur anlegen, wenn noch nicht vorhanden – bearbeitete Fassungen bleiben erhalten
+  const templates: Array<[string, string, string, string]> = [
+    ["SUCHAUFTRAG", "de", "Suchauftrag", "suchauftrag.de.md"],
+    ["SUCHAUFTRAG", "en", "Search mandate", "suchauftrag.en.md"],
+    ["PARTNERVEREINBARUNG", "de", "Partnervereinbarung", "partnervereinbarung.de.md"],
+    ["PARTNERVEREINBARUNG", "en", "Partner agreement", "partnervereinbarung.en.md"],
+    ["TIPPGEBERBESTAETIGUNG", "de", "Tippgeberbestätigung", "tippgeberbestaetigung.de.md"],
+  ];
+  for (const [kind, lang, name, file] of templates) {
+    const body = readFileSync(path.join(__dirname, "templates", file), "utf8");
+    await prisma.documentTemplate.upsert({ where: { kind_lang: { kind, lang } }, update: {}, create: { kind, lang, name, body } });
   }
 
   console.log(`Seed fertig: ${regions.length} Regionen, aktives Event, Honorarstaffel und Ziel gesetzt.`);

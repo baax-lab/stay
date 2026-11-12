@@ -1,6 +1,6 @@
 import "server-only";
 import { randomBytes } from "node:crypto";
-import { mkdir, unlink, writeFile } from "node:fs/promises";
+import { copyFile, mkdir, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { prisma } from "@/lib/db";
 
@@ -63,4 +63,15 @@ export async function deleteFile(id: string) {
 export function filePath(storedName: string) {
   // Nur den Basisnamen zulassen, kein Pfad
   return path.join(UPLOAD_DIR, path.basename(storedName));
+}
+
+/** Datei für ein anderes Objekt kopieren (z. B. Besichtigungsfoto ins Objekt übernehmen). */
+export async function copyStoredFile(fileId: string, target: { entity: string; entityId: string; kind: string; userId: string }) {
+  const f = await prisma.storedFile.findUniqueOrThrow({ where: { id: fileId } });
+  const ext = path.extname(f.storedName);
+  const storedName = randomBytes(16).toString("hex") + ext;
+  await copyFile(path.join(UPLOAD_DIR, f.storedName), path.join(UPLOAD_DIR, storedName));
+  return prisma.storedFile.create({
+    data: { fileName: f.fileName, storedName, mimeType: f.mimeType, size: f.size, entity: target.entity, entityId: target.entityId, kind: target.kind, uploadedById: target.userId },
+  });
 }

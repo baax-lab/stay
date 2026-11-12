@@ -18,6 +18,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     { href: "/leads", label: "Leads", icon: Icons.list, exact: true },
     { href: "/auftraege", label: "Aufträge", icon: Icons.briefcase },
     { href: "/objekte", label: "Objekte", icon: Icons.building },
+    { href: "/besichtigungen", label: "Besichtigungen", icon: Icons.camera },
     { href: "/partner", label: "Partner", icon: Icons.handshake },
     { href: "/tippgeber", label: "Tippgeber", icon: Icons.gift },
     { href: "/suche", label: "Suche", icon: Icons.search },

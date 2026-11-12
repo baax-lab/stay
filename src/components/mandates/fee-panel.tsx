@@ -6,8 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Checkbox, Field, Input, Select, Textarea } from "@/components/ui/field";
 import { Notice } from "@/components/ui/card";
 
-export function FeePanel({ mandateId, fee, bands, country, canEdit }: { mandateId: string; fee: FeeAgreement; bands: FeeBand[]; country: string | null; canEdit: boolean }) {
-  const calc = calculateFee({ ...fee, askingPrice: fee.askingPrice, purchasePrice: fee.purchasePrice });
+export function FeePanel({ mandateId, fee, bands, country, canEdit, trips = 0 }: { mandateId: string; fee: FeeAgreement; bands: FeeBand[]; country: string | null; canEdit: boolean; trips?: number }) {
+  const calc = calculateFee({ ...fee, askingPrice: fee.askingPrice, purchasePrice: fee.purchasePrice, trips });
   const at = country === "AT" && fee.purchasePrice ? austriaCap(fee.purchasePrice) : null;
   const d = (x: Date | null) => (x ? x.toISOString().slice(0, 10) : "");
 
@@ -79,6 +79,7 @@ export function FeePanel({ mandateId, fee, bands, country, canEdit }: { mandateI
           <Row k="Erfolgshonorar" v={formatEur(calc.successFee)} />
           <Row k="Ersparnis" v={formatEur(calc.savings)} />
           <Row k={`Bonus (${Math.round(fee.bonusPct * 100)} %, max. ${Math.round(fee.bonusCapPct * 100) } %)`} v={formatEur(calc.bonus)} />
+          {calc.travel > 0 && <Row k={`Reisepauschale (${trips} Reisen)`} v={formatEur(calc.travel)} />}
           {calc.sellerSideCredited > 0 && <Row k="Anrechnung Verkäuferprovision" v={`− ${formatEur(calc.sellerSideCredited)}`} />}
           <div className="mt-2 flex justify-between border-t border-line pt-2 text-base font-semibold text-petrol">
             <span>Gesamt</span>

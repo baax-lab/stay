@@ -22,3 +22,8 @@ export function pdfResponseHeaders(fileName: string): HeadersInit {
     "cache-control": "private, no-store",
   };
 }
+
+export async function renderTemplatePdf(kind: string, entityId: string, lang: Lang): Promise<Buffer | null> {
+  const pt = await signPrintToken({ scope: "template", id: `${kind}:${entityId}`, lang });
+  return urlToPdf(`${env.internalUrl}/vorlage/${kind}/${entityId}?pt=${encodeURIComponent(pt)}`);
+}

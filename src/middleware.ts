@@ -14,7 +14,7 @@ export async function middleware(req: NextRequest) {
   }
 
   // Druck-Token (PDF-Rendering): die Seite bzw. der Route Handler prüft das Token selbst
-  if (req.nextUrl.searchParams.has("pt") && (pathname.startsWith("/dossier/") || pathname.startsWith("/bericht/") || pathname.startsWith("/api/files/"))) {
+  if (req.nextUrl.searchParams.has("pt") && (pathname.startsWith("/dossier/") || pathname.startsWith("/bericht/") || pathname.startsWith("/vorlage/") || pathname.startsWith("/api/files/"))) {
     return NextResponse.next();
   }
 

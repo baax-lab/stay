@@ -15,7 +15,8 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   const m = await prisma.mandate.findUnique({ where: { id }, include: { fee: true, closing: true, presentations: true } });
   if (!m || !m.fee) return NextResponse.json({ error: "Kein Honorar" }, { status: 404 });
   const property = m.closing ? await prisma.property.findUnique({ where: { id: m.closing.propertyId } }) : null;
-  const calc = calculateFee({ ...m.fee, askingPrice: m.fee.askingPrice, purchasePrice: m.fee.purchasePrice });
+  const trips = await prisma.trip.count({ where: { mandateId: id, billable: true } });
+  const calc = calculateFee({ ...m.fee, askingPrice: m.fee.askingPrice, purchasePrice: m.fee.purchasePrice, trips });
 
   const rows: Array<[string, unknown]> = [
     ["Suchauftrag", m.title],
@@ -29,7 +30,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     ["Erfolgshonorar", calc.successFee],
     ["Ersparnis", calc.savings],
     ["Verhandlungsbonus", calc.bonus],
-    ["Reisekosten", calc.travel],
+    ["Reisepauschale", `${calc.travel} (${trips} abrechenbare Reisen)`],
     ["Anrechnung Verkäuferprovision", calc.sellerSideCredited],
     ["Gesamt netto", calc.total],
     ["Beurkundung", m.closing?.notaryDate?.toLocaleDateString("de-DE")],

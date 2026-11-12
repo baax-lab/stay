@@ -131,8 +131,11 @@ function MatchCard({ m, mandateId, canEdit, canApprove, expanded, onToggle }: { 
           <button type="button" onClick={onToggle} className="block text-xs text-brand-strong">
             {expanded ? "Begründung ausblenden" : "Begründung"}
           </button>
-          <Link href={`/dossier/${m.property.id}?m=${mandateId}`} target="_blank" className="text-xs text-brand-strong">
+          <Link href={`/dossier/${m.property.id}?m=${mandateId}`} target="_blank" className="block text-xs text-brand-strong">
             Dossier
+          </Link>
+          <Link href={`/besichtigungen/neu?property=${m.property.id}&mandate=${mandateId}`} className="text-xs text-brand-strong">
+            Protokoll
           </Link>
         </div>
       </div>

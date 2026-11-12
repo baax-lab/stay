@@ -56,7 +56,14 @@ export default async function DashboardPage() {
 
   return (
     <div>
-      <PageHeader title={firstName ? `Hallo ${firstName}` : "Start"} subtitle={event.active ? `Aktives Event: ${event.sourceDetail || event.source}` : "Kein aktives Event"} action={<ButtonLink href="/leads/neu">Kontakt erfassen</ButtonLink>} />
+      <PageHeader title={firstName ? `Hallo ${firstName}` : "Start"} subtitle={event.active ? `Aktives Event: ${event.sourceDetail || event.source}` : "Kein aktives Event"} action={
+          <div className="flex flex-wrap gap-2">
+            <ButtonLink href="/besichtigungen/neu" variant="secondary">
+              Besichtigung protokollieren
+            </ButtonLink>
+            <ButtonLink href="/leads/neu">Kontakt erfassen</ButtonLink>
+          </div>
+        } />
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <Stat label="Offene Leads" value={openLeads} href="/leads?status=NEU" />
