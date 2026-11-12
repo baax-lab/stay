@@ -1,4 +1,8 @@
 import type { MetadataRoute } from "next";
+import { env } from "@/lib/env";
+import { DEFAULT_BRAND, parseHex } from "@/lib/brand";
+
+export const dynamic = "force-dynamic";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
@@ -8,7 +12,7 @@ export default function manifest(): MetadataRoute.Manifest {
     start_url: "/leads/neu",
     display: "standalone",
     background_color: "#f4f8f9",
-    theme_color: "#19b5d4",
+    theme_color: parseHex(env.brandColor) ?? DEFAULT_BRAND,
     lang: "de",
     icons: [{ src: "/icons/icon.svg", sizes: "any", type: "image/svg+xml", purpose: "any" }],
   };

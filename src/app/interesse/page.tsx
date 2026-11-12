@@ -1,13 +1,14 @@
 import Link from "next/link";
-import { getPublicSources } from "@/lib/settings";
+import { getLegalTexts, getPublicSources } from "@/lib/settings";
 import { Logo } from "@/components/layout/logo";
 import { InterestForm } from "@/components/public/interest-form";
+import { PublicFooter } from "@/components/public/legal-text";
 
 export const metadata = { title: "Interesse mitteilen", robots: { index: false } };
 
 export default async function InterestPage({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
   const { q } = await searchParams;
-  const sources = await getPublicSources();
+  const [sources, legal] = await Promise.all([getPublicSources(), getLegalTexts()]);
   const known = q && sources[q] ? q : null;
   const sourceLabel = known ? sources[known].sourceDetail : null;
 
@@ -24,12 +25,11 @@ export default async function InterestPage({ searchParams }: { searchParams: Pro
         <InterestForm q={known} />
       </div>
 
-      <footer className="mt-10 text-xs text-muted">
-        Baax Immobilien GmbH ·{" "}
+      <PublicFooter imprintUrl={legal.imprintUrl}>
         <Link href="/datenschutz" className="underline">
           Datenschutzhinweise
         </Link>
-      </footer>
+      </PublicFooter>
     </main>
   );
 }

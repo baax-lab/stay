@@ -8,6 +8,11 @@ function req(name: string, fallback?: string): string {
   return v;
 }
 
+function path(value: string | undefined, fallback: string): string {
+  const v = (value || fallback).trim();
+  return v.startsWith("/") ? v : `/${v}`;
+}
+
 export const env = {
   /** Basis-URL, unter der der Server sich selbst erreicht (PDF-Rendering). */
   get internalUrl() {
@@ -48,6 +53,16 @@ export const env = {
     },
     get apiToken() {
       return process.env.HUB_API_TOKEN || undefined;
+    },
+    /** Endpunkte der Hub-API (Annahme, anpassbar ohne Codeänderung) */
+    get contactsPath() {
+      return path(process.env.HUB_CONTACTS_PATH, "/contacts");
+    },
+    get tasksPath() {
+      return path(process.env.HUB_TASKS_PATH, "/tasks");
+    },
+    get appointmentsPath() {
+      return path(process.env.HUB_APPOINTMENTS_PATH, "/appointments");
     },
     /** Hub-Login konfiguriert (Secret oder JWKS vorhanden)? */
     get ssoConfigured() {
@@ -95,6 +110,9 @@ export const env = {
   },
   get retentionDiscardedLeadsMonths() {
     return Number(process.env.RETENTION_DISCARDED_LEADS_MONTHS ?? 12) || 12;
+  },
+  get brandColor() {
+    return process.env.BRAND_COLOR || undefined;
   },
   get cronSecret() {
     return process.env.CRON_SECRET || undefined;

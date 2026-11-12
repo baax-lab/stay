@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
   try {
     const user = await verifyHubToken(token);
     await createSession(user);
-    await audit({ userId: user.id, action: "LOGIN", entity: "Session", meta: { via: "hub", role: user.role }, ip: await clientIp() });
+    await audit({ userId: user.id, action: "LOGIN", entity: "Session", meta: { via: "hub", role: user.role, name: user.name, email: user.email }, ip: await clientIp() });
     return NextResponse.redirect(new URL(next, env.appUrl));
   } catch (e) {
     const msg = e instanceof Error ? e.message : "Login fehlgeschlagen";

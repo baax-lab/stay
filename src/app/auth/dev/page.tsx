@@ -24,7 +24,7 @@ async function devLogin(formData: FormData) {
     role,
   };
   await createSession(user);
-  await audit({ userId: user.id, action: "LOGIN", entity: "Session", meta: { via: "dev", role } });
+  await audit({ userId: user.id, action: "LOGIN", entity: "Session", meta: { via: "dev", role, name: user.name, email: user.email } });
   redirect(next.startsWith("/") && !next.startsWith("//") ? next : "/");
 }
 

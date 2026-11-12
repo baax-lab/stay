@@ -20,6 +20,11 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="de">
+      <head>
+        {/* Hausfarbe aus BRAND_COLOR, zur Laufzeit ausgeliefert */}
+        {/* eslint-disable-next-line @next/next/no-css-tags -- bewusst: Laufzeit-CSS, nicht Teil des Builds */}
+        <link rel="stylesheet" href="/brand.css" precedence="default" />
+      </head>
       <body className="min-h-dvh">{children}</body>
     </html>
   );

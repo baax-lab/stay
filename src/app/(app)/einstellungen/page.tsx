@@ -11,6 +11,10 @@ import { Card, CardTitle, Notice, PageHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Checkbox, Field, Input, Select, Textarea } from "@/components/ui/field";
 import { Badge } from "@/components/ui/badge";
+import { ActionButton, type ActionResult } from "@/components/ui/action-form";
+import { testHubConnection } from "@/lib/hub";
+import { sendMail, verifyMailConnection } from "@/lib/mail";
+import { parseHex } from "@/lib/brand";
 
 export const metadata = { title: "Einstellungen" };
 
@@ -61,6 +65,38 @@ async function saveGoal(formData: FormData) {
   redirect("/einstellungen?saved=goal");
 }
 
+async function testHub(): Promise<ActionResult> {
+  "use server";
+  const user = await requirePermission("editEventSetting");
+  const r = await testHubConnection();
+  await audit({ userId: user.id, action: "HUB_TEST", entity: "Setting", meta: r });
+  return r.ok ? { ok: true, message: `${r.message}${r.ms ? ` (${r.ms} ms)` : ""}` } : { ok: false, error: r.message };
+}
+
+async function testSmtp(): Promise<ActionResult> {
+  "use server";
+  const user = await requirePermission("editEventSetting");
+  const r = await verifyMailConnection();
+  await audit({ userId: user.id, action: "MAIL_TEST", entity: "Setting", meta: { ok: r.ok, message: r.message } });
+  return r.ok ? { ok: true, message: r.message } : { ok: false, error: r.message };
+}
+
+async function sendTestMail(): Promise<ActionResult> {
+  "use server";
+  const user = await requirePermission("editEventSetting");
+  const to = user.email || env.adminEmail;
+  if (!to) return { ok: false, error: "Keine Empfängeradresse (E-Mail im Konto oder ADMIN_EMAIL)." };
+  const r = await sendMail({
+    to,
+    subject: "Baax Stay: Testmail",
+    text: "Diese Testmail wurde aus den Einstellungen von Baax Stay gesendet. Absender, Signatur und Zustellung bitte prüfen.",
+    userId: user.id,
+    purpose: "test",
+    entity: "Setting",
+  });
+  return r.sent ? { ok: true, message: `Testmail an ${to} gesendet.` } : { ok: false, error: r.error ?? "Nicht gesendet (SMTP nicht konfiguriert)." };
+}
+
 export default async function SettingsPage({ searchParams }: { searchParams: Promise<{ saved?: string; error?: string }> }) {
   const user = await requireUser();
   if (!can.editEventSetting(user.role)) redirect("/");
@@ -94,6 +130,13 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
         <Link href="/einstellungen/vorlagen" className="rounded-full border border-line bg-surface px-4 py-2 text-sm font-medium text-petrol hover:border-brand">Vorlagen</Link>
         <Link href="/einstellungen/wechselkurse" className="rounded-full border border-line bg-surface px-4 py-2 text-sm font-medium text-petrol hover:border-brand">Wechselkurse</Link>
         <Link href="/leads/import" className="rounded-full border border-line bg-surface px-4 py-2 text-sm font-medium text-petrol hover:border-brand">CSV-Import</Link>
+        <Link href="/einstellungen/texte" className="rounded-full border border-line bg-surface px-4 py-2 text-sm font-medium text-petrol hover:border-brand">Rechtstexte</Link>
+        {can.viewAuditLog(user.role) && (
+          <Link href="/einstellungen/protokoll" className="rounded-full border border-line bg-surface px-4 py-2 text-sm font-medium text-petrol hover:border-brand">Protokoll</Link>
+        )}
+        {can.handlePrivacyRequests(user.role) && (
+          <Link href="/einstellungen/datenschutz" className="rounded-full border border-line bg-surface px-4 py-2 text-sm font-medium text-petrol hover:border-brand">Datenschutz-Anfragen</Link>
+        )}
       </div>
 
       <div className="space-y-4">
@@ -168,10 +211,31 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
               <dd>{env.cronSecret ? <Badge tone="ok">CRON_SECRET gesetzt</Badge> : <Badge tone="warn">CRON_SECRET fehlt</Badge>}</dd>
             </div>
             <div className="flex items-center justify-between">
+              <dt>Hausfarbe (BRAND_COLOR)</dt>
+              <dd>
+                {parseHex(env.brandColor) ? (
+                  <span className="inline-flex items-center gap-2 text-xs">
+                    <span className="inline-block size-4 rounded-full border border-line bg-brand" aria-hidden />
+                    {parseHex(env.brandColor)}
+                  </span>
+                ) : (
+                  <Badge tone="warn">{env.brandColor ? "ungültig, Standard aktiv" : "Platzhalter #19b5d4"}</Badge>
+                )}
+              </dd>
+            </div>
+            <div className="flex items-center justify-between">
               <dt>Entwickler-Login</dt>
               <dd>{env.devLoginEnabled ? <Badge tone="danger">aktiv</Badge> : <Badge tone="ok">aus</Badge>}</dd>
             </div>
           </dl>
+          <div className="mt-4 text-xs text-muted">
+            Hub-Endpunkte: {env.hub.apiUrl || "–"} · Kontakte {env.hub.contactsPath} · Aufgaben {env.hub.tasksPath} · Termine {env.hub.appointmentsPath}
+          </div>
+          <div className="mt-4 flex flex-col gap-2">
+            <ActionButton action={testHub}>Hub-Verbindung testen</ActionButton>
+            <ActionButton action={testSmtp}>SMTP-Anmeldung testen</ActionButton>
+            <ActionButton action={sendTestMail}>Testmail an mich senden</ActionButton>
+          </div>
         </Card>
       </div>
     </div>

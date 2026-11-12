@@ -40,7 +40,12 @@ export type AuditAction =
   | "TRIP_UPDATE"
   | "TEMPLATE_UPDATE"
   | "TEMPLATE_RENDER"
-  | "REMINDER";
+  | "REMINDER"
+  | "AUDIT_EXPORT"
+  | "PRIVACY_EXPORT"
+  | "PRIVACY_ERASURE"
+  | "HUB_TEST"
+  | "MAIL_TEST";
 
 export async function audit(input: {
   userId?: string | null;

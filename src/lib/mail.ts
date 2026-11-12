@@ -81,3 +81,14 @@ export async function sendMail(input: MailInput): Promise<{ sent: boolean; error
     return { sent: false, error };
   }
 }
+
+/** SMTP-Verbindungstest für die Einstellungen (Anmeldung am Server, ohne zu senden). */
+export async function verifyMailConnection(): Promise<{ ok: boolean; message: string }> {
+  if (!env.mailConfigured) return { ok: false, message: "SMTP_HOST fehlt." };
+  try {
+    await transporter().verify();
+    return { ok: true, message: `Anmeldung an ${env.mail.host}:${env.mail.port} erfolgreich.` };
+  } catch (e) {
+    return { ok: false, message: `SMTP-Fehler: ${e instanceof Error ? e.message : String(e)}` };
+  }
+}

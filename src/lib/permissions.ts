@@ -29,6 +29,8 @@ export const can = {
   /** Systemeinstellungen, Nutzerrollen, Protokolle: nur Admin. */
   systemSettings: (role: Role) => role === "ADMIN",
   viewAuditLog: (role: Role) => role === "ADMIN",
+  /** DSGVO-Auskunft und Löschung: nur Admin. */
+  handlePrivacyRequests: (role: Role) => role === "ADMIN",
   /** Honorare (Phase 1): Leitung und Admin. */
   viewFees: (role: Role) => roleAtLeast(role, "LEITUNG"),
   editFeeBands: (role: Role) => roleAtLeast(role, "LEITUNG"),

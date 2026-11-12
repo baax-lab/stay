@@ -10,8 +10,9 @@ import { LEAD_ROLE_LABEL, LEAD_SOURCE_LABEL } from "./labels";
  *
  * Die konkreten Endpunkte des Hubs sind ein offener Punkt im Konzept (§14).
  * Annahme bis zur Klärung:
- *   POST {HUB_API_URL}/contacts   → { id }
- *   POST {HUB_API_URL}/tasks      → { id }
+ *   POST {HUB_API_URL}{HUB_CONTACTS_PATH}      → { id }   (Standard /contacts)
+ *   POST {HUB_API_URL}{HUB_TASKS_PATH}         → { id }   (Standard /tasks)
+ *   POST {HUB_API_URL}{HUB_APPOINTMENTS_PATH}  → { id }   (Standard /appointments)
  * Authentifizierung: Authorization: Bearer {HUB_API_TOKEN}
  * Solange die API nicht konfiguriert ist, bleibt der Lead auf PENDING und kann
  * später per Button („Übergabe nachholen“) oder gesammelt übertragen werden.
@@ -87,7 +88,7 @@ export function leadToHubTask(lead: Lead, hubContactId: string) {
 /** Allgemeine Aufgabe im Hub anlegen (Nachfassen, Kaufabwicklung, Nachgespräch, Besichtigungsanfrage). */
 export async function createHubTask(task: { contactId?: string | null; title: string; description?: string | null; dueAt: string; assigneeId?: string | null; externalRef: string }): Promise<{ ok: boolean; id?: string; error?: string; configured: boolean }> {
   try {
-    const r = await hubFetch<{ id: string }>("/tasks", task);
+    const r = await hubFetch<{ id: string }>(env.hub.tasksPath, task);
     return { ok: true, id: r.id, configured: true };
   } catch (e) {
     const configured = !(e instanceof HubNotConfiguredError);
@@ -95,10 +96,10 @@ export async function createHubTask(task: { contactId?: string | null; title: st
   }
 }
 
-/** Termin im Hub anlegen (Annahme: POST {HUB_API_URL}/appointments), z. B. Reisen und Besichtigungen. */
+/** Termin im Hub anlegen (Annahme: POST {HUB_API_URL}{HUB_APPOINTMENTS_PATH}), z. B. Reisen und Besichtigungen. */
 export async function createHubAppointment(a: { contactId?: string | null; title: string; start: string; end?: string | null; location?: string | null; description?: string | null; ownerId?: string | null; externalRef: string }): Promise<{ ok: boolean; id?: string; error?: string; configured: boolean }> {
   try {
-    const r = await hubFetch<{ id: string }>("/appointments", a);
+    const r = await hubFetch<{ id: string }>(env.hub.appointmentsPath, a);
     return { ok: true, id: r.id, configured: true };
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : String(e), configured: !(e instanceof HubNotConfiguredError) };
@@ -116,11 +117,11 @@ export async function syncLeadToHub(leadId: string, userId: string | null): Prom
   try {
     let hubContactId = lead.hubContactId;
     if (!hubContactId) {
-      const contact = await hubFetch<{ id: string }>("/contacts", leadToHubContact(lead));
+      const contact = await hubFetch<{ id: string }>(env.hub.contactsPath, leadToHubContact(lead));
       hubContactId = contact.id;
       await prisma.lead.update({ where: { id: lead.id }, data: { hubContactId } });
     }
-    await hubFetch<{ id: string }>("/tasks", leadToHubTask(lead, hubContactId));
+    await hubFetch<{ id: string }>(env.hub.tasksPath, leadToHubTask(lead, hubContactId));
     await prisma.lead.update({
       where: { id: lead.id },
       data: { hubSync: "SYNCED", hubSyncError: null, hubSyncedAt: new Date() },
@@ -159,4 +160,25 @@ export async function syncPendingLeads(userId: string | null, limit = 50): Promi
     else failed++;
   }
   return { synced, failed, skipped: false };
+}
+
+/**
+ * Verbindungstest für die Einstellungen: GET auf den Kontakte-Endpunkt mit Token.
+ * Legt nichts an. 2xx/404/405 = erreichbar und Token angenommen, 401/403 = Token abgelehnt.
+ */
+export async function testHubConnection(): Promise<{ ok: boolean; message: string; ms?: number }> {
+  if (!env.hub.apiConfigured) return { ok: false, message: "HUB_API_URL oder HUB_API_TOKEN fehlt." };
+  const started = Date.now();
+  try {
+    const res = await fetch(`${env.hub.apiUrl}${env.hub.contactsPath}?limit=1`, {
+      headers: { authorization: `Bearer ${env.hub.apiToken}`, "x-client": "baax-stay" },
+      signal: AbortSignal.timeout(10_000),
+    });
+    const ms = Date.now() - started;
+    if (res.status === 401 || res.status === 403) return { ok: false, message: `Hub erreichbar, Token abgelehnt (${res.status}).`, ms };
+    if (res.ok || res.status === 404 || res.status === 405) return { ok: true, message: `Hub erreichbar, Antwort ${res.status}.`, ms };
+    return { ok: false, message: `Hub antwortete ${res.status}.`, ms };
+  } catch (e) {
+    return { ok: false, message: `Keine Verbindung: ${e instanceof Error ? e.message : String(e)}` };
+  }
 }

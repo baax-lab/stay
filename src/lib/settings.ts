@@ -73,3 +73,29 @@ export async function getGoal(): Promise<Goal> {
 export async function setGoal(value: Goal, userId: string): Promise<void> {
   await prisma.setting.upsert({ where: { key: "goal" }, update: { value, updatedBy: userId }, create: { key: "goal", value, updatedBy: userId } });
 }
+
+/**
+ * Rechtstexte für öffentliche Seiten (Interessenformular, Datenschutzhinweise, Portal).
+ * Leerer Datenschutztext = eingebauter Standardtext. Format: Absätze durch Leerzeilen, „## “ am Zeilenanfang = Zwischenüberschrift.
+ */
+export const legalSchema = z.object({
+  privacyText: z.string().max(20_000).default(""),
+  imprintUrl: z
+    .string()
+    .trim()
+    .max(300)
+    .refine((v) => v === "" || /^https:\/\//.test(v), "Impressum-Link muss mit https:// beginnen")
+    .default("https://www.baax.de/impressum"),
+  contactEmail: z.string().trim().max(200).default("mail@baax.de"),
+});
+export type LegalTexts = z.output<typeof legalSchema>;
+
+export async function getLegalTexts(): Promise<LegalTexts> {
+  const row = await prisma.setting.findUnique({ where: { key: "legal" } });
+  const parsed = legalSchema.safeParse(row?.value ?? {});
+  return parsed.success ? parsed.data : legalSchema.parse({});
+}
+
+export async function setLegalTexts(value: LegalTexts, userId: string): Promise<void> {
+  await prisma.setting.upsert({ where: { key: "legal" }, update: { value, updatedBy: userId }, create: { key: "legal", value, updatedBy: userId } });
+}
