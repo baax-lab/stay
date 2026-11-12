@@ -31,7 +31,6 @@ test("Lead bis Kauf: Umwandeln, GwG, Suchprofil, Objekt, Treffer, Vorstellung, A
   await page.getByRole("button", { name: "In Suchauftrag umwandeln" }).click();
   await page.waitForURL(/\/auftraege\/[^/?]+\?tab=erstgespraech/);
   const mandateUrl = page.url().split("?")[0];
-  const mandateId = mandateUrl.split("/").pop()!;
 
   // Lead ist UMGEWANDELT
   await page.goto(`/leads/${leadId}`);

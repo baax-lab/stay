@@ -8,6 +8,7 @@ import { audit } from "@/lib/audit";
 import { MANDATE_STATUS_LABEL } from "@/lib/mandates";
 import { formatEur } from "@/lib/fees";
 import { mandateRankForProperty } from "@/lib/services/matching";
+import { isPriorKnowledge } from "@/lib/matching";
 import { ensureFeeAgreement } from "@/lib/services/mandates";
 import { Card, Notice, PageHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -340,7 +341,7 @@ async function MatchesTab({ mandate, canEdit, canApprove }: { mandate: Pick<Mand
       viewingAt: m.viewingAt?.toISOString() ?? null,
       viewingNote: m.viewingNote,
       rank: { rank: rank.rank, total: rank.total, firstTitle: rank.first?.title },
-      priorKnowledge: Boolean(mandate.contractSignedAt && m.property.knownSince < mandate.contractSignedAt),
+      priorKnowledge: isPriorKnowledge(m.property.knownSince, mandate.contractSignedAt),
       presentation: presentation ? { channel: presentation.channel, askingPrice: presentation.askingPrice, sentAt: presentation.sentAt.toISOString() } : null,
       property: {
         id: m.property.id,

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { matchProperty, rankMandates, type ProfileForMatch, type PropertyForMatch } from "@/lib/matching";
+import { isPriorKnowledge, matchProperty, rankMandates, type ProfileForMatch, type PropertyForMatch } from "@/lib/matching";
 
 const profile: ProfileForMatch = {
   segments: ["FEWO"],
@@ -98,5 +98,11 @@ describe("Matching", () => {
     const b = { id: "b", contractSignedAt: new Date("2026-02-01"), createdAt: new Date("2026-02-15") };
     const c = { id: "c", contractSignedAt: null, createdAt: new Date("2026-02-10") };
     expect(rankMandates([a, b, c]).map((m) => m.id)).toEqual(["b", "c", "a"]);
+  });
+
+  it("Vorkenntnis tagesgenau: gleicher Tag zählt nicht", () => {
+    expect(isPriorKnowledge(new Date("2026-11-12T08:00:00"), new Date("2026-11-12T15:00:00"))).toBe(false);
+    expect(isPriorKnowledge(new Date("2026-11-11T23:00:00"), new Date("2026-11-12T08:00:00"))).toBe(true);
+    expect(isPriorKnowledge(new Date("2026-11-11"), null)).toBe(false);
   });
 });

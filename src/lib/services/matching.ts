@@ -1,7 +1,7 @@
 import "server-only";
 import type { Match, MatchStatus, Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
-import { matchProperty, rankMandates, type MatchResult } from "@/lib/matching";
+import { isPriorKnowledge, matchProperty, rankMandates, type MatchResult } from "@/lib/matching";
 import { ACTIVE_STATUSES } from "@/lib/mandates";
 import { logEvent } from "./events";
 import type { SessionUser } from "@/lib/session";
@@ -142,7 +142,7 @@ export async function setMatchStatus(
       },
     });
     if (status === "AN_KAEUFER") {
-      const priorKnowledge = Boolean(match.mandate.contractSignedAt && match.property.knownSince < match.mandate.contractSignedAt);
+      const priorKnowledge = isPriorKnowledge(match.property.knownSince, match.mandate.contractSignedAt);
       await tx.presentation.upsert({
         where: { mandateId_propertyId: { mandateId: match.mandateId, propertyId: match.propertyId } },
         update: {},

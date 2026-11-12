@@ -158,3 +158,10 @@ export function rankMandates<T extends { id: string; contractSignedAt: Date | nu
     return da - db;
   });
 }
+
+/** Vorkenntnis (Konzept §8.9): Objekt war vor dem Tag der Beauftragung bekannt. Tagesgenau, damit das Anlegen am selben Tag nicht warnt. */
+export function isPriorKnowledge(knownSince: Date, contractSignedAt: Date | null | undefined): boolean {
+  if (!contractSignedAt) return false;
+  const day = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+  return day(knownSince) < day(contractSignedAt);
+}
