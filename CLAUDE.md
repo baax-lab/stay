@@ -1,6 +1,8 @@
 # Baax Stay – Hinweise für Claude Code
 
-- Bauvorlage ist `docs/KONZEPT.md`. Phase 0 ist umgesetzt; nächster Schritt ist Phase 1 (Schritt 9 ff. in Konzept §13).
+- Bauvorlage ist `docs/KONZEPT.md`. Phase 0 und Phase 1 sind umgesetzt; nächster Schritt ist Phase 1b (Schritt 19 ff. in Konzept §13: i18n, Ampel-Details, Nebenkosten, Wechselkurse, Gesamtkosten, Rendite, Dossier, Käuferportal, Suchbericht).
+- Fachlogik liegt als reine Funktionen in `src/lib/*.ts` (Matching, Honorar, Status, Ampel, Checklisten) mit Unit-Tests; Datenbankzugriffe in `src/lib/services/*`.
+- E2E-Tests nutzen den Dev-Server mit Turbopack in `.next-e2e`; `pnpm dev` baut in `.next-dev`, `pnpm build` in `.next`.
 - Sprache im UI und in Kommentaren: Deutsch. Enum-Werte und Code: Englisch bzw. wie im Konzept.
 - Rechte immer serverseitig prüfen: `requirePermission()` in Server Actions und Route Handlern, `can.*` aus `src/lib/permissions.ts`.
 - Jede Änderung nach außen (Export, Versand, Hub) ins `AuditLog` (`src/lib/audit.ts`).

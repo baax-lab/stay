@@ -28,7 +28,8 @@ function ip(req: NextRequest): string {
 
 export async function POST(req: NextRequest) {
   const addr = ip(req);
-  const rl = rateLimit(`interesse:${addr}`, 5, 10 * 60 * 1000); // 5 Anfragen je 10 Minuten
+  // 20 Anfragen je 10 Minuten: auf der Messe teilen sich viele Besucher eine IP (WLAN/NAT)
+  const rl = rateLimit(`interesse:${addr}`, 20, 10 * 60 * 1000);
   if (!rl.ok) {
     return NextResponse.json({ error: "Zu viele Anfragen. Bitte in einigen Minuten erneut versuchen." }, { status: 429, headers: { "retry-after": String(rl.retryAfterSec) } });
   }

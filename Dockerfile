@@ -1,5 +1,6 @@
 # Baax Stay – Produktions-Image (Coolify / Docker)
-FROM node:22-alpine AS base
+# Debian-Basis mit Chromium für PDF-Erzeugung (Suchprofil-PDF, später Dossiers)
+FROM node:22-bookworm-slim AS base
 RUN corepack enable && corepack prepare pnpm@10.28.0 --activate
 WORKDIR /app
 
@@ -17,14 +18,19 @@ ENV DATABASE_URL="postgresql://build:build@localhost:5432/build"
 ENV SESSION_SECRET="build-time-placeholder-secret-not-used-at-runtime"
 RUN pnpm build
 
-FROM node:22-alpine AS runner
+FROM node:22-bookworm-slim AS runner
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends chromium fonts-liberation fonts-noto-core ca-certificates \
+  && apt-get clean
 RUN corepack enable && corepack prepare pnpm@10.28.0 --activate
 WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV PORT=3000
 ENV HOSTNAME=0.0.0.0
-RUN addgroup -S app && adduser -S app -G app
+ENV CHROMIUM_PATH=/usr/bin/chromium
+ENV UPLOAD_DIR=/app/uploads
+RUN groupadd -r app && useradd -r -g app -d /app app && mkdir -p /app/uploads
 
 COPY --from=build /app/public ./public
 COPY --from=build /app/.next/standalone ./
@@ -37,5 +43,6 @@ COPY docker-entrypoint.sh ./
 RUN chmod +x docker-entrypoint.sh && chown -R app:app /app
 USER app
 EXPOSE 3000
+VOLUME ["/app/uploads"]
 ENTRYPOINT ["./docker-entrypoint.sh"]
 CMD ["node", "server.js"]

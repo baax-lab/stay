@@ -21,7 +21,7 @@ export function ActionForm({
   children: React.ReactNode;
   className?: string;
   resetOnSuccess?: boolean;
-  onSuccess?: () => void;
+  onSuccess?: (result: { ok: true; message?: string }) => void;
 }) {
   const [pending, start] = useTransition();
   const [result, setResult] = useState<ActionResult | null>(null);
@@ -38,7 +38,7 @@ export function ActionForm({
           setResult(r);
           if (r.ok) {
             if (resetOnSuccess) form.reset();
-            onSuccess?.();
+            onSuccess?.(r);
           }
         });
       }}

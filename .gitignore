@@ -43,3 +43,8 @@ next-env.d.ts
 # Tests
 /test-results
 /playwright-report
+
+# Dev/E2E-Build
+/.next-e2e
+/.next-dev
+/uploads

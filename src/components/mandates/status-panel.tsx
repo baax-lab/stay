@@ -27,6 +27,7 @@ export function StatusPanel({
   presented: Presented[];
 }) {
   const [target, setTarget] = useState<MandateStatus | null>(null);
+  const [done, setDone] = useState<string | null>(null);
   const options = allowedTransitions(status, statusBeforePause);
   const needsReason = target === "BEENDET_OHNE_KAUF";
   const needsPrice = target === "GEKAUFT";
@@ -45,19 +46,20 @@ export function StatusPanel({
         })}
       </ol>
       {(status === "PAUSIERT" || status === "BEENDET_OHNE_KAUF") && <p className="mt-2 text-sm font-medium text-warn">{MANDATE_STATUS_LABEL[status]}</p>}
+      {done && <p className="mt-2 text-sm text-ok">{done}</p>}
 
       {canEdit && options.length > 0 && (
         <div className="mt-4">
           <div className="flex flex-wrap gap-2">
             {options.map((o) => (
-              <Button key={o} size="sm" variant={target === o ? "primary" : "secondary"} onClick={() => setTarget(target === o ? null : o)}>
+              <Button key={o} size="sm" variant={target === o ? "primary" : "secondary"} onClick={() => { setTarget(o); setDone(null); }}>
                 → {MANDATE_STATUS_LABEL[o]}
               </Button>
             ))}
           </div>
           {target === "BEAUFTRAGT" && !gwgDone && <p className="mt-2 text-sm text-danger">GwG-Identifizierung fehlt. Bitte zuerst unten eintragen.</p>}
           {target && (
-            <ActionForm action={changeStatusAction.bind(null, mandateId)} className="mt-3 rounded-xl border border-line bg-canvas p-4" onSuccess={() => setTarget(null)}>
+            <ActionForm action={changeStatusAction.bind(null, mandateId)} className="mt-3 rounded-xl border border-line bg-canvas p-4" onSuccess={(r) => { setTarget(null); setDone(r.message ?? "Status geändert."); }}>
               <input type="hidden" name="status" value={target} />
               {needsReason && (
                 <Field label="Grund (Pflicht)" required>

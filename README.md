@@ -2,7 +2,7 @@
 
 Internes Arbeitswerkzeug der Baax Immobilien GmbH für die Suchmakler-Tätigkeit bei touristisch genutzten Immobilien (ausschließlich Käuferseite). Bauvorlage: [docs/KONZEPT.md](docs/KONZEPT.md).
 
-**Stand: Phase 0** (Messe SuperStay LIVE) – Lead-Schnellerfassung mit Offline-Puffer, Lead-Liste mit CSV-Export, öffentliches Interessenformular, Hub-Login und Hub-Übergabe mit PENDING-Mechanik.
+**Stand: Phase 0 und Phase 1 (Kern) umgesetzt.** Phase 0: Lead-Schnellerfassung mit Offline-Puffer, Lead-Liste mit CSV-Export, öffentliches Interessenformular, Hub-Login und Hub-Übergabe mit PENDING-Mechanik. Phase 1: Suchaufträge mit Statuslogik, Erstgespräch, Suchprofile, Objekte, Matching, Vorrang, Honorar, Angebote, Kaufabwicklung, Nachbetreuung, Partner, Tippgeber, Import, Automatisierungen. Phase 1b (Käuferportal, Ampel-Details, Gesamtkosten, Rendite, Dossier, Suchbericht) folgt.
 
 ## Stack
 
@@ -30,7 +30,16 @@ Ohne konfigurierten Hub steht unter `/auth/dev` ein Entwickler-Login mit wählba
 | `/leads/[id]` | Detail, Status, Notiz, Zusammenführen | Bearbeiten ab Mitarbeiter |
 | `/leads/export` | CSV (Semikolon, UTF-8 mit BOM) | Leitung, Admin |
 | `/interesse?q=<kennung>` | QR-Formular für Visitenkarte und Einseiter | öffentlich |
-| `/einstellungen` | Aktives Event, QR-Kennungen, Systemstatus | Leitung, Admin |
+| `/auftraege` | Suchaufträge als Tabelle und Kanban, neu anlegen | alle; bearbeiten ab Mitarbeiter |
+| `/auftraege/[id]` | Tabs: Übersicht (Kopf, GwG), Erstgespräch, Suchprofil, Treffer, Angebote, Kaufabwicklung, Honorar, Dokumente, Partner, Nachbetreuung, Verlauf | Honorar nur Leitung/Admin |
+| `/objekte` | Objekte mit Filtern, Ampel, Verfügbarkeit, Treffern | alle; bearbeiten ab Mitarbeiter |
+| `/objekte/[id]` | Eckdaten, Ampel, Preisverlauf, Dubletten, Treffer mit Rang, Fotos und Unterlagen | |
+| `/objekte/offmarket` | Off-Market-Pipeline aus Verkäuferkontakten | |
+| `/partner`, `/tippgeber` | Partner-Stammdaten; Tippgeber mit Prämien | Prämien nur Leitung/Admin |
+| `/suche` | Globale Suche über alle Bereiche | |
+| `/leads/import`, `/objekte/import`, `/partner/import` | CSV-Import mit Spaltenzuordnung, Vorschau, Dubletten | Leitung, Admin |
+| `/einstellungen` | Ziel, aktives Event, QR-Kennungen, Systemstatus; Unterseiten Honorarstaffel, Regionen | Leitung, Admin |
+| `/api/cron/daily` | Tägliche Jobs (Bearer `CRON_SECRET`) | Cron |
 | `/datenschutz` | Datenschutzhinweise zum Formular (Platzhalter, prüfen) | öffentlich |
 
 ## Hub-Anbindung
@@ -41,25 +50,42 @@ Ohne konfigurierten Hub steht unter `/auth/dev` ein Entwickler-Login mit wählba
 
 Beides sind Annahmen bis die Hub-Schnittstelle feststeht (offener Punkt im Konzept §14). Anpassungen betreffen nur `src/lib/auth.ts` und `src/lib/hub.ts`.
 
+## Fachlogik (reine Funktionen, getestet)
+
+- `src/lib/matching.ts`: Muss-Filter, Punktwert, „knapp daneben“, Rangfolge nach Beauftragung
+- `src/lib/fees.ts`: Honorar mit Bonus und Deckel (Testfälle aus dem Konzept), AT-Höchstsatz, Band-Vorschlag, Prämie
+- `src/lib/mandates.ts`: erlaubte Statusübergänge, GwG-Pflicht, Pflichtgrund, Kaufpreis-Pflicht
+- `src/lib/license.ts`: Genehmigungsampel aus Lizenzstatus und Regionsregel
+- `src/lib/checklists.ts`: Kaufabwicklung je Land (DE, AT, IT, ES, allgemein)
+
 ## Tests
 
 ```bash
-pnpm test                       # Unit (Vitest): Validierung, Dubletten-Normalisierung, Rechte, Session, Rate-Limit
-pnpm test:e2e                   # Playwright: Login, Erfassung mobil, Offline-Puffer, QR-Formular, Export-Rechte
+pnpm test                       # Unit (Vitest): Matching, Honorar, Statuslogik, Ampel, Validierung, Rechte, Session, Rate-Limit
+pnpm test:e2e                   # Playwright: Phase 0 (Erfassung, Offline, QR, Export) und Phase 1 (Lead bis Kauf, Rechte, Vorrang)
 ```
 
-Die E2E-Tests starten den Dev-Server auf Port 3100 und brauchen eine erreichbare Datenbank aus `.env`. Mit abweichendem Chromium-Pfad: `PW_CHROMIUM_PATH=/pfad/zu/chromium pnpm test:e2e`.
+Die E2E-Tests starten einen Dev-Server (Turbopack, eigener Build-Ordner `.next-e2e`) auf Port 3100 und brauchen die Datenbank aus `.env`. Mit abweichendem Chromium-Pfad: `PW_CHROMIUM_PATH=/pfad/zu/chromium pnpm test:e2e`.
+
+## Automatisierungen
+
+`GET /api/cron/daily` mit `Authorization: Bearer <CRON_SECRET>` (im Compose übernimmt das der Dienst `cron`, 7:30 Uhr): Lead ohne Kontakt nach 2 Werktagen → Hub-Aufgabe; tägliche Trefferübersicht per Mail an Verantwortliche; Nachgespräche und Laufzeitende → Hub-Aufgaben; verworfene Leads nach 12 Monaten löschen. Fehler gehen per Mail an `ADMIN_EMAIL`.
 
 ## Deployment (Coolify)
 
-- `Dockerfile` baut ein Standalone-Image; `docker-entrypoint.sh` führt `prisma migrate deploy` beim Start aus.
-- `docker-compose.yml` enthält App, PostgreSQL und einen Backup-Dienst (täglich, 30 Tage Aufbewahrung).
+- `Dockerfile` baut ein Standalone-Image mit Chromium (PDF); `docker-entrypoint.sh` führt `prisma migrate deploy` beim Start aus.
+- `docker-compose.yml` enthält App, PostgreSQL, Cron-Dienst, Upload-Volume und einen Backup-Dienst (täglich, 30 Tage Aufbewahrung).
+- Uploads liegen auf dem Volume `/app/uploads` (Nextcloud/WebDAV ist offener Punkt).
 - Umgebungsvariablen siehe `.env.example`. In Produktion `AUTH_DEV_LOGIN` nicht setzen.
 - Domain: `stay.baax.de` (Vorschlag, zu bestätigen).
 
-## Offene Punkte für Phase 0
+## Offene Punkte vor Veröffentlichung
 
-- Hub-Endpunkte und Token-Format bestätigen (siehe oben)
+- Hub-Endpunkte und Token-Format bestätigen (siehe oben); Hub-Aufgaben nutzen dieselbe API
+- SMTP-Zugang und HTML-Signatur der GmbH (`MAIL_SIGNATURE_HTML`) eintragen
 - Exakten Hex-Wert Baax-Cyan in `src/app/globals.css` (`--brand`) eintragen
+- Honorarstaffel-Startwerte unter `/einstellungen/honorar` festlegen
+- Regionsregeln (Vermietung, Zweitwohnsitz) unter `/einstellungen/regionen` als Kurztext pflegen
+- Checklisten der Kaufabwicklung (`src/lib/checklists.ts`) mit Partnern vor Ort abstimmen
 - Datenschutzhinweise unter `/datenschutz` inhaltlich prüfen
 - QR-Code mit `https://stay.baax.de/interesse?q=superstay26` erzeugen

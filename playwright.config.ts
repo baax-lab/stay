@@ -22,10 +22,10 @@ export default defineConfig({
   ],
   webServer: {
     // Dev-Server, damit der Entwickler-Login (nur außerhalb von Produktion) verfügbar ist
-    command: `pnpm dev -p ${PORT}`,
+    command: `pnpm exec next dev --turbopack -p ${PORT}`,
     port: PORT,
     reuseExistingServer: !process.env.CI,
-    env: { ...process.env, APP_URL: `http://localhost:${PORT}`, AUTH_DEV_LOGIN: "true", NODE_ENV: "development" } as Record<string, string>,
+    env: { ...process.env, APP_URL: `http://localhost:${PORT}`, AUTH_DEV_LOGIN: "true", NODE_ENV: "development", NEXT_DIST_DIR: ".next-e2e" } as Record<string, string>,
     timeout: 120_000,
   },
 });
