@@ -1,5 +1,5 @@
 import type { SearchProfile } from "@prisma/client";
-import { criterionLabel } from "./criteria";
+import { criterionLabel as defaultLabel } from "./criteria";
 import { SEGMENT_LABEL } from "./labels";
 import { USAGE_GOAL_LABEL } from "./mandates";
 
@@ -16,10 +16,12 @@ export const EN_CRITERIA: Record<string, string> = {
 
 export type ProfileText = { title: string; lines: Array<[string, string]>; intro: string; outro: string };
 
-export function profileToText(profile: SearchProfile, regionNames: Record<string, string>, lang: "de" | "en", ref: string): ProfileText {
+export function profileToText(profile: SearchProfile, regionNames: Record<string, string>, lang: "de" | "en", ref: string, labels?: { de: Record<string, string>; en: Record<string, string> }): ProfileText {
+  const criterionLabel = (k: string) => labels?.de[k] ?? defaultLabel(k);
+  const EN_CRITERIA_L: Record<string, string> = { ...EN_CRITERIA, ...(labels?.en ?? {}) };
   const eur = (n: number | null | undefined) => (n == null ? "–" : `${n.toLocaleString(lang === "de" ? "de-DE" : "en-GB")} €`);
   const regions = profile.regions.map((r) => regionNames[r] ?? r);
-  const must = (profile.mustCriteria as string[]).map((k) => (lang === "de" ? criterionLabel(k) : (EN_CRITERIA[k] ?? k)));
+  const must = (profile.mustCriteria as string[]).map((k) => (lang === "de" ? criterionLabel(k) : (EN_CRITERIA_L[k] ?? criterionLabel(k))));
   const wish = (profile.wishCriteria as Array<{ key: string; weight: number }>).map((w) => `${lang === "de" ? criterionLabel(w.key) : (EN_CRITERIA[w.key] ?? w.key)} (${w.weight})`);
 
   if (lang === "en") {

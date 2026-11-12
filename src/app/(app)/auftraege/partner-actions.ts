@@ -8,6 +8,8 @@ import { sendMail } from "@/lib/mail";
 import { htmlToPdf } from "@/lib/pdf";
 import { profilePdfHtml, profileTextHtml, profileTextPlain, profileToText } from "@/lib/profile-text";
 import { logEvent } from "@/lib/services/events";
+import { criteriaLabels } from "@/lib/services/criteria";
+import { createPartnerAccess } from "@/lib/services/partner-access";
 import type { ActionResult } from "./actions";
 
 /** Suchprofil anonymisiert an Partner senden (Konzept §8.22). */
@@ -15,6 +17,7 @@ export async function sendProfileToPartnersAction(mandateId: string, formData: F
   const user = await requirePermission("sendExternal");
   const partnerIds = formData.getAll("partnerIds").filter((v): v is string => typeof v === "string");
   const intro = String(formData.get("intro") ?? "").trim() || null;
+  const includeAccess = formData.get("includeAccess") === "on";
   if (partnerIds.length === 0) return { ok: false, error: "Keinen Partner ausgewählt" };
 
   const mandate = await prisma.mandate.findUniqueOrThrow({ where: { id: mandateId }, include: { profile: true } });
@@ -23,6 +26,7 @@ export async function sendProfileToPartnersAction(mandateId: string, formData: F
   const regionRows = await prisma.region.findMany({ select: { key: true, name: true } });
   const regionNames = Object.fromEntries(regionRows.map((r) => [r.key, r.name]));
   const ref = `BS-${mandate.id.slice(-6).toUpperCase()}`;
+  const labels = await criteriaLabels();
 
   // Sicherheitsnetz: Käufername darf nirgends im Versand auftauchen
   const forbidden = [mandate.buyerName, mandate.buyerEmail, mandate.buyerPhone].filter((x): x is string => Boolean(x && x.length > 3));
@@ -34,12 +38,18 @@ export async function sendProfileToPartnersAction(mandateId: string, formData: F
       continue;
     }
     const lang = partner.language === "en" ? "en" : "de";
-    const t = profileToText(mandate.profile, regionNames, lang, ref);
-    const text = profileTextPlain(t, intro);
-    const html = profileTextHtml(t, intro);
+    const t = profileToText(mandate.profile, regionNames, lang, ref, labels);
+    let text = profileTextPlain(t, intro);
+    let html = profileTextHtml(t, intro);
     if (forbidden.some((f) => text.includes(f) || html.includes(f))) {
       results.push(`${partner.name}: Versand gestoppt, Käuferdaten im Text`);
       continue;
+    }
+    if (includeAccess) {
+      const { url } = await createPartnerAccess(partner.id, user, mandateId);
+      const line = lang === "en" ? `Submit suitable properties directly via your partner access: ${url}` : `Passende Objekte können Sie direkt über Ihren Partnerzugang einreichen: ${url}`;
+      text += `\n\n${line}`;
+      html += `<p>${line.replace(url, `<a href="${url}">${url}</a>`)}</p>`;
     }
     const subject = lang === "en" ? `Search mandate ${ref}: ${t.lines[0][1]} in ${t.lines[2][1]}` : `Suchauftrag ${ref}: ${t.lines[0][1]} in ${t.lines[2][1]}`;
     const pdf = await htmlToPdf(profilePdfHtml(t, intro));

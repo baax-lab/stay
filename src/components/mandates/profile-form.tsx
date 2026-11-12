@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useTransition } from "react";
 import type { Segment, UsageGoal } from "@prisma/client";
-import { CRITERIA } from "@/lib/criteria";
+import type { CriterionDef } from "@/lib/criteria";
 import { SEGMENT_LABEL, entries } from "@/lib/labels";
 import { USAGE_GOAL_LABEL } from "@/lib/mandates";
 import { saveProfileAction, type ProfileInput } from "@/app/(app)/auftraege/actions";
@@ -25,7 +25,8 @@ export const COUNTRY_LABEL: Record<string, string> = {
   GR: "Griechenland",
 };
 
-export function ProfileForm({ mandateId, initial, regions, canEdit }: { mandateId: string; initial: ProfileInput; regions: RegionOption[]; canEdit: boolean }) {
+export function ProfileForm({ mandateId, initial, regions, canEdit, criteria }: { mandateId: string; initial: ProfileInput; regions: RegionOption[]; canEdit: boolean; criteria: CriterionDef[] }) {
+  const CRITERIA = criteria;
   const [form, setForm] = useState<ProfileInput>(initial);
   const [pending, start] = useTransition();
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);

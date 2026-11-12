@@ -29,6 +29,7 @@ import { PartnerSendPanel } from "@/components/mandates/partner-send-panel";
 import { PortalPanel } from "@/components/mandates/portal-panel";
 import { ReportsPanel } from "@/components/mandates/reports-panel";
 import { suggestProfileAdjustments } from "@/lib/portal";
+import { getCriteria } from "@/lib/services/criteria";
 import { saveHeaderAction, saveNoteAction, setGwgAction } from "../actions";
 import type { ProfileInput } from "../actions";
 import { cn } from "@/lib/cn";
@@ -92,6 +93,7 @@ export default async function MandatePage({ params, searchParams }: { params: Pr
   const canFees = can.viewFees(user.role);
   if (tab === "honorar" && !canFees) return <Notice tone="danger">Honorare sind nur für Leitung und Admin sichtbar.</Notice>;
 
+  const criteria = await getCriteria();
   const regions: RegionOption[] = await prisma.region.findMany({ orderBy: [{ country: "asc" }, { name: "asc" }], select: { key: true, name: true, country: true, focus: true } });
   const presented = mandate.presentations.map((p) => ({ propertyId: p.propertyId, title: p.property.title, askingPrice: p.askingPrice }));
 
@@ -281,7 +283,7 @@ export default async function MandatePage({ params, searchParams }: { params: Pr
 
       {tab === "erstgespraech" && (
         <Card>
-          <InterviewForm mandateId={mandate.id} initial={(mandate.interviewNotes as Record<string, unknown> | null) ?? {}} assessment={mandate.assessment} regions={regions} canEdit={canEdit} profile={profileInput} />
+          <InterviewForm mandateId={mandate.id} initial={(mandate.interviewNotes as Record<string, unknown> | null) ?? {}} assessment={mandate.assessment} regions={regions} canEdit={canEdit} profile={profileInput} criteria={criteria} />
         </Card>
       )}
 
@@ -304,7 +306,7 @@ export default async function MandatePage({ params, searchParams }: { params: Pr
               </div>
             ) : null;
           })()}
-          <ProfileForm mandateId={mandate.id} initial={profileInput} regions={regions} canEdit={canEdit} />
+          <ProfileForm mandateId={mandate.id} initial={profileInput} regions={regions} canEdit={canEdit} criteria={criteria} />
         </Card>
       )}
 

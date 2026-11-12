@@ -271,6 +271,9 @@ model Mandate {
   portalAccesses PortalAccess[]
   reports        Report[]
   notifications  BuyerNotification[]
+  inspections    Inspection[]
+  trips          Trip[]
+  partnerRatings PartnerRating[]
 
   @@index([status])
   @@index([ownerId])
@@ -354,9 +357,12 @@ model Property {
   createdAt        DateTime      @default(now())
   updatedAt        DateTime      @updatedAt
 
-  matches       Match[]
-  presentations Presentation[]
-  offers        Offer[]
+  matches              Match[]
+  presentations        Presentation[]
+  offers               Offer[]
+  precheck             Precheck?
+  inspections          Inspection[]
+  submittedViaAccessId String? // Einreichung über Partnerzugang
 
   @@index([country, region])
   @@index([segment])
@@ -508,6 +514,8 @@ model Partner {
 
   properties Property[]
   sends      PartnerSend[]
+  accesses   PartnerAccess[]
+  ratings    PartnerRating[]
 }
 
 // Versand eines anonymisierten Suchprofils an einen Partner
@@ -713,4 +721,166 @@ model BuyerNotification {
   sentTo    String?
 
   @@index([mandateId, status])
+}
+
+// ---------------------------------------------------------------------------
+// Phase 2
+// ---------------------------------------------------------------------------
+
+enum InspectionStatus {
+  ENTWURF
+  ABGESCHLOSSEN
+}
+
+enum Recommendation {
+  EMPFEHLEN
+  BEDINGT
+  NICHT_EMPFEHLEN
+}
+
+enum PrecheckStatus {
+  OFFEN
+  LAEUFT
+  OK
+  BEDENKEN
+  KO
+}
+
+// Besichtigungsprotokoll (mobil am Objekt)
+model Inspection {
+  id             String           @id @default(cuid())
+  propertyId     String
+  property       Property         @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  mandateId      String?
+  mandate        Mandate?         @relation(fields: [mandateId], references: [id], onDelete: SetNull)
+  tripId         String?
+  trip           Trip?            @relation(fields: [tripId], references: [id], onDelete: SetNull)
+  date           DateTime         @default(now())
+  attendees      String?
+  status         InspectionStatus @default(ENTWURF)
+  rating         Int? // Gesamteindruck 1–5
+  recommendation Recommendation?
+  items          Json             @default("[]") // { key, label, rating, note }[]
+  notes          String?
+  photos         Json             @default("[]") // StoredFile-IDs
+  createdById    String
+  createdByName  String?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  @@index([propertyId])
+  @@index([mandateId])
+}
+
+// Reise je Suchauftrag mit Kosten
+model Trip {
+  id          String       @id @default(cuid())
+  mandateId   String
+  mandate     Mandate      @relation(fields: [mandateId], references: [id], onDelete: Cascade)
+  title       String
+  destination String?
+  startDate   DateTime
+  endDate     DateTime?
+  travelers   String?
+  billable    Boolean      @default(true) // zählt für die Reisepauschale des Käufers
+  note        String?
+  createdById String
+  createdAt   DateTime     @default(now())
+  costs       TripCost[]
+  inspections Inspection[]
+
+  @@index([mandateId])
+}
+
+model TripCost {
+  id            String   @id @default(cuid())
+  tripId        String
+  trip          Trip     @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  category      String // FLUG, BAHN, AUTO, MIETWAGEN, HOTEL, VERPFLEGUNG, SONSTIGES
+  description   String?
+  amount        Int // EUR
+  date          DateTime @default(now())
+  receiptFileId String?
+  createdAt     DateTime @default(now())
+}
+
+// Vorprüfung je Objekt (Checkliste je Segment und Land)
+model Precheck {
+  id          String         @id @default(cuid())
+  propertyId  String         @unique
+  property    Property       @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  status      PrecheckStatus @default(OFFEN)
+  items       Json // { key, label, group, status, note, doneAt }[]
+  summary     String?
+  updatedById String?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+}
+
+// Zugangslink für Partner (Konzept: AccessLink)
+model PartnerAccess {
+  id          String    @id @default(cuid())
+  partnerId   String
+  partner     Partner   @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  mandateId   String? // optional auf einen Suchauftrag beschränkt
+  tokenHash   String    @unique
+  expiresAt   DateTime
+  revokedAt   DateTime?
+  lastSeenAt  DateTime?
+  viewCount   Int       @default(0)
+  createdById String
+  createdAt   DateTime  @default(now())
+
+  @@index([partnerId])
+}
+
+// Bewertung eines Partners nach Zusammenarbeit
+model PartnerRating {
+  id          String   @id @default(cuid())
+  partnerId   String
+  partner     Partner  @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  mandateId   String?
+  mandate     Mandate? @relation(fields: [mandateId], references: [id], onDelete: SetNull)
+  reliability Int // 1–5
+  quality     Int // Objektqualität, 1–5
+  speed       Int // Reaktionszeit, 1–5
+  comment     String?
+  ratedById   String
+  ratedByName String?
+  createdAt   DateTime @default(now())
+
+  @@index([partnerId])
+}
+
+// Vorlagen aus Datensatz (Suchauftrag, Partnervereinbarung, Tippgeberbestätigung)
+model DocumentTemplate {
+  id          String   @id @default(cuid())
+  kind        String // SUCHAUFTRAG, PARTNERVEREINBARUNG, TIPPGEBERBESTAETIGUNG
+  lang        String   @default("de")
+  name        String
+  body        String // Text mit {{platzhalter}}
+  version     Int      @default(1)
+  active      Boolean  @default(true)
+  updatedById String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([kind, lang])
+}
+
+// Kriterienkatalog (Phase 2: pflegbar)
+model Criterion {
+  key     String  @id
+  label   String
+  labelEn String?
+  group   String
+  active  Boolean @default(true)
+  sort    Int     @default(0)
+}
+
+// Einmalige Erinnerungen (gegen doppelten Versand)
+model ReminderLog {
+  id     String   @id @default(cuid())
+  key    String   @unique
+  sentAt DateTime @default(now())
 }

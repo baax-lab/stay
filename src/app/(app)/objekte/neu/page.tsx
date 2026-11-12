@@ -4,6 +4,7 @@ import { requireUser } from "@/lib/auth";
 import { can } from "@/lib/permissions";
 import { Card, PageHeader } from "@/components/ui/card";
 import { PropertyForm } from "@/components/properties/property-form";
+import { getCriteria } from "@/lib/services/criteria";
 import type { PropertyFormInput } from "../actions";
 
 export const metadata = { title: "Objekt erfassen" };
@@ -52,7 +53,7 @@ export default async function NewPropertyPage({ searchParams }: { searchParams: 
     <div className="mx-auto max-w-3xl">
       <PageHeader title={sellerLead ? "Off-Market-Objekt anlegen" : "Objekt erfassen"} subtitle="Nach dem Speichern läuft das Matching gegen alle aktiven Suchprofile." />
       <Card>
-        <PropertyForm initial={initial} regions={regions} partners={partners} referrers={referrers} sellerLead={sellerLead ? { id: sellerLead.id, name: sellerLead.name } : null} isAdmin={user.role === "ADMIN"} canEdit />
+        <PropertyForm criteria={await getCriteria()} initial={initial} regions={regions} partners={partners} referrers={referrers} sellerLead={sellerLead ? { id: sellerLead.id, name: sellerLead.name } : null} isAdmin={user.role === "ADMIN"} canEdit />
       </Card>
     </div>
   );

@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { ButtonLink } from "@/components/ui/button";
 import { Table, Td, Th } from "@/components/ui/table";
 import { PARTNER_TYPE_LABEL } from "@/components/partners/partner-form";
+import { averageRatings, hitRate } from "@/lib/partner-stats";
 
 export const metadata = { title: "Partner" };
 
@@ -19,7 +20,7 @@ export default async function PartnersPage({ searchParams }: { searchParams: Pro
       ...(sp.q ? { OR: [{ name: { contains: sp.q, mode: "insensitive" } }, { company: { contains: sp.q, mode: "insensitive" } }] } : {}),
     },
     orderBy: [{ country: "asc" }, { name: "asc" }],
-    include: { _count: { select: { properties: true, sends: true } } },
+    include: { _count: { select: { properties: true, sends: true } }, ratings: { select: { reliability: true, quality: true, speed: true } }, properties: { select: { _count: { select: { presentations: true } } } } },
   });
   const regions = await prisma.region.findMany({ select: { key: true, name: true } });
   const rn = Object.fromEntries(regions.map((r) => [r.key, r.name]));
@@ -53,6 +54,8 @@ export default async function PartnersPage({ searchParams }: { searchParams: Pro
             <Th>Land / Regionen</Th>
             <Th>Vereinbarung</Th>
             <Th>Objekte</Th>
+            <Th>Trefferquote</Th>
+            <Th>Bewertung</Th>
             <Th>Profile erhalten</Th>
             <Th>Sprache</Th>
           </tr>
@@ -73,13 +76,15 @@ export default async function PartnersPage({ searchParams }: { searchParams: Pro
               </Td>
               <Td>{p.agreementAt ? <Badge tone="ok">{p.agreementAt.toLocaleDateString("de-DE")}</Badge> : <Badge tone="warn">fehlt</Badge>}</Td>
               <Td>{p._count.properties}</Td>
+              <Td>{hitRate(p._count.properties, p.properties.filter((x) => x._count.presentations > 0).length) ?? "–"}{p._count.properties ? " %" : ""}</Td>
+              <Td>{averageRatings(p.ratings).score?.toLocaleString("de-DE") ?? "–"}</Td>
               <Td>{p._count.sends}</Td>
               <Td>{p.language.toUpperCase()}</Td>
             </tr>
           ))}
           {partners.length === 0 && (
             <tr>
-              <Td className="py-10 text-center text-muted" {...{ colSpan: 7 }}>
+              <Td className="py-10 text-center text-muted" {...{ colSpan: 9 }}>
                 Keine Partner.
               </Td>
             </tr>

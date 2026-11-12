@@ -1,4 +1,6 @@
 import { PrismaClient } from "@prisma/client";
+import { CRITERIA } from "../src/lib/criteria";
+import { EN_CRITERIA } from "../src/lib/profile-text";
 
 const prisma = new PrismaClient();
 
@@ -110,6 +112,11 @@ async function main() {
         { currency: "GBP", rateToEur: 1.17, source: "Startwert" },
       ],
     });
+  }
+
+  // Kriterienkatalog (Phase 2 pflegbar)
+  for (const [i, c] of CRITERIA.entries()) {
+    await prisma.criterion.upsert({ where: { key: c.key }, update: {}, create: { key: c.key, label: c.label, labelEn: EN_CRITERIA[c.key] ?? null, group: c.group, sort: i } });
   }
 
   console.log(`Seed fertig: ${regions.length} Regionen, aktives Event, Honorarstaffel und Ziel gesetzt.`);

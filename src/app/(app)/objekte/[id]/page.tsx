@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { ActionButton, ActionForm } from "@/components/ui/action-form";
 import { Field, Input, Select } from "@/components/ui/field";
 import { PropertyForm } from "@/components/properties/property-form";
+import { getCriteria } from "@/lib/services/criteria";
 import { MATCH_STATUS_LABEL } from "@/components/mandates/matches-table";
 import { deletePropertyAction, deletePropertyFileAction, markDuplicateAction, setAvailabilityAction, uploadPropertyFilesAction, type PropertyFormInput } from "../actions";
 import { cn } from "@/lib/cn";
@@ -212,7 +213,7 @@ export default async function PropertyPage({ params, searchParams }: { params: P
 
       {tab === "bearbeiten" && (
         <Card>
-          <PropertyForm id={property.id} initial={initial} regions={regions} partners={partners} referrers={referrers} sellerLead={property.sellerLead} isAdmin={user.role === "ADMIN"} canEdit={canEdit} />
+          <PropertyForm criteria={await getCriteria()} id={property.id} initial={initial} regions={regions} partners={partners} referrers={referrers} sellerLead={property.sellerLead} isAdmin={user.role === "ADMIN"} canEdit={canEdit} />
           {canEdit && (
             <form action={deletePropertyAction.bind(null, property.id)} className="mt-6 border-t border-line pt-4">
               <Button type="submit" variant="danger" size="sm">

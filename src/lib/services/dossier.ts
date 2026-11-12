@@ -1,7 +1,6 @@
 import "server-only";
 import { prisma } from "@/lib/db";
-import { criterionLabel } from "@/lib/criteria";
-import { EN_CRITERIA } from "@/lib/profile-text";
+import { criteriaLabels } from "./criteria";
 import type { Lang } from "@/lib/i18n";
 import { propertyFigures, type PropertyFigures } from "./figures";
 
@@ -40,6 +39,7 @@ export async function loadDossier(propertyId: string, mandateId: string | null, 
   const figures = await propertyFigures(p, mandate ? mandateId : null);
   const photoIds = Array.isArray(p.photos) ? (p.photos as string[]) : [];
   const en = lang === "en";
+  const labels = await criteriaLabels();
   return {
     propertyId: p.id,
     title: (en && p.titleEn) || p.title,
@@ -54,7 +54,7 @@ export async function loadDossier(propertyId: string, mandateId: string | null, 
     occupancyPct: p.occupancyPct,
     adr: p.adr,
     revenueYear: p.revenueYear,
-    features: (p.features as string[]).map((k) => (en ? (EN_CRITERIA[k] ?? k) : criterionLabel(k))),
+    features: (p.features as string[]).map((k) => (en ? (labels.en[k] ?? labels.de[k] ?? k) : (labels.de[k] ?? k))),
     description: (en && p.descriptionEn) || p.description,
     strengths: lines((en && p.strengthsEn) || p.strengths),
     risks: lines((en && p.risksEn) || p.risks),

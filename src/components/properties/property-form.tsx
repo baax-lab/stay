@@ -4,7 +4,7 @@ import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import type { LicenseStatus, ObjectSource, Segment } from "@prisma/client";
-import { CRITERIA } from "@/lib/criteria";
+import type { CriterionDef } from "@/lib/criteria";
 import { SEGMENT_LABEL, entries } from "@/lib/labels";
 import { LICENSE_STATUS_LABEL } from "@/lib/license";
 import { createPropertyAction, updatePropertyAction, type PropertyFormInput, type SaveResult } from "@/app/(app)/objekte/actions";
@@ -26,7 +26,9 @@ export function PropertyForm({
   sellerLead,
   isAdmin,
   canEdit,
+  criteria,
 }: {
+  criteria: CriterionDef[];
   id?: string;
   initial: PropertyFormInput;
   regions: RegionOption[];
@@ -37,6 +39,7 @@ export function PropertyForm({
   canEdit: boolean;
 }) {
   const router = useRouter();
+  const CRITERIA = criteria;
   const [form, setForm] = useState<PropertyFormInput>(initial);
   const [pending, start] = useTransition();
   const [result, setResult] = useState<SaveResult | null>(null);

@@ -1,4 +1,8 @@
-/** Kriterienkatalog (Konzept §8). Phase 1 als Konstante, Phase 2 editierbar. */
+/**
+ * Kriterienkatalog (Konzept §8). Seit Phase 2 in der Tabelle Criterion pflegbar;
+ * diese Konstante ist Startbestand (Seed) und Rückfall, falls die Tabelle leer ist.
+ */
+export type CriterionDef = { key: string; label: string; labelEn?: string | null; group: string };
 export const CRITERIA = [
   { key: "lage_strand", label: "Lage am Strand", group: "Lage" },
   { key: "lage_berg_ski", label: "Lage Berg / Ski", group: "Lage" },

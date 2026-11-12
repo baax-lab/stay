@@ -7,7 +7,7 @@ import type { ImportScope } from "@/lib/csv";
 import type { SessionUser } from "@/lib/session";
 import { findDuplicates } from "./lead-service-bridge";
 import { createProperty, findPropertyDuplicates, type PropertyInput } from "./properties";
-import { CRITERIA } from "@/lib/criteria";
+import { getCriteria } from "./criteria";
 
 /** CSV-Import (Konzept §8.24): Zuordnung → Vorschau mit Dubletten → Speichern. Nur Leitung/Admin, protokolliert. */
 
@@ -44,6 +44,7 @@ function pick<T extends string>(v: string | undefined, allowed: T[], fallback: T
 
 export async function previewImport(scope: ImportScope, rows: ImportRow[]): Promise<PreviewRow[]> {
   const regions = await prisma.region.findMany();
+  const CRITERIA = await getCriteria({ includeInactive: true });
   const regionKey = (v: string | undefined, country: string) => {
     const s = (v ?? "").trim().toLowerCase();
     if (!s) return null;

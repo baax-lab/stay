@@ -1,5 +1,5 @@
 import type { LicenseLight, Segment } from "@prisma/client";
-import { criterionLabel } from "./criteria";
+import { criterionLabel as defaultLabel } from "./criteria";
 
 /**
  * Matching (Konzept §8.5). Reine Funktion, Server Action ruft sie für alle Kombinationen auf.
@@ -45,7 +45,8 @@ function fmtEur(n: number) {
   return `${n.toLocaleString("de-DE")} €`;
 }
 
-export function matchProperty(profile: ProfileForMatch, property: PropertyForMatch): MatchResult {
+export function matchProperty(profile: ProfileForMatch, property: PropertyForMatch, labels?: Record<string, string>): MatchResult {
+  const criterionLabel = (k: string) => labels?.[k] ?? defaultLabel(k);
   const passt: string[] = [];
   const fehlt: string[] = [];
   const knapp: string[] = [];

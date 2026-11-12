@@ -7,6 +7,9 @@ import { prisma } from "@/lib/db";
 import { requirePermission } from "@/lib/auth";
 import { audit } from "@/lib/audit";
 import type { ActionResult } from "@/components/ui/action-form";
+import { createPartnerAccess, sendPartnerAccess, PARTNER_ACCESS_DAYS } from "@/lib/services/partner-access";
+import { extendExpiry } from "@/lib/portal";
+import { validRating } from "@/lib/partner-stats";
 
 const str = (fd: FormData, k: string) => {
   const v = fd.get(k);
@@ -106,4 +109,49 @@ export async function createRewardAction(referrerId: string, formData: FormData)
   await prisma.referralReward.create({ data: { referrerId, mandateId, amount, basis: str(formData, "basis") || "manuell" } });
   revalidatePath(`/tippgeber/${referrerId}`);
   return { ok: true, message: "Prämie angelegt." };
+}
+
+// ---------- Phase 2: Partnerzugang und Bewertung ----------
+
+export async function createPartnerAccessAction(partnerId: string, mandateId: string | null): Promise<{ ok: boolean; message: string; url?: string }> {
+  const user = await requirePermission("sendExternal");
+  const { url, access } = await createPartnerAccess(partnerId, user, mandateId);
+  revalidatePath(`/partner/${partnerId}`);
+  return { ok: true, message: `Link erstellt, gültig bis ${access.expiresAt.toLocaleDateString("de-DE")}. Er wird nur jetzt angezeigt.`, url };
+}
+
+export async function sendPartnerAccessAction(partnerId: string): Promise<{ ok: boolean; message: string; url?: string }> {
+  const user = await requirePermission("sendExternal");
+  const r = await sendPartnerAccess(partnerId, user);
+  revalidatePath(`/partner/${partnerId}`);
+  return r;
+}
+
+export async function extendPartnerAccessAction(partnerId: string, accessId: string): Promise<ActionResult> {
+  const user = await requirePermission("sendExternal");
+  await prisma.partnerAccess.update({ where: { id: accessId }, data: { expiresAt: extendExpiry(new Date(), PARTNER_ACCESS_DAYS), revokedAt: null } });
+  await audit({ userId: user.id, action: "PORTAL_LINK", entity: "Partner", entityId: partnerId, meta: { extended: accessId } });
+  revalidatePath(`/partner/${partnerId}`);
+  return { ok: true, message: "Verlängert." };
+}
+
+export async function revokePartnerAccessAction(partnerId: string, accessId: string): Promise<ActionResult> {
+  const user = await requirePermission("sendExternal");
+  await prisma.partnerAccess.update({ where: { id: accessId }, data: { revokedAt: new Date() } });
+  await audit({ userId: user.id, action: "PORTAL_LINK", entity: "Partner", entityId: partnerId, meta: { revoked: accessId } });
+  revalidatePath(`/partner/${partnerId}`);
+  return { ok: true, message: "Widerrufen." };
+}
+
+export async function ratePartnerAction(partnerId: string, formData: FormData): Promise<ActionResult> {
+  const user = await requirePermission("editPartners");
+  const n = (k: string) => Number(formData.get(k));
+  const data = { reliability: n("reliability"), quality: n("quality"), speed: n("speed") };
+  if (!validRating(data.reliability) || !validRating(data.quality) || !validRating(data.speed)) return { ok: false, error: "Bitte alle drei Bewertungen (1–5) wählen" };
+  const mandateId = str(formData, "mandateId") || null;
+  await prisma.partnerRating.create({ data: { partnerId, mandateId, ...data, comment: str(formData, "comment") || null, ratedById: user.id, ratedByName: user.name } });
+  await audit({ userId: user.id, action: "PARTNER_RATING", entity: "Partner", entityId: partnerId, meta: { ...data, mandateId } });
+  revalidatePath(`/partner/${partnerId}`);
+  revalidatePath("/partner");
+  return { ok: true, message: "Bewertung gespeichert." };
 }

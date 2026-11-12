@@ -7,6 +7,7 @@ import { logEvent } from "./events";
 import type { SessionUser } from "@/lib/session";
 import { can } from "@/lib/permissions";
 import { draftObjectNotification } from "./notifications";
+import { criteriaLabels } from "./criteria";
 
 type ProfileRow = Prisma.SearchProfileGetPayload<{ include: { mandate: { select: { id: true; status: true } } } }>;
 type PropertyRow = Prisma.PropertyGetPayload<Record<string, never>>;
@@ -71,8 +72,9 @@ export async function runMatchingForProperty(propertyId: string): Promise<{ crea
     where: { active: true, mandate: { status: { in: ACTIVE_STATUSES } } },
     include: { mandate: { select: { id: true, status: true } } },
   });
+  const labels = (await criteriaLabels()).de;
   for (const profile of profiles) {
-    const r = await upsertMatch(profile.mandateId, property.id, matchProperty(toProfile(profile), toProperty(property)));
+    const r = await upsertMatch(profile.mandateId, property.id, matchProperty(toProfile(profile), toProperty(property), labels));
     if (r !== "none") out[r]++;
   }
   return out;
@@ -84,8 +86,9 @@ export async function runMatchingForMandate(mandateId: string): Promise<{ create
   const out = { created: 0, updated: 0, removed: 0 };
   if (!profile || !profile.active) return out;
   const properties = await prisma.property.findMany({ where: { active: true, availability: { in: ["VERFUEGBAR", "RESERVIERT"] } } });
+  const labels = (await criteriaLabels()).de;
   for (const property of properties) {
-    const r = await upsertMatch(mandateId, property.id, matchProperty(toProfile(profile), toProperty(property)));
+    const r = await upsertMatch(mandateId, property.id, matchProperty(toProfile(profile), toProperty(property), labels));
     if (r !== "none") out[r]++;
   }
   return out;

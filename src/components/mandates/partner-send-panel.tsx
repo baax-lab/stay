@@ -72,6 +72,10 @@ export async function PartnerSendPanel({ mandateId, sends, countries, regions, c
                 </label>
               ))}
             </div>
+            <label className="flex items-center gap-2 text-sm">
+              <input type="checkbox" name="includeAccess" defaultChecked className="h-4 w-4 accent-brand-strong" />
+              Link zum Partnerzugang beifügen (Einreichung direkt, nur dieses Suchprofil)
+            </label>
             <Field label="Persönliche Anmerkung (optional)">
               <Textarea name="intro" rows={2} />
             </Field>

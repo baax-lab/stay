@@ -26,7 +26,11 @@ export type MandateEventType =
   | "BUYER_FEEDBACK"
   | "PORTAL_LINK"
   | "REPORT"
-  | "NOTIFICATION";
+  | "NOTIFICATION"
+  | "PARTNER_SUBMISSION"
+  | "INSPECTION"
+  | "TRIP"
+  | "TEMPLATE";
 
 export const MANDATE_EVENT_LABEL: Record<MandateEventType, string> = {
   CREATED: "Suchauftrag angelegt",
@@ -52,6 +56,10 @@ export const MANDATE_EVENT_LABEL: Record<MandateEventType, string> = {
   PORTAL_LINK: "Portal-Link erstellt",
   REPORT: "Bericht",
   NOTIFICATION: "Benachrichtigung an Käufer",
+  PARTNER_SUBMISSION: "Objekt vom Partner eingereicht",
+  INSPECTION: "Besichtigungsprotokoll",
+  TRIP: "Reise",
+  TEMPLATE: "Dokument aus Vorlage",
 };
 
 export async function logEvent(mandateId: string, type: MandateEventType, payload: Prisma.InputJsonValue, user: Pick<SessionUser, "id" | "name"> | { id: string; name?: string }) {

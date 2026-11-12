@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import type { Segment, UsageGoal } from "@prisma/client";
 import { ASSESSMENT_OPTIONS, INTERVIEW_QUESTIONS } from "@/lib/interview";
-import { CRITERIA } from "@/lib/criteria";
+import type { CriterionDef } from "@/lib/criteria";
 import { SEGMENT_LABEL, entries } from "@/lib/labels";
 import { USAGE_GOAL_LABEL } from "@/lib/mandates";
 import { saveInterviewAction, saveProfileAction, type ProfileInput } from "@/app/(app)/auftraege/actions";
@@ -15,7 +15,8 @@ import { COUNTRY_LABEL, type RegionOption } from "./profile-form";
 
 type Notes = Record<string, unknown>;
 
-export function InterviewForm({ mandateId, initial, assessment, regions, canEdit, profile }: { mandateId: string; initial: Notes; assessment: string | null; regions: RegionOption[]; canEdit: boolean; profile: ProfileInput }) {
+export function InterviewForm({ mandateId, initial, assessment, regions, canEdit, profile, criteria }: { mandateId: string; initial: Notes; assessment: string | null; regions: RegionOption[]; canEdit: boolean; profile: ProfileInput; criteria: CriterionDef[] }) {
+  const CRITERIA = criteria;
   const router = useRouter();
   const [notes, setNotes] = useState<Notes>(initial);
   const [assess, setAssess] = useState<string | null>(assessment);

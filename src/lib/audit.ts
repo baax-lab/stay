@@ -32,7 +32,15 @@ export type AuditAction =
   | "PORTAL_VIEW"
   | "PORTAL_ACTION"
   | "PORTAL_DENIED"
-  | "REPORT_UPDATE";
+  | "REPORT_UPDATE"
+  | "PARTNER_SUBMIT"
+  | "PARTNER_RATING"
+  | "PRECHECK_UPDATE"
+  | "INSPECTION_UPDATE"
+  | "TRIP_UPDATE"
+  | "TEMPLATE_UPDATE"
+  | "TEMPLATE_RENDER"
+  | "REMINDER";
 
 export async function audit(input: {
   userId?: string | null;
