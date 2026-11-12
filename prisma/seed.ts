@@ -61,7 +61,26 @@ async function main() {
     },
   });
 
-  console.log(`Seed fertig: ${regions.length} Regionen, aktives Event gesetzt.`);
+  // Honorarstaffel – Startwerte (offener Punkt im Konzept, von der Leitung anzupassen)
+  if ((await prisma.feeBand.count()) === 0) {
+    await prisma.feeBand.createMany({
+      data: [
+        { volumeFrom: 0, volumeTo: 500_000, baseFee: 2_500, successFee: 12_000, bonusPct: 0.1, bonusCapPct: 0.25, note: "Startwert" },
+        { volumeFrom: 500_000, volumeTo: 1_000_000, baseFee: 3_500, successFee: 18_500, bonusPct: 0.1, bonusCapPct: 0.25, note: "Startwert" },
+        { volumeFrom: 1_000_000, volumeTo: 2_000_000, baseFee: 5_000, successFee: 28_000, bonusPct: 0.1, bonusCapPct: 0.25, note: "Startwert" },
+        { volumeFrom: 2_000_000, volumeTo: 3_000_000, baseFee: 7_500, successFee: 40_000, bonusPct: 0.1, bonusCapPct: 0.25, note: "Startwert" },
+        { volumeFrom: 3_000_000, volumeTo: null, baseFee: 10_000, successFee: 55_000, bonusPct: 0.1, bonusCapPct: 0.25, note: "darüber individuell" },
+      ],
+    });
+  }
+
+  await prisma.setting.upsert({
+    where: { key: "goal" },
+    update: {},
+    create: { key: "goal", value: { mandates: 3, days: 90, startDate: "2026-11-20" } },
+  });
+
+  console.log(`Seed fertig: ${regions.length} Regionen, aktives Event, Honorarstaffel und Ziel gesetzt.`);
 }
 
 main()

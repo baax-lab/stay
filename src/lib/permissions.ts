@@ -31,6 +31,28 @@ export const can = {
   viewAuditLog: (role: Role) => role === "ADMIN",
   /** Honorare (Phase 1): Leitung und Admin. */
   viewFees: (role: Role) => roleAtLeast(role, "LEITUNG"),
+  editFeeBands: (role: Role) => roleAtLeast(role, "LEITUNG"),
+  /** Suchaufträge, Objekte, Suchprofile bearbeiten: ab Mitarbeiter. Praktikanten erfassen nur Objekte. */
+  editMandates: (role: Role) => roleAtLeast(role, "MITARBEITER"),
+  viewMandates: (role: Role) => ROLE_ORDER.includes(role),
+  /** Käuferdetails (Kontakt, Honorar, Notizen) im Suchauftrag: ab Mitarbeiter. */
+  viewBuyerDetails: (role: Role) => roleAtLeast(role, "MITARBEITER"),
+  createProperty: (role: Role) => ROLE_ORDER.includes(role),
+  editProperty: (role: Role) => roleAtLeast(role, "MITARBEITER"),
+  /** Freigabe Vorstellung an nachrangigen Käufer: Leitung und Admin. */
+  approveSecondBuyer: (role: Role) => roleAtLeast(role, "LEITUNG"),
+  /** GwG-Nachweise sehen: nur Leitung und Admin. */
+  viewGwgDocuments: (role: Role) => roleAtLeast(role, "LEITUNG"),
+  /** knownSince/knownSourceNote nachträglich ändern: nur Admin (mit Protokoll). */
+  editKnownSince: (role: Role) => role === "ADMIN",
+  /** Partner, Tippgeber pflegen: ab Mitarbeiter. */
+  editPartners: (role: Role) => roleAtLeast(role, "MITARBEITER"),
+  /** Prämien sehen und markieren: Leitung und Admin. */
+  viewRewards: (role: Role) => roleAtLeast(role, "LEITUNG"),
+  /** CSV-Import: Leitung und Admin. */
+  importData: (role: Role) => roleAtLeast(role, "LEITUNG"),
+  /** Versand nach außen (Partner-Mail): ab Mitarbeiter. */
+  sendExternal: (role: Role) => roleAtLeast(role, "MITARBEITER"),
 } as const;
 
 export type Permission = keyof typeof can;

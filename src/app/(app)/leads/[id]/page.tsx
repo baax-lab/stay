@@ -13,11 +13,13 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/field";
 import { SyncOneButton } from "@/components/leads/sync-buttons";
 import { mergeLeadAction, updateLeadNoteAction, updateLeadStatusAction } from "../actions";
+import { convertLeadAction } from "@/app/(app)/auftraege/actions";
+import { ButtonLink } from "@/components/ui/button";
 
 export default async function LeadDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const user = await requireUser();
   const { id } = await params;
-  const lead = await prisma.lead.findUnique({ where: { id }, include: { duplicateOf: { select: { id: true, name: true } }, duplicates: { select: { id: true, name: true, createdAt: true } } } });
+  const lead = await prisma.lead.findUnique({ where: { id }, include: { duplicateOf: { select: { id: true, name: true } }, duplicates: { select: { id: true, name: true, createdAt: true } }, mandate: { select: { id: true, title: true } }, sellerProperties: { select: { id: true, title: true } } } });
   if (!lead) notFound();
 
   const showDetails = can.viewLeadContactDetails(user.role);
@@ -136,7 +138,34 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
           ) : (
             <p className="text-sm text-muted">Statusänderung ab Rolle Mitarbeiter.</p>
           )}
-          <p className="mt-3 text-xs text-muted">„In Suchauftrag umwandeln“ folgt in Phase 1. Bis dahin Status Erstgespräch setzen und Notiz führen.</p>
+          <div className="mt-4 space-y-2 border-t border-line pt-4">
+            {lead.mandate ? (
+              <ButtonLink href={`/auftraege/${lead.mandate.id}`} size="sm" variant="secondary">
+                Suchauftrag „{lead.mandate.title}“ öffnen
+              </ButtonLink>
+            ) : lead.role === "KAEUFER" && canEdit ? (
+              <form action={convertLeadAction.bind(null, lead.id)}>
+                <Button type="submit" size="sm">
+                  In Suchauftrag umwandeln
+                </Button>
+              </form>
+            ) : null}
+            {lead.role === "VERKAEUFER" && (
+              <div className="space-y-1">
+                {lead.sellerProperties.map((p) => (
+                  <ButtonLink key={p.id} href={`/objekte/${p.id}`} size="sm" variant="secondary">
+                    Objekt „{p.title}“ öffnen
+                  </ButtonLink>
+                ))}
+                {canEdit && (
+                  <ButtonLink href={`/objekte/neu?sellerLeadId=${lead.id}`} size="sm">
+                    Als Off-Market-Objekt anlegen
+                  </ButtonLink>
+                )}
+                <p className="text-xs text-muted">Baax arbeitet auf Käuferseite; bei Wohnungen und Häusern keine Provision vom Verkäufer.</p>
+              </div>
+            )}
+          </div>
         </Card>
       </div>
 

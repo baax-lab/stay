@@ -84,6 +84,17 @@ export function leadToHubTask(lead: Lead, hubContactId: string) {
   };
 }
 
+/** Allgemeine Aufgabe im Hub anlegen (Nachfassen, Kaufabwicklung, Nachgespräch, Besichtigungsanfrage). */
+export async function createHubTask(task: { contactId?: string | null; title: string; description?: string | null; dueAt: string; assigneeId?: string | null; externalRef: string }): Promise<{ ok: boolean; id?: string; error?: string; configured: boolean }> {
+  try {
+    const r = await hubFetch<{ id: string }>("/tasks", task);
+    return { ok: true, id: r.id, configured: true };
+  } catch (e) {
+    const configured = !(e instanceof HubNotConfiguredError);
+    return { ok: false, error: e instanceof Error ? e.message : String(e), configured };
+  }
+}
+
 export type SyncResult = { ok: true; hubContactId: string } | { ok: false; error: string; configured: boolean };
 
 /** Einen Lead an den Hub übergeben. Setzt hubSync und hubContactId. */

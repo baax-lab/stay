@@ -33,6 +33,35 @@ export const Icons = {
       <path d="M4 21a8 8 0 0 1 16 0" />
     </svg>
   ),
+  briefcase: (
+    <svg viewBox="0 0 24 24" {...p}>
+      <rect x="3" y="7" width="18" height="13" rx="2" />
+      <path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 12h18" />
+    </svg>
+  ),
+  building: (
+    <svg viewBox="0 0 24 24" {...p}>
+      <path d="M4 21V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v16M16 9h2a2 2 0 0 1 2 2v10M3 21h18M8 7h2M8 11h2M8 15h2" />
+    </svg>
+  ),
+  handshake: (
+    <svg viewBox="0 0 24 24" {...p}>
+      <path d="m11 17 2 2a1.5 1.5 0 0 0 3-3M14 14l2.5 2.5a1.5 1.5 0 0 0 3-3L15 9l-2 1a2 2 0 0 1-2.5-.5L9 8" />
+      <path d="M3 10 7 6l4 1 3 3M3 10l4 4 2 2M21 10l-4-4-3 .5" />
+    </svg>
+  ),
+  gift: (
+    <svg viewBox="0 0 24 24" {...p}>
+      <rect x="3" y="8" width="18" height="4" rx="1" />
+      <path d="M12 8v13M5 12v9h14v-9M12 8c-2-3-6-3-6-1s4 1 6 1Zm0 0c2-3 6-3 6-1s-4 1-6 1Z" />
+    </svg>
+  ),
+  search: (
+    <svg viewBox="0 0 24 24" {...p}>
+      <circle cx="11" cy="11" r="7" />
+      <path d="m20 20-3.5-3.5" />
+    </svg>
+  ),
   qr: (
     <svg viewBox="0 0 24 24" {...p}>
       <rect x="3" y="3" width="7" height="7" rx="1.5" />

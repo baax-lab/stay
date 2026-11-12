@@ -56,3 +56,20 @@ export async function setPublicSources(value: PublicSources, userId: string): Pr
     create: { key: "publicSources", value, updatedBy: userId },
   });
 }
+
+export const goalSchema = z.object({
+  mandates: z.number().int().min(1).default(3),
+  days: z.number().int().min(1).default(90),
+  startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).default("2026-11-20"),
+});
+export type Goal = z.output<typeof goalSchema>;
+
+export async function getGoal(): Promise<Goal> {
+  const row = await prisma.setting.findUnique({ where: { key: "goal" } });
+  const parsed = goalSchema.safeParse(row?.value ?? {});
+  return parsed.success ? parsed.data : goalSchema.parse({});
+}
+
+export async function setGoal(value: Goal, userId: string): Promise<void> {
+  await prisma.setting.upsert({ where: { key: "goal" }, update: { value, updatedBy: userId }, create: { key: "goal", value, updatedBy: userId } });
+}

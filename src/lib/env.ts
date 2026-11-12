@@ -54,6 +54,50 @@ export const env = {
       return Boolean(this.apiUrl && this.apiToken);
     },
   },
+  mail: {
+    get host() {
+      return process.env.SMTP_HOST || undefined;
+    },
+    get port() {
+      return Number(process.env.SMTP_PORT ?? 587);
+    },
+    get user() {
+      return process.env.SMTP_USER || undefined;
+    },
+    get pass() {
+      return process.env.SMTP_PASS || undefined;
+    },
+    get secure() {
+      return process.env.SMTP_SECURE === "true";
+    },
+    get from() {
+      return process.env.MAIL_FROM ?? "Baax Stay <stay@baax.de>";
+    },
+    get signatureHtml() {
+      return process.env.MAIL_SIGNATURE_HTML || undefined;
+    },
+    get signatureFile() {
+      return process.env.MAIL_SIGNATURE_FILE || undefined;
+    },
+  },
+  get mailConfigured() {
+    return Boolean(process.env.SMTP_HOST);
+  },
+  get digestFallbackTo() {
+    return process.env.MAIL_DIGEST_FALLBACK_TO || undefined;
+  },
+  get adminEmail() {
+    return process.env.ADMIN_EMAIL || undefined;
+  },
+  get retentionDiscardedLeadsMonths() {
+    return Number(process.env.RETENTION_DISCARDED_LEADS_MONTHS ?? 12) || 12;
+  },
+  get cronSecret() {
+    return process.env.CRON_SECRET || undefined;
+  },
+  get chromiumPath() {
+    return process.env.CHROMIUM_PATH || undefined;
+  },
   get devLoginEnabled() {
     return process.env.AUTH_DEV_LOGIN === "true" && process.env.NODE_ENV !== "production";
   },

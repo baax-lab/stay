@@ -56,36 +56,39 @@ enum HubSync {
 }
 
 model Lead {
-  id            String     @id @default(cuid())
-  clientId      String?    @unique // Idempotenz für Offline-Nachsendung
-  hubContactId  String?
-  hubSync       HubSync    @default(PENDING)
-  hubSyncError  String?
-  hubSyncedAt   DateTime?
-  duplicateOfId String?
-  duplicateOf   Lead?      @relation("LeadDuplicates", fields: [duplicateOfId], references: [id])
-  duplicates    Lead[]     @relation("LeadDuplicates")
-  name          String
-  company       String?
-  email         String?
-  phone         String?
-  phoneNorm     String? // nur Ziffern mit Ländervorwahl, für die Dubletten-Prüfung
-  role          LeadRole   @default(KAEUFER)
-  source        LeadSource
-  sourceDetail  String?
-  referrerId    String?
-  interest      String?
-  segment       Segment?
-  regions       String[]   @default([])
-  budgetMin     Int?
-  budgetMax     Int?
-  consentEmail  Boolean    @default(false)
-  consentAt     DateTime?
-  status        LeadStatus @default(NEU)
-  note          String?
-  createdById   String // Hub-User-ID oder "public" für das Interessenformular
-  createdAt     DateTime   @default(now())
-  updatedAt     DateTime   @updatedAt
+  id               String     @id @default(cuid())
+  clientId         String?    @unique // Idempotenz für Offline-Nachsendung
+  hubContactId     String?
+  hubSync          HubSync    @default(PENDING)
+  hubSyncError     String?
+  hubSyncedAt      DateTime?
+  duplicateOfId    String?
+  duplicateOf      Lead?      @relation("LeadDuplicates", fields: [duplicateOfId], references: [id])
+  duplicates       Lead[]     @relation("LeadDuplicates")
+  name             String
+  company          String?
+  email            String?
+  phone            String?
+  phoneNorm        String? // nur Ziffern mit Ländervorwahl, für die Dubletten-Prüfung
+  role             LeadRole   @default(KAEUFER)
+  source           LeadSource
+  sourceDetail     String?
+  referrerId       String?
+  interest         String?
+  segment          Segment?
+  regions          String[]   @default([])
+  budgetMin        Int?
+  budgetMax        Int?
+  consentEmail     Boolean    @default(false)
+  consentAt        DateTime?
+  status           LeadStatus @default(NEU)
+  note             String?
+  followUpTaskAt   DateTime? // Aufgabe „Nachfassen“ im Hub angelegt (Lead ohne Kontakt nach 2 Werktagen)
+  createdById      String // Hub-User-ID oder "public" für das Interessenformular
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+  mandate          Mandate?
+  sellerProperties Property[] @relation("SellerLeadProperties")
 
   @@index([email])
   @@index([phoneNorm])
@@ -125,4 +128,455 @@ model Setting {
   value     Json
   updatedAt DateTime @updatedAt
   updatedBy String?
+}
+
+// ---------------------------------------------------------------------------
+// Phase 1 – Kern
+// ---------------------------------------------------------------------------
+
+enum MandateStatus {
+  ERSTGESPRAECH
+  BEAUFTRAGT
+  ANALYSE
+  SUCHE
+  PRUEFUNG
+  VERHANDLUNG
+  GEKAUFT
+  NACHBETREUUNG
+  ABGESCHLOSSEN
+  PAUSIERT
+  BEENDET_OHNE_KAUF
+}
+
+enum UsageGoal {
+  RENDITE
+  EIGENNUTZUNG
+  KOMBINIERT
+  EIGENBETRIEB
+}
+
+enum ObjectSource {
+  PARTNER
+  AGENTUR
+  PORTAL
+  OFFMARKET
+  DIREKT
+}
+
+enum LicenseStatus {
+  VORHANDEN
+  BEANTRAGT
+  FEHLT
+  UNKLAR
+  NICHT_NOETIG
+}
+
+enum LicenseLight {
+  GRUEN
+  GELB
+  ROT
+  GRAU
+}
+
+enum Availability {
+  VERFUEGBAR
+  RESERVIERT
+  VERKAUFT
+  ZURUECKGEZOGEN
+}
+
+enum MatchStatus {
+  NEU
+  GEPRUEFT
+  AN_KAEUFER
+  ABGELEHNT
+  GEMERKT
+  GESCHLOSSEN
+}
+
+enum ReferrerType {
+  TIPPGEBER
+  AGENTUR
+  MULTIPLIKATOR
+  PARTNER
+}
+
+enum PartnerType {
+  MAKLER
+  AGENTUR
+  ANWALT
+  NOTAR
+  FINANZIERER
+  SONSTIGES
+}
+
+enum OfferResponse {
+  OFFEN
+  ANGENOMMEN
+  ABGELEHNT
+  GEGENANGEBOT
+}
+
+enum DocumentKind {
+  SUCHAUFTRAG
+  GWG_NACHWEIS
+  FINANZIERUNG
+  VOLLMACHT
+  SONSTIGES
+}
+
+model Mandate {
+  id                String         @id @default(cuid())
+  leadId            String?        @unique
+  lead              Lead?          @relation(fields: [leadId], references: [id])
+  hubContactId      String? // Käufer im Hub; leer, solange die Hub-Schnittstelle nicht steht
+  buyerName         String // Anzeigename des Käufers (Kopie aus Lead/Hub)
+  buyerEmail        String?
+  buyerPhone        String?
+  title             String
+  status            MandateStatus  @default(ERSTGESPRAECH)
+  ownerId           String
+  ownerName         String?
+  ownerEmail        String?
+  startDate         DateTime?
+  endDate           DateTime?
+  endReason         String?
+  statusBeforePause MandateStatus?
+  contractSignedAt  DateTime?
+  gwgIdentifiedAt   DateTime?
+  gwgIdentType      String?
+  interviewNotes    Json?
+  assessment        String? // Einschätzung: realistisch ja / nein / mit Anpassung
+  referrerId        String?
+  referrer          Referrer?      @relation(fields: [referrerId], references: [id])
+  note              String?
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+
+  profile       SearchProfile?
+  fee           FeeAgreement?
+  matches       Match[]
+  events        MandateEvent[]
+  presentations Presentation[]
+  offers        Offer[]
+  closing       Closing?
+  followUps     FollowUp[]
+  documents     MandateDocument[]
+  rewards       ReferralReward[]
+  partnerSends  PartnerSend[]
+
+  @@index([status])
+  @@index([ownerId])
+}
+
+model SearchProfile {
+  id              String    @id @default(cuid())
+  mandateId       String    @unique
+  mandate         Mandate   @relation(fields: [mandateId], references: [id], onDelete: Cascade)
+  segments        Segment[]
+  countries       String[]  @default([])
+  regions         String[]  @default([]) // Region-Keys
+  priceMin        Int?
+  priceMax        Int
+  usageGoal       UsageGoal @default(RENDITE)
+  minUnits        Int?
+  maxUnits        Int?
+  licenseRequired Boolean   @default(true)
+  mustCriteria    Json      @default("[]") // string[]
+  wishCriteria    Json      @default("[]") // { key, weight }[]
+  financing       String?
+  horizon         String?
+  active          Boolean   @default(true)
+  updatedAt       DateTime  @updatedAt
+}
+
+model Property {
+  id              String        @id @default(cuid())
+  title           String
+  segment         Segment
+  country         String
+  region          String // Region-Key
+  locality        String?
+  address         String?
+  price           Int
+  currency        String        @default("EUR")
+  units           Int?
+  livingArea      Int?
+  licenseStatus   LicenseStatus @default(UNKLAR)
+  licenseNote     String?
+  licenseLight    LicenseLight  @default(GRAU)
+  occupancyPct    Float?
+  adr             Int?
+  revenueYear     Int?
+  features        Json          @default("[]") // string[]
+  description     String?
+  source          ObjectSource
+  sourceDetail    String?
+  knownSince      DateTime      @default(now())
+  knownSourceNote String?
+  sellerLeadId    String?
+  sellerLead      Lead?         @relation("SellerLeadProperties", fields: [sellerLeadId], references: [id])
+  offmarket       Boolean       @default(false)
+  referrerId      String?
+  referrer        Referrer?     @relation(fields: [referrerId], references: [id])
+  partnerId       String?
+  partner         Partner?      @relation(fields: [partnerId], references: [id])
+  availability    Availability  @default(VERFUEGBAR)
+  priceHistory    Json          @default("[]") // { price, at, note? }[]
+  documents       Json          @default("[]") // StoredFile-IDs
+  photos          Json          @default("[]") // StoredFile-IDs
+  duplicateOfId   String?
+  duplicateOf     Property?     @relation("PropertyDuplicates", fields: [duplicateOfId], references: [id])
+  duplicates      Property[]    @relation("PropertyDuplicates")
+  active          Boolean       @default(true)
+  createdById     String
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  matches       Match[]
+  presentations Presentation[]
+  offers        Offer[]
+
+  @@index([country, region])
+  @@index([segment])
+  @@index([availability])
+}
+
+model Match {
+  id           String      @id @default(cuid())
+  mandateId    String
+  propertyId   String
+  mandate      Mandate     @relation(fields: [mandateId], references: [id], onDelete: Cascade)
+  property     Property    @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  score        Int
+  nearMiss     Boolean     @default(false)
+  reasons      Json // { passt: string[], fehlt: string[], knapp: string[] }
+  status       MatchStatus @default(NEU)
+  rejectReason String?
+  viewingAt    DateTime?
+  viewingNote  String?
+  notifiedAt   DateTime?
+  approvedById String? // Freigabe Leitung für Vorstellung an nachrangigen Käufer
+  approvedAt   DateTime?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  @@unique([mandateId, propertyId])
+  @@index([status])
+  @@index([notifiedAt])
+}
+
+model Presentation {
+  id             String    @id @default(cuid())
+  mandateId      String
+  propertyId     String
+  mandate        Mandate   @relation(fields: [mandateId], references: [id], onDelete: Cascade)
+  property       Property  @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  channel        String // PORTAL, EMAIL, DOSSIER, VOR_ORT
+  askingPrice    Int
+  sentById       String
+  sentAt         DateTime  @default(now())
+  viewedAt       DateTime?
+  priorKnowledge Boolean   @default(false) // Objekt war vor Beginn des Suchauftrags bekannt
+
+  @@unique([mandateId, propertyId])
+}
+
+model FeeBand {
+  id          String  @id @default(cuid())
+  volumeFrom  Int
+  volumeTo    Int?
+  baseFee     Int
+  successFee  Int
+  bonusPct    Float   @default(0.10)
+  bonusCapPct Float   @default(0.25)
+  note        String?
+
+  @@index([volumeFrom])
+}
+
+model FeeAgreement {
+  id                   String    @id @default(cuid())
+  mandateId            String    @unique
+  mandate              Mandate   @relation(fields: [mandateId], references: [id], onDelete: Cascade)
+  volumeBandId         String?
+  baseFeeActive        Boolean   @default(false)
+  baseFee              Int       @default(0)
+  successFee           Int       @default(0)
+  bonusPct             Float     @default(0.10)
+  bonusCapPct          Float     @default(0.25)
+  travelFlat           Int?
+  sellerSideCommission Int?
+  sellerSideCredited   Int?
+  note                 String?
+  purchasePrice        Int?
+  askingPrice          Int? // eingefrorener Angebotspreis des gekauften Objekts
+  bonusAmount          Int?
+  invoicedAt           DateTime?
+  paidAt               DateTime?
+  updatedAt            DateTime  @updatedAt
+}
+
+model MandateEvent {
+  id        String   @id @default(cuid())
+  mandateId String
+  mandate   Mandate  @relation(fields: [mandateId], references: [id], onDelete: Cascade)
+  type      String
+  payload   Json     @default("{}")
+  userId    String
+  userName  String?
+  createdAt DateTime @default(now())
+
+  @@index([mandateId, createdAt])
+}
+
+model Referrer {
+  id           String       @id @default(cuid())
+  hubContactId String?
+  name         String
+  company      String?
+  email        String?
+  phone        String?
+  type         ReferrerType
+  rewardRule   String?
+  rewardPct    Float? // Anteil am Netto-Erfolgshonorar, falls prozentual
+  rewardFlat   Int? // fester Betrag, falls pauschal
+  active       Boolean      @default(true)
+  note         String?
+  createdAt    DateTime     @default(now())
+
+  rewards    ReferralReward[]
+  mandates   Mandate[]
+  properties Property[]
+}
+
+model ReferralReward {
+  id         String    @id @default(cuid())
+  referrerId String
+  referrer   Referrer  @relation(fields: [referrerId], references: [id], onDelete: Cascade)
+  mandateId  String
+  mandate    Mandate   @relation(fields: [mandateId], references: [id], onDelete: Cascade)
+  amount     Int
+  basis      String? // Berechnungsgrundlage als Text
+  dueAt      DateTime?
+  paidAt     DateTime?
+  createdAt  DateTime  @default(now())
+}
+
+model Partner {
+  id              String      @id @default(cuid())
+  hubContactId    String?
+  name            String
+  company         String?
+  email           String?
+  phone           String?
+  language        String      @default("de") // de | en
+  type            PartnerType @default(MAKLER)
+  country         String
+  regions         String[]    @default([])
+  licenseNote     String?
+  commissionSplit String?
+  agreementAt     DateTime?
+  active          Boolean     @default(true)
+  note            String?
+  createdAt       DateTime    @default(now())
+
+  properties Property[]
+  sends      PartnerSend[]
+}
+
+// Versand eines anonymisierten Suchprofils an einen Partner
+model PartnerSend {
+  id        String    @id @default(cuid())
+  mandateId String
+  partnerId String
+  mandate   Mandate   @relation(fields: [mandateId], references: [id], onDelete: Cascade)
+  partner   Partner   @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  sentById  String
+  sentAt    DateTime  @default(now())
+  language  String
+  subject   String
+  body      String
+  repliedAt DateTime?
+  replyNote String?
+}
+
+model Offer {
+  id            String        @id @default(cuid())
+  mandateId     String
+  propertyId    String
+  mandate       Mandate       @relation(fields: [mandateId], references: [id], onDelete: Cascade)
+  property      Property      @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  amount        Int
+  madeAt        DateTime
+  conditions    String?
+  response      OfferResponse @default(OFFEN)
+  counterAmount Int?
+  note          String?
+  createdById   String
+  createdAt     DateTime      @default(now())
+
+  @@index([mandateId, madeAt])
+}
+
+model Closing {
+  id           String    @id @default(cuid())
+  mandateId    String    @unique
+  mandate      Mandate   @relation(fields: [mandateId], references: [id], onDelete: Cascade)
+  propertyId   String
+  country      String
+  checklist    Json // { key, label, done, doneAt?, dueAt?, hubTaskAt?, note? }[]
+  notaryDate   DateTime?
+  handoverDate DateTime?
+  updatedAt    DateTime  @updatedAt
+}
+
+model FollowUp {
+  id                String    @id @default(cuid())
+  mandateId         String
+  mandate           Mandate   @relation(fields: [mandateId], references: [id], onDelete: Cascade)
+  dueAt             DateTime
+  doneAt            DateTime?
+  feedback          String?
+  referralGiven     Boolean   @default(false)
+  nextMandateWanted Boolean   @default(false)
+  hubTaskAt         DateTime?
+}
+
+model StoredFile {
+  id           String   @id @default(cuid())
+  fileName     String // Originalname (nur Anzeige)
+  storedName   String   @unique // zufälliger Name auf dem Volume
+  mimeType     String
+  size         Int
+  entity       String // Property, Mandate
+  entityId     String
+  kind         String? // PHOTO, DOCUMENT, SUCHAUFTRAG, ...
+  uploadedById String
+  createdAt    DateTime @default(now())
+
+  @@index([entity, entityId])
+}
+
+model MandateDocument {
+  id           String       @id @default(cuid())
+  mandateId    String
+  mandate      Mandate      @relation(fields: [mandateId], references: [id], onDelete: Cascade)
+  kind         DocumentKind
+  fileId       String
+  label        String?
+  uploadedById String
+  uploadedAt   DateTime     @default(now())
+}
+
+// Gespeicherte Filter je Nutzer
+model SavedView {
+  id        String   @id @default(cuid())
+  userId    String
+  scope     String // leads | auftraege | objekte | partner | tippgeber
+  name      String
+  query     String // Querystring
+  createdAt DateTime @default(now())
+
+  @@index([userId, scope])
 }

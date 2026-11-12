@@ -11,7 +11,23 @@ export type AuditAction =
   | "LEAD_EXPORT"
   | "LEAD_PUBLIC_CREATE"
   | "HUB_SYNC"
-  | "SETTING_UPDATE";
+  | "SETTING_UPDATE"
+  | "MANDATE_CREATE"
+  | "MANDATE_UPDATE"
+  | "FEE_VIEW"
+  | "FEE_UPDATE"
+  | "FEEBAND_UPDATE"
+  | "PROPERTY_CREATE"
+  | "PROPERTY_UPDATE"
+  | "KNOWN_SINCE_CHANGE"
+  | "FILE_UPLOAD"
+  | "FILE_DELETE"
+  | "FILE_VIEW"
+  | "PARTNER_SEND"
+  | "EMAIL_SENT"
+  | "IMPORT"
+  | "EXPORT"
+  | "CRON";
 
 export async function audit(input: {
   userId?: string | null;

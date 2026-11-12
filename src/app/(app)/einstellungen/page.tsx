@@ -4,7 +4,8 @@ import { requireUser, requirePermission } from "@/lib/auth";
 import { can } from "@/lib/permissions";
 import { audit } from "@/lib/audit";
 import { env } from "@/lib/env";
-import { activeEventSchema, getActiveEvent, getPublicSources, publicSourceSchema, setActiveEvent, setPublicSources } from "@/lib/settings";
+import { activeEventSchema, getActiveEvent, getGoal, getPublicSources, goalSchema, publicSourceSchema, setActiveEvent, setGoal, setPublicSources } from "@/lib/settings";
+import Link from "next/link";
 import { LEAD_SOURCE_LABEL, entries } from "@/lib/labels";
 import { Card, CardTitle, Notice, PageHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -46,11 +47,25 @@ async function savePublicSources(formData: FormData) {
   redirect("/einstellungen?saved=sources");
 }
 
+async function saveGoal(formData: FormData) {
+  "use server";
+  const user = await requirePermission("editEventSetting");
+  const value = goalSchema.parse({
+    mandates: Number(formData.get("mandates") ?? 3),
+    days: Number(formData.get("days") ?? 90),
+    startDate: String(formData.get("startDate") ?? ""),
+  });
+  await setGoal(value, user.id);
+  await audit({ userId: user.id, action: "SETTING_UPDATE", entity: "Setting", entityId: "goal", meta: value });
+  revalidatePath("/");
+  redirect("/einstellungen?saved=goal");
+}
+
 export default async function SettingsPage({ searchParams }: { searchParams: Promise<{ saved?: string; error?: string }> }) {
   const user = await requireUser();
   if (!can.editEventSetting(user.role)) redirect("/");
   const { saved, error } = await searchParams;
-  const [event, sources] = await Promise.all([getActiveEvent(), getPublicSources()]);
+  const [event, sources, goal] = await Promise.all([getActiveEvent(), getPublicSources(), getGoal()]);
 
   const sourcesText = Object.entries(sources)
     .map(([k, v]) => `${k} | ${v.source} | ${v.sourceDetail}`)
@@ -71,7 +86,30 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
         </div>
       )}
 
+      <div className="mb-4 flex flex-wrap gap-2">
+        <Link href="/einstellungen/honorar" className="rounded-full border border-line bg-surface px-4 py-2 text-sm font-medium text-petrol hover:border-brand">Honorarstaffel</Link>
+        <Link href="/einstellungen/regionen" className="rounded-full border border-line bg-surface px-4 py-2 text-sm font-medium text-petrol hover:border-brand">Regionen und Vermietungsregeln</Link>
+        <Link href="/leads/import" className="rounded-full border border-line bg-surface px-4 py-2 text-sm font-medium text-petrol hover:border-brand">CSV-Import</Link>
+      </div>
+
       <div className="space-y-4">
+        <Card>
+          <CardTitle>Ziel</CardTitle>
+          <p className="mb-4 text-sm text-muted">Zielverfolgung auf dem Dashboard (Start: 3 Suchaufträge in 90 Tagen).</p>
+          <form action={saveGoal} className="grid gap-4 sm:grid-cols-[1fr_1fr_1fr_auto] sm:items-end">
+            <Field label="Suchaufträge">
+              <Input name="mandates" type="number" min={1} defaultValue={goal.mandates} />
+            </Field>
+            <Field label="Tage">
+              <Input name="days" type="number" min={1} defaultValue={goal.days} />
+            </Field>
+            <Field label="Start">
+              <Input name="startDate" type="date" defaultValue={goal.startDate} />
+            </Field>
+            <Button type="submit">Speichern</Button>
+          </form>
+        </Card>
+
         <Card>
           <CardTitle>Aktives Event</CardTitle>
           <p className="mb-4 text-sm text-muted">Belegt die Quelle in der Schnellerfassung vor, z. B. Messe + „SuperStay LIVE 2026“.</p>
@@ -116,6 +154,14 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
             <div className="flex items-center justify-between">
               <dt>Hub-API (Kontakt- und Aufgabenübergabe)</dt>
               <dd>{env.hub.apiConfigured ? <Badge tone="ok">konfiguriert</Badge> : <Badge tone="warn">nicht konfiguriert – Leads bleiben „ausstehend“</Badge>}</dd>
+            </div>
+            <div className="flex items-center justify-between">
+              <dt>SMTP-Versand</dt>
+              <dd>{env.mailConfigured ? <Badge tone="ok">konfiguriert</Badge> : <Badge tone="warn">nicht konfiguriert – Mails werden nur protokolliert</Badge>}</dd>
+            </div>
+            <div className="flex items-center justify-between">
+              <dt>Cron (tägliche Jobs)</dt>
+              <dd>{env.cronSecret ? <Badge tone="ok">CRON_SECRET gesetzt</Badge> : <Badge tone="warn">CRON_SECRET fehlt</Badge>}</dd>
             </div>
             <div className="flex items-center justify-between">
               <dt>Entwickler-Login</dt>

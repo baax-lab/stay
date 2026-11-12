@@ -16,10 +16,16 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     { href: "/", label: "Start", icon: Icons.home, exact: true },
     { href: "/leads/neu", label: "Erfassen", icon: Icons.plus },
     { href: "/leads", label: "Leads", icon: Icons.list, exact: true },
+    { href: "/auftraege", label: "Aufträge", icon: Icons.briefcase },
+    { href: "/objekte", label: "Objekte", icon: Icons.building },
+    { href: "/partner", label: "Partner", icon: Icons.handshake },
+    { href: "/tippgeber", label: "Tippgeber", icon: Icons.gift },
+    { href: "/suche", label: "Suche", icon: Icons.search },
   ];
   if (can.editEventSetting(user.role)) {
     items.push({ href: "/einstellungen", label: "Einstellungen", icon: Icons.settings });
   }
+  const mobileItems = items.filter((i) => ["/", "/leads/neu", "/leads", "/auftraege", "/objekte"].includes(i.href));
 
   return (
     <div className="min-h-dvh md:grid md:grid-cols-[240px_1fr]">
@@ -58,7 +64,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           </div>
         </header>
         <main className="mx-auto w-full max-w-6xl flex-1 px-4 pb-28 pt-5 md:px-8 md:pb-10 md:pt-8">{children}</main>
-        <BottomNav items={items} />
+        <BottomNav items={mobileItems} />
       </div>
     </div>
   );
