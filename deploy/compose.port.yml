@@ -1,0 +1,9 @@
+# Variante A: Reverse Proxy läuft direkt auf dem Host (Caddy/nginx als Systemdienst).
+# Veröffentlicht die App NUR auf 127.0.0.1, damit sie nicht am Proxy vorbei erreichbar ist.
+# Port frei wählen, falls 3010 auf dem Server schon belegt ist (prüfen: ss -ltnp | grep 3010).
+#
+#   docker compose -f docker-compose.yml -f deploy/compose.port.yml --env-file .env.production up -d --build
+services:
+  app:
+    ports:
+      - "127.0.0.1:${STAY_HOST_PORT:-3010}:3000"

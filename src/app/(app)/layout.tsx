@@ -48,9 +48,12 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             <div className="truncate font-medium text-petrol">{user.name || user.email}</div>
             <div className="text-xs text-muted">{ROLE_LABEL[user.role]}</div>
           </div>
-          <Link href="/auth/logout" className="text-xs text-muted hover:text-petrol">
-            Abmelden
-          </Link>
+          {/* Formular statt Link: Links werden in Produktion vorab geladen und würden sonst abmelden */}
+          <form action="/auth/logout" method="post">
+            <button type="submit" className="text-xs text-muted hover:text-petrol">
+              Abmelden
+            </button>
+          </form>
         </div>
       </aside>
 
@@ -61,9 +64,11 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           </Link>
           <div className="flex items-center gap-3">
             <PendingBadge />
-            <Link href="/auth/logout" className="text-xs text-muted" aria-label="Abmelden">
-              {user.name?.split(" ")[0] || "Konto"}
-            </Link>
+            <form action="/auth/logout" method="post">
+              <button type="submit" className="text-xs text-muted" aria-label={`Abmelden (${user.name || "Konto"})`} title="Abmelden">
+                {user.name?.split(" ")[0] || "Konto"} · Abmelden
+              </button>
+            </form>
           </div>
         </header>
         <main className="mx-auto w-full max-w-6xl flex-1 px-4 pb-28 pt-5 md:px-8 md:pb-10 md:pt-8">{children}</main>

@@ -1,0 +1,19 @@
+# Ausschnitt für einen vorhandenen Caddy. Variante A (Caddy auf dem Host):
+stay.baax.de {
+	encode zstd gzip
+	reverse_proxy 127.0.0.1:3010
+	request_body {
+		max_size 60MB
+	}
+}
+
+# Variante B (Caddy als Container im Netz PROXY_NETWORK): Dienstname statt localhost
+# stay.baax.de {
+# 	encode zstd gzip
+# 	reverse_proxy baax-stay-app-1:3000
+# }
+
+# Staging (eigenes Compose-Projekt baax-stay-staging, z. B. Port 3011)
+# stay-staging.baax.de {
+# 	reverse_proxy 127.0.0.1:3011
+# }

@@ -18,7 +18,7 @@ export async function htmlToPdf(html: string): Promise<Buffer | null> {
   if (!exe) return null;
   try {
     const { chromium } = await import("playwright-core");
-    const browser = await chromium.launch({ executablePath: exe, args: ["--no-sandbox", "--disable-gpu"] });
+    const browser = await chromium.launch({ executablePath: exe, args: ["--no-sandbox", "--disable-gpu", "--disable-dev-shm-usage"] });
     try {
       const page = await browser.newPage();
       await page.setContent(html, { waitUntil: "load" });
@@ -39,7 +39,7 @@ export async function urlToPdf(url: string): Promise<Buffer | null> {
   if (!exe) return null;
   try {
     const { chromium } = await import("playwright-core");
-    const browser = await chromium.launch({ executablePath: exe, args: ["--no-sandbox", "--disable-gpu"] });
+    const browser = await chromium.launch({ executablePath: exe, args: ["--no-sandbox", "--disable-gpu", "--disable-dev-shm-usage"] });
     try {
       const page = await browser.newPage();
       const res = await page.goto(url, { waitUntil: "networkidle", timeout: 60_000 });

@@ -1,0 +1,6 @@
+# Optional: Backups zusätzlich in ein Host-Verzeichnis schreiben (z. B. für Offsite-Sicherung per rsync/restic).
+#   docker compose -f docker-compose.yml -f deploy/compose.backup-host.yml ... up -d
+services:
+  backup:
+    volumes:
+      - ${BACKUP_HOST_DIR:-/srv/backups/baax-stay}:/backups

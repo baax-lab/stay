@@ -17,6 +17,8 @@ const eslintConfig = [
       ".next/**",
       ".next-*/**",
       "uploads/**",
+      "prisma/seed.cjs",
+      "public/sw.js",
       "test-results/**",
       "out/**",
       "build/**",

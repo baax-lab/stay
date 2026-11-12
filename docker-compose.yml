@@ -1,5 +1,22 @@
-# Lokaler Betrieb / Vorlage für Coolify (Docker Compose Deployment).
-# Bei Coolify: Domain stay.baax.de auf den Dienst "app" legen, Caddy/Traefik übernimmt TLS.
+# Baax Stay – Docker Compose für einen geteilten VPS (Coolify oder vorhandener Docker-Host)
+#
+# Rücksicht auf andere Programme auf demselben Server:
+# - Projektname „baax-stay“: alle Container, Volumes und das interne Netz bekommen dieses Präfix
+# - keine festen container_name, kein öffentlich veröffentlichter Port (Zugriff über Reverse Proxy, siehe deploy/)
+# - PostgreSQL nur im internen Netz, nie am Host
+# - Speicher-, CPU- und Log-Grenzen je Dienst
+#
+# Start:      docker compose --env-file .env.production up -d --build
+# Staging:    docker compose -p baax-stay-staging --env-file .env.staging up -d --build
+# Erreichbar: deploy/compose.port.yml (Host-Proxy) oder deploy/compose.proxy-network.yml (Proxy-Container)
+name: baax-stay
+
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
 services:
   db:
     image: postgres:16-alpine
@@ -7,75 +24,111 @@ services:
     environment:
       POSTGRES_DB: stay
       POSTGRES_USER: stay
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-stay}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD fehlt}
+      TZ: Europe/Berlin
     volumes:
       - db-data:/var/lib/postgresql/data
-      - db-backups:/backups
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U stay -d stay"]
       interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 6
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+          cpus: "1.0"
+    logging: *logging
 
   app:
-    build: .
+    build:
+      context: .
+      args:
+        APP_VERSION: ${APP_VERSION:-latest}
+    image: baax-stay:${APP_VERSION:-latest}
     restart: unless-stopped
     depends_on:
       db:
         condition: service_healthy
+    expose:
+      - "3000"
+    shm_size: 256mb # Chromium für PDF
     environment:
-      DATABASE_URL: postgresql://stay:${POSTGRES_PASSWORD:-stay}@db:5432/stay?schema=public
-      APP_URL: ${APP_URL:-https://stay.baax.de}
-      SESSION_SECRET: ${SESSION_SECRET}
-      HUB_URL: ${HUB_URL}
+      DATABASE_URL: postgresql://stay:${POSTGRES_PASSWORD}@db:5432/stay?schema=public
+      APP_URL: ${APP_URL:?APP_URL fehlt}
+      SESSION_SECRET: ${SESSION_SECRET:?SESSION_SECRET fehlt}
+      CRON_SECRET: ${CRON_SECRET:?CRON_SECRET fehlt}
+      HUB_URL: ${HUB_URL:-}
       HUB_LOGIN_PATH: ${HUB_LOGIN_PATH:-/sso/login}
-      HUB_JWT_SECRET: ${HUB_JWT_SECRET}
-      HUB_JWKS_URL: ${HUB_JWKS_URL}
-      HUB_JWT_ISSUER: ${HUB_JWT_ISSUER}
+      HUB_JWT_SECRET: ${HUB_JWT_SECRET:-}
+      HUB_JWKS_URL: ${HUB_JWKS_URL:-}
+      HUB_JWT_ISSUER: ${HUB_JWT_ISSUER:-}
       HUB_JWT_AUDIENCE: ${HUB_JWT_AUDIENCE:-baax-stay}
       HUB_ROLE_CLAIM: ${HUB_ROLE_CLAIM:-role}
-      HUB_API_URL: ${HUB_API_URL}
-      HUB_API_TOKEN: ${HUB_API_TOKEN}
-      SMTP_HOST: ${SMTP_HOST}
+      HUB_API_URL: ${HUB_API_URL:-}
+      HUB_API_TOKEN: ${HUB_API_TOKEN:-}
+      HUB_CONTACTS_PATH: ${HUB_CONTACTS_PATH:-/contacts}
+      HUB_TASKS_PATH: ${HUB_TASKS_PATH:-/tasks}
+      HUB_APPOINTMENTS_PATH: ${HUB_APPOINTMENTS_PATH:-/appointments}
+      SMTP_HOST: ${SMTP_HOST:-}
       SMTP_PORT: ${SMTP_PORT:-587}
-      SMTP_USER: ${SMTP_USER}
-      SMTP_PASS: ${SMTP_PASS}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
       SMTP_SECURE: ${SMTP_SECURE:-false}
       MAIL_FROM: ${MAIL_FROM:-Baax Immobilien GmbH <stay@baax.de>}
-      MAIL_SIGNATURE_HTML: ${MAIL_SIGNATURE_HTML}
-      MAIL_DIGEST_FALLBACK_TO: ${MAIL_DIGEST_FALLBACK_TO}
+      MAIL_SIGNATURE_HTML: ${MAIL_SIGNATURE_HTML:-}
+      MAIL_DIGEST_FALLBACK_TO: ${MAIL_DIGEST_FALLBACK_TO:-}
       ADMIN_EMAIL: ${ADMIN_EMAIL:-mail@baax.de}
-      CRON_SECRET: ${CRON_SECRET}
-      UPLOAD_DIR: /app/uploads
-      INTERNAL_URL: http://localhost:3000
+      BRAND_COLOR: ${BRAND_COLOR:-}
+      RETENTION_DISCARDED_LEADS_MONTHS: ${RETENTION_DISCARDED_LEADS_MONTHS:-12}
+      SEED_ON_START: ${SEED_ON_START:-true}
       AUTH_DEV_LOGIN: "false"
     volumes:
       - uploads:/app/uploads
-    ports:
-      - "3000:3000"
+    deploy:
+      resources:
+        limits:
+          memory: 1g
+          cpus: "1.5"
+    logging: *logging
 
-  # Tägliche Jobs 7:30 Uhr MEZ (Lead-Nachfassen, Trefferübersicht, Nachgespräche, Laufzeit, Löschkonzept)
+  # Tägliche Jobs (Lead-Nachfassen, Trefferübersicht, Erinnerungen, Wechselkurse, Löschkonzept)
+  # Läuft einmal je Tag ab CRON_TIME (Standard 07:30); holt den Lauf nach, falls der Container später startet.
   cron:
-    image: curlimages/curl:latest
+    image: curlimages/curl:8.11.1
     restart: unless-stopped
     depends_on:
-      - app
+      app:
+        condition: service_healthy
     environment:
       CRON_SECRET: ${CRON_SECRET}
+      CRON_TIME: ${CRON_TIME:-0730}
       TZ: Europe/Berlin
+    user: "0" # schreibt den Merker ins Volume
+    volumes:
+      - cron-state:/state # Merker „heute gelaufen“ übersteht Neustarts und Updates
     entrypoint: ["/bin/sh", "-c"]
     command:
       - |
+        echo "Cron aktiv, täglich ab $$CRON_TIME"
         while true; do
-          now=$$(date +%H:%M)
-          if [ "$$now" = "07:30" ]; then
-            curl -fsS -H "Authorization: Bearer $$CRON_SECRET" http://app:3000/api/cron/daily || echo "Cron fehlgeschlagen"
-            sleep 60
+          today=$$(date +%F); now=$$(date +%H%M)
+          if [ "$$now" -ge "$$CRON_TIME" ] && [ "$$(cat /state/last 2>/dev/null)" != "$$today" ]; then
+            if curl -fsS --max-time 300 -H "Authorization: Bearer $$CRON_SECRET" http://app:3000/api/cron/daily; then
+              echo; echo "$$today" > /state/last; echo "Tagesjob $$today ok"
+            else
+              echo "Tagesjob fehlgeschlagen, neuer Versuch in 10 Minuten"; sleep 540
+            fi
           fi
-          sleep 30
+          sleep 60
         done
+    deploy:
+      resources:
+        limits:
+          memory: 64m
+    logging: *logging
 
-  # Tägliches Backup, 30 Tage Aufbewahrung (Konzept §11)
+  # Tägliches Backup von Datenbank und Uploads, Aufbewahrung BACKUP_KEEP_DAYS (Standard 30)
   backup:
     image: postgres:16-alpine
     restart: unless-stopped
@@ -83,20 +136,45 @@ services:
       db:
         condition: service_healthy
     environment:
-      PGPASSWORD: ${POSTGRES_PASSWORD:-stay}
+      PGHOST: db
+      PGUSER: stay
+      PGDATABASE: stay
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      BACKUP_TIME: ${BACKUP_TIME:-0300}
+      BACKUP_KEEP_DAYS: ${BACKUP_KEEP_DAYS:-30}
+      TZ: Europe/Berlin
     volumes:
-      - db-backups:/backups
+      - backups:/backups
+      - uploads:/uploads:ro
     entrypoint: ["/bin/sh", "-c"]
     command:
       - |
+        umask 077 # Backups enthalten personenbezogene Daten
+        backup() {
+          ts=$$(date +%F_%H%M)
+          pg_dump -Fc -f /backups/stay-$$ts.dump && tar -czf /backups/uploads-$$ts.tar.gz -C /uploads . \
+            && echo "Backup $$ts ok ($$(du -h /backups/stay-$$ts.dump | cut -f1) DB)" \
+            || echo "BACKUP FEHLGESCHLAGEN $$ts"
+          find /backups -name 'stay-*.dump' -mtime +$$BACKUP_KEEP_DAYS -delete
+          find /backups -name 'uploads-*.tar.gz' -mtime +$$BACKUP_KEEP_DAYS -delete
+        }
+        # Erstes Backup sofort, wenn noch keines existiert; zählt als Lauf des Tages
+        if [ -z "$$(ls /backups/stay-*.dump 2>/dev/null)" ]; then backup; date +%F > /backups/.last; fi
         while true; do
-          ts=$$(date +%F)
-          pg_dump -h db -U stay -d stay -Fc -f /backups/stay-$$ts.dump && echo "Backup $$ts ok"
-          find /backups -name 'stay-*.dump' -mtime +30 -delete
-          sleep 86400
+          today=$$(date +%F); now=$$(date +%H%M)
+          if [ "$$now" -ge "$$BACKUP_TIME" ] && [ "$$(cat /backups/.last 2>/dev/null)" != "$$today" ]; then
+            backup; echo "$$today" > /backups/.last
+          fi
+          sleep 60
         done
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+    logging: *logging
 
 volumes:
   db-data:
-  db-backups:
   uploads:
+  backups:
+  cron-state:

@@ -48,3 +48,13 @@ next-env.d.ts
 /.next-e2e
 /.next-dev
 /uploads
+
+# gebündelter Seed (wird im Docker-Build erzeugt)
+/prisma/seed.cjs
+
+# Umgebungsdateien des Servers
+/.env.production
+/.env.staging
+
+/.sandbox-ca.crt
+/Dockerfile.sandbox

@@ -1,0 +1,23 @@
+# Variante B: Reverse Proxy läuft selbst als Container (Caddy, Traefik, nginx-proxy) in einem eigenen Docker-Netz.
+# Die App tritt diesem vorhandenen Netz bei; die Datenbank bleibt im internen Netz von baax-stay.
+# Netzname prüfen: docker network ls  (PROXY_NETWORK in .env.production setzen)
+#
+#   docker compose -f docker-compose.yml -f deploy/compose.proxy-network.yml --env-file .env.production up -d --build
+services:
+  app:
+    networks:
+      - default
+      - proxy
+    labels:
+      # Für Traefik (wird von Caddy/nginx ignoriert)
+      - traefik.enable=true
+      - traefik.docker.network=${PROXY_NETWORK:-proxy}
+      - traefik.http.routers.baax-stay.rule=Host(`${STAY_DOMAIN:-stay.baax.de}`)
+      - traefik.http.routers.baax-stay.entrypoints=${TRAEFIK_ENTRYPOINT:-websecure}
+      - traefik.http.routers.baax-stay.tls.certresolver=${TRAEFIK_CERTRESOLVER:-letsencrypt}
+      - traefik.http.services.baax-stay.loadbalancer.server.port=3000
+
+networks:
+  proxy:
+    name: ${PROXY_NETWORK:-proxy}
+    external: true

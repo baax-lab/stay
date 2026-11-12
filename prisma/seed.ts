@@ -51,7 +51,7 @@ async function main() {
   for (const r of regions) {
     await prisma.region.upsert({
       where: { key: r.key },
-      update: { name: r.name, country: r.country, focus: r.focus ?? false },
+      update: {}, // gepflegte Angaben (Name, Schwerpunkt, Regeln) nie überschreiben
       create: { ...r, focus: r.focus ?? false },
     });
   }
@@ -148,7 +148,7 @@ async function main() {
   ];
   for (const c of countries) await prisma.country.upsert({ where: { code: c.code }, update: {}, create: { currency: "EUR", ...c } });
 
-  console.log(`Seed fertig: ${regions.length} Regionen, aktives Event, Honorarstaffel und Ziel gesetzt.`);
+  console.log("Seed fertig (idempotent): Stammdaten ergänzt, gepflegte Werte unverändert.");
 }
 
 main()
