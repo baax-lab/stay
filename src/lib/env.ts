@@ -9,6 +9,10 @@ function req(name: string, fallback?: string): string {
 }
 
 export const env = {
+  /** Basis-URL, unter der der Server sich selbst erreicht (PDF-Rendering). */
+  get internalUrl() {
+    return (process.env.INTERNAL_URL ?? process.env.APP_URL ?? "http://localhost:3000").replace(/\/$/, "");
+  },
   get appUrl() {
     return (process.env.APP_URL ?? "http://localhost:3000").replace(/\/$/, "");
   },

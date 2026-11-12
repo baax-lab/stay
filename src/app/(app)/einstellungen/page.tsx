@@ -89,6 +89,8 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
       <div className="mb-4 flex flex-wrap gap-2">
         <Link href="/einstellungen/honorar" className="rounded-full border border-line bg-surface px-4 py-2 text-sm font-medium text-petrol hover:border-brand">Honorarstaffel</Link>
         <Link href="/einstellungen/regionen" className="rounded-full border border-line bg-surface px-4 py-2 text-sm font-medium text-petrol hover:border-brand">Regionen und Vermietungsregeln</Link>
+        <Link href="/einstellungen/nebenkosten" className="rounded-full border border-line bg-surface px-4 py-2 text-sm font-medium text-petrol hover:border-brand">Kaufnebenkosten</Link>
+        <Link href="/einstellungen/wechselkurse" className="rounded-full border border-line bg-surface px-4 py-2 text-sm font-medium text-petrol hover:border-brand">Wechselkurse</Link>
         <Link href="/leads/import" className="rounded-full border border-line bg-surface px-4 py-2 text-sm font-medium text-petrol hover:border-brand">CSV-Import</Link>
       </div>
 

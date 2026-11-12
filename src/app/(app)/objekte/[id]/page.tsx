@@ -19,13 +19,14 @@ import { PropertyForm } from "@/components/properties/property-form";
 import { MATCH_STATUS_LABEL } from "@/components/mandates/matches-table";
 import { deletePropertyAction, deletePropertyFileAction, markDuplicateAction, setAvailabilityAction, uploadPropertyFilesAction, type PropertyFormInput } from "../actions";
 import { cn } from "@/lib/cn";
+import { FiguresTab } from "@/components/properties/figures-tab";
 
 const LIGHT: Record<string, string> = { GRUEN: "bg-ok", GELB: "bg-warn", ROT: "bg-danger", GRAU: "bg-muted" };
 
-export default async function PropertyPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ tab?: string; neu?: string }> }) {
+export default async function PropertyPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ tab?: string; neu?: string; m?: string }> }) {
   const user = await requireUser();
   const { id } = await params;
-  const { tab = "uebersicht", neu } = await searchParams;
+  const { tab = "uebersicht", neu, m: mandateParam } = await searchParams;
   const property = await prisma.property.findUnique({
     where: { id },
     include: {
@@ -64,6 +65,7 @@ export default async function PropertyPage({ params, searchParams }: { params: P
   const tabs = [
     ["uebersicht", "Übersicht"],
     ["bearbeiten", "Bearbeiten"],
+    ["kosten", "Kosten & Rendite"],
     ["treffer", `Treffer (${property.matches.length})`],
     ["dateien", `Fotos & Unterlagen (${files.length})`],
   ] as const;
@@ -197,6 +199,15 @@ export default async function PropertyPage({ params, searchParams }: { params: P
             </Card>
           </div>
         </div>
+      )}
+
+      {tab === "kosten" && (
+        <FiguresTab
+          property={property}
+          mandateId={mandateParam && property.matches.some((x) => x.mandateId === mandateParam) ? mandateParam : null}
+          mandates={property.matches.map((x) => ({ id: x.mandate.id, title: x.mandate.title }))}
+          canEdit={canEdit}
+        />
       )}
 
       {tab === "bearbeiten" && (

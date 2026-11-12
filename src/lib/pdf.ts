@@ -32,3 +32,26 @@ export async function htmlToPdf(html: string): Promise<Buffer | null> {
     return null;
   }
 }
+
+/** Seite per URL rendern und als PDF zurückgeben (Konzept §9.5: Playwright rendert die Dossier-Route). */
+export async function urlToPdf(url: string): Promise<Buffer | null> {
+  const exe = chromiumPath();
+  if (!exe) return null;
+  try {
+    const { chromium } = await import("playwright-core");
+    const browser = await chromium.launch({ executablePath: exe, args: ["--no-sandbox", "--disable-gpu"] });
+    try {
+      const page = await browser.newPage();
+      const res = await page.goto(url, { waitUntil: "networkidle", timeout: 60_000 });
+      if (!res || !res.ok()) throw new Error(`Seite antwortete ${res?.status()}`);
+      await page.emulateMedia({ media: "print" });
+      const pdf = await page.pdf({ format: "A4", printBackground: true, margin: { top: "14mm", bottom: "16mm", left: "14mm", right: "14mm" } });
+      return Buffer.from(pdf);
+    } finally {
+      await browser.close();
+    }
+  } catch (e) {
+    console.error("PDF-Erzeugung fehlgeschlagen", e);
+    return null;
+  }
+}

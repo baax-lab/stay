@@ -5,9 +5,19 @@ import type { LicenseLight, LicenseStatus } from "@prisma/client";
  * GRÜN: vorhanden/übertragbar · GELB: beantragt oder zu prüfen · ROT: fehlt oder Vergabestopp · GRAU: unbekannt
  * Die Regionsregel (Region.licenseRule) kann die Ampel verschärfen: enthält sie „stopp“ oder „verbot“, wird FEHLT/BEANTRAGT zu ROT.
  */
-export function deriveLicenseLight(status: LicenseStatus, regionRule?: string | null): { light: LicenseLight; reason: string } {
-  const rule = (regionRule ?? "").toLowerCase();
-  const stop = /stopp|verbot|moratorium|keine neuen/.test(rule);
+export function deriveLicenseLight(status: LicenseStatus, regionRule?: string | null): { light: LicenseLight; reason: string; reasonKey: string } {
+  const r = deriveLicenseLightInner(status, regionRule);
+  const stop = isStopRule(regionRule);
+  const reasonKey = `license.reason_${status}${stop && (status === "BEANTRAGT" || status === "FEHLT") ? "_STOP" : ""}`;
+  return { ...r, reasonKey };
+}
+
+export function isStopRule(regionRule?: string | null): boolean {
+  return /stopp|verbot|moratorium|keine neuen/.test((regionRule ?? "").toLowerCase());
+}
+
+function deriveLicenseLightInner(status: LicenseStatus, regionRule?: string | null): { light: LicenseLight; reason: string } {
+  const stop = isStopRule(regionRule);
   switch (status) {
     case "VORHANDEN":
       return { light: "GRUEN", reason: "Vermietungslizenz vorhanden; Übertragbarkeit beim Kauf prüfen lassen." };

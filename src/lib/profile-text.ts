@@ -7,7 +7,7 @@ import { USAGE_GOAL_LABEL } from "./mandates";
 
 const EN_SEGMENT: Record<string, string> = { FEWO: "Holiday apartment", APARTMENTHAUS: "Apartment building", PENSION_HOTEL: "Guesthouse / small hotel" };
 const EN_GOAL: Record<string, string> = { RENDITE: "Yield", EIGENNUTZUNG: "Own use", KOMBINIERT: "Combined", EIGENBETRIEB: "Owner-operated" };
-const EN_CRITERIA: Record<string, string> = {
+export const EN_CRITERIA: Record<string, string> = {
   lage_strand: "Beachfront location", lage_berg_ski: "Mountain / ski location", lage_see: "Lakeside", lage_altstadt: "Old town", meerblick: "Sea view", bergblick: "Mountain view",
   pool: "Pool", garten_terrasse: "Garden / terrace", parkplatz: "Parking", aufzug: "Lift", barrierearm: "Accessible", lizenz_vorhanden: "Rental licence in place",
   vermietung_laufend: "Rental operation running", agentur_vorhanden: "Management agency in place", renovierungsbedarf_gering: "Little renovation needed", sanierungsobjekt: "Renovation project",

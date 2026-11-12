@@ -80,6 +80,38 @@ async function main() {
     create: { key: "goal", value: { mandates: 3, days: 90, startDate: "2026-11-20" } },
   });
 
+  // Kaufnebenkosten-Richtwerte für die Startmärkte (offener Punkt: inhaltlich prüfen und regelmäßig aktualisieren)
+  if ((await prisma.countryCost.count()) === 0) {
+    const validFrom = new Date("2026-01-01");
+    const bavarian = ["de-oberallgaeu", "de-ostallgaeu", "de-garmisch", "de-berchtesgaden", "de-chiemgau", "de-tegernsee"];
+    await prisma.countryCost.createMany({
+      data: [
+        { country: "DE", label: "Grunderwerbsteuer", pct: 5.0, note: "je Bundesland 3,5–6,5 %; Richtwert", validFrom },
+        ...bavarian.map((regionKey) => ({ country: "DE", regionKey, label: "Grunderwerbsteuer", pct: 3.5, note: "Bayern 3,5 %", validFrom })),
+        { country: "DE", label: "Notar und Grundbuch", pct: 2.0, note: "Richtwert", validFrom },
+        { country: "AT", label: "Grunderwerbsteuer", pct: 3.5, note: "", validFrom },
+        { country: "AT", label: "Grundbucheintragung", pct: 1.1, note: "", validFrom },
+        { country: "AT", label: "Vertragserrichtung und Treuhand", pct: 1.8, note: "inkl. USt; Richtwert", validFrom },
+        { country: "IT", label: "Registersteuer (Zweitwohnsitz)", pct: 9.0, note: "Bemessung meist auf Katasterwert, hier vereinfacht auf Kaufpreis; Richtwert", validFrom },
+        { country: "IT", label: "Hypothekar- und Katastersteuer", flat: 100, note: "pauschal", validFrom },
+        { country: "IT", label: "Notar", pct: 1.5, note: "Richtwert", validFrom },
+        { country: "ES", label: "Grunderwerbsteuer (ITP)", pct: 10.0, note: "regional unterschiedlich; Richtwert", validFrom },
+        ...["es-mallorca", "es-ibiza", "es-menorca"].map((regionKey) => ({ country: "ES", regionKey, label: "Grunderwerbsteuer (ITP)", pct: 10.0, note: "Balearen progressiv ca. 8–13 % je nach Kaufpreis; Richtwert", validFrom })),
+        { country: "ES", label: "Notar und Registro", pct: 1.5, note: "Richtwert", validFrom },
+        { country: "ES", label: "Anwalt", pct: 1.0, note: "Richtwert", validFrom },
+      ],
+    });
+  }
+
+  if ((await prisma.fxRate.count()) === 0) {
+    await prisma.fxRate.createMany({
+      data: [
+        { currency: "CHF", rateToEur: 1.06, source: "Startwert" },
+        { currency: "GBP", rateToEur: 1.17, source: "Startwert" },
+      ],
+    });
+  }
+
   console.log(`Seed fertig: ${regions.length} Regionen, aktives Event, Honorarstaffel und Ziel gesetzt.`);
 }
 

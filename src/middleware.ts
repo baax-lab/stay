@@ -13,6 +13,11 @@ export async function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
+  // Druck-Token (PDF-Rendering): die Seite bzw. der Route Handler prüft das Token selbst
+  if (req.nextUrl.searchParams.has("pt") && (pathname.startsWith("/dossier/") || pathname.startsWith("/bericht/") || pathname.startsWith("/api/files/"))) {
+    return NextResponse.next();
+  }
+
   const token = req.cookies.get(SESSION_COOKIE)?.value;
   const secret = process.env.SESSION_SECRET ?? "";
   const user = token && secret.length >= 32 ? await verifySession(token, secret) : null;

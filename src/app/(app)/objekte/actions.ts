@@ -147,3 +147,40 @@ export async function deletePropertyAction(id: string): Promise<void> {
   revalidatePath("/objekte");
   redirect("/objekte");
 }
+
+/** Kosten-, Rendite- und Dossier-Angaben am Objekt (Phase 1b). */
+export async function saveDossierInputsAction(id: string, formData: FormData): Promise<ActionResult> {
+  const user = await requirePermission("editProperty");
+  const n = (k: string, float = false) => {
+    const raw = String(formData.get(k) ?? "").trim().replace(/\s|€/g, "");
+    if (!raw) return null;
+    const v = Number(float ? raw.replace(",", ".") : raw.replace(/\./g, "").replace(",", "."));
+    return Number.isFinite(v) ? (float ? v : Math.round(v)) : null;
+  };
+  const s = (k: string) => String(formData.get(k) ?? "").trim() || null;
+  const spread = n("scenarioSpread", true);
+  await prisma.property.update({
+    where: { id },
+    data: {
+      renovationBudget: n("renovationBudget"),
+      opCostsYear: n("opCostsYear"),
+      managementPct: n("managementPct", true),
+      reservesPct: n("reservesPct", true),
+      taxPct: n("taxPct", true),
+      scenarioSpread: spread != null ? spread / 100 : null,
+      occupancyPct: n("occupancyPct", true),
+      adr: n("adr"),
+      revenueYear: n("revenueYear"),
+      strengths: s("strengths"),
+      risks: s("risks"),
+      strengthsEn: s("strengthsEn"),
+      risksEn: s("risksEn"),
+      titleEn: s("titleEn"),
+      descriptionEn: s("descriptionEn"),
+      precheckNote: s("precheckNote"),
+    },
+  });
+  await audit({ userId: user.id, action: "PROPERTY_UPDATE", entity: "Property", entityId: id, meta: { fields: "dossier" } });
+  revalidatePath(`/objekte/${id}`);
+  return { ok: true, message: "Gespeichert. Gesamtkosten und Rendite neu berechnet." };
+}
