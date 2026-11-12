@@ -29,6 +29,7 @@ import { PartnerSendPanel } from "@/components/mandates/partner-send-panel";
 import { PortalPanel } from "@/components/mandates/portal-panel";
 import { ReportsPanel } from "@/components/mandates/reports-panel";
 import { TripsPanel } from "@/components/mandates/trips-panel";
+import { CandidatesPanel } from "@/components/mandates/candidates-panel";
 import { DocumentFromTemplate } from "@/components/templates/document-from-template";
 import { suggestProfileAdjustments } from "@/lib/portal";
 import { getCriteria } from "@/lib/services/criteria";
@@ -52,6 +53,7 @@ const TABS = [
   ["erstgespraech", "Erstgespräch"],
   ["profil", "Suchprofil"],
   ["treffer", "Treffer"],
+  ["kandidaten", "Kandidaten"],
   ["angebote", "Angebote"],
   ["reisen", "Reisen & Besichtigungen"],
   ["kauf", "Kaufabwicklung"],
@@ -90,6 +92,7 @@ export default async function MandatePage({ params, searchParams }: { params: Pr
     },
   });
   if (!mandate) notFound();
+  const openCandidates = await prisma.searchCandidate.count({ where: { mandateId: mandate.id, status: "NEU" } });
 
   const canEdit = can.editMandates(user.role);
   const canDetails = can.viewBuyerDetails(user.role);
@@ -140,6 +143,7 @@ export default async function MandatePage({ params, searchParams }: { params: Pr
           <Link key={k} href={`/auftraege/${mandate.id}?tab=${k}`} className={cn("whitespace-nowrap rounded-full px-3.5 py-1.5 text-sm font-medium", tab === k ? "bg-brand text-petrol" : "bg-surface text-ink border border-line hover:border-brand")}>
             {label}
             {k === "treffer" && openMatches > 0 && <span className="ml-1 rounded-full bg-petrol/10 px-1.5 text-xs">{openMatches}</span>}
+            {k === "kandidaten" && openCandidates > 0 && <span className="ml-1 rounded-full bg-petrol/10 px-1.5 text-xs">{openCandidates}</span>}
           </Link>
         ))}
       </nav>
@@ -331,6 +335,8 @@ export default async function MandatePage({ params, searchParams }: { params: Pr
       {tab === "dokumente" && <DocumentsTab mandateId={mandate.id} documents={mandate.documents} canEdit={canEdit} canSeeGwg={can.viewGwgDocuments(user.role)} />}
 
       {tab === "portal" && <PortalPanel mandate={mandate} canEdit={canEdit} canSend={can.sendExternal(user.role)} />}
+
+      {tab === "kandidaten" && <CandidatesPanel mandateId={mandate.id} canEdit={canEdit} />}
 
       {tab === "reisen" && <TripsPanel mandateId={mandate.id} canEdit={canEdit} showFees={canFees} />}
 

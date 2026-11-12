@@ -8,6 +8,8 @@ import { enterPortal } from "@/lib/services/portal-page";
 import { PortalShell, PortalUnavailable } from "@/components/portal/portal-shell";
 import { LIGHT_COLOR } from "@/components/figures/figures-view";
 import { cn } from "@/lib/cn";
+import { PortalSearches } from "@/components/portal/portal-searches";
+import { getCriteria } from "@/lib/services/criteria";
 
 export const metadata = { title: "Käuferportal", robots: { index: false, follow: false } };
 export const dynamic = "force-dynamic";
@@ -20,10 +22,16 @@ export default async function PortalPage({ params, searchParams }: { params: Pro
     return <PortalUnavailable token={token} lang={lang} state={r.state} contact={r.state !== "unknown" ? { name: r.mandate.ownerName, phone: r.mandate.ownerPhone, email: r.mandate.ownerEmail } : undefined} />;
   }
   const m = r.mandate;
-  const [objects, reports] = await Promise.all([
+  const [objects, reports, searches, regions, criteria, countries] = await Promise.all([
     releasedObjects(m.id),
     prisma.report.findMany({ where: { mandateId: m.id, status: "FREIGEGEBEN" }, orderBy: { approvedAt: "desc" } }),
+    prisma.portalSearch.findMany({ where: { mandateId: m.id, active: true }, orderBy: { createdAt: "asc" } }),
+    prisma.region.findMany({ orderBy: [{ country: "asc" }, { name: "asc" }] }),
+    getCriteria(),
+    prisma.country.findMany(),
   ]);
+  const countryName = (c: string) => countries.find((x) => x.code === c)?.[lang === "en" ? "nameEn" : "name"] ?? c;
+  const regionName = Object.fromEntries(regions.map((r) => [r.key, r.name]));
   const withFigures = await Promise.all(objects.map(async (o) => ({ ...o, figures: await propertyFigures(o.property, m.id) })));
   const active = withFigures.filter((o) => o.match?.buyerAction !== "ABGELEHNT");
   const declined = withFigures.filter((o) => o.match?.buyerAction === "ABGELEHNT");
@@ -153,6 +161,34 @@ export default async function PortalPage({ params, searchParams }: { params: Pro
             </ul>
           </details>
         )}
+      </section>
+
+      <section className="mt-8 rounded-2xl border border-line bg-surface p-5">
+        <h2 className="mb-2 text-lg font-semibold text-petrol">{t(lang, "portal.searches")}</h2>
+        <PortalSearches
+          token={token}
+          labels={{
+            intro: t(lang, "portal.searches_intro"),
+            none: t(lang, "portal.no_searches"),
+            delete: t(lang, "portal.search_delete"),
+            saved: t(lang, "portal.search_saved"),
+            limit: t(lang, "portal.search_limit"),
+            error: t(lang, "portal.search_limit"),
+            name: t(lang, "portal.search_name"),
+            segments: t(lang, "portal.search_segments"),
+            regions: t(lang, "portal.search_regions"),
+            priceMin: t(lang, "portal.search_price_min"),
+            priceMax: t(lang, "portal.search_price_max"),
+            units: t(lang, "portal.search_units"),
+            features: t(lang, "portal.search_features"),
+            note: t(lang, "portal.search_note"),
+            save: t(lang, "portal.search_save"),
+          }}
+          segments={(["FEWO", "APARTMENTHAUS", "PENSION_HOTEL"] as const).map((sg) => ({ value: sg, label: t(lang, `segment.${sg}`) }))}
+          regionGroups={Array.from(new Set(regions.map((r) => r.country))).map((c) => ({ label: countryName(c), options: regions.filter((r) => r.country === c).map((r) => ({ value: r.key, label: r.name })) }))}
+          features={criteria.map((c) => ({ value: c.key, label: lang === "en" ? (c.labelEn ?? c.label) : c.label }))}
+          saved={searches.map((ps) => ({ id: ps.id, name: ps.name, summary: [ps.regions.map((k) => regionName[k] ?? k).join(", "), `${fmtMoney(lang, ps.priceMax)}`].filter(Boolean).join(" · ") }))}
+        />
       </section>
 
       <section className="mt-8">

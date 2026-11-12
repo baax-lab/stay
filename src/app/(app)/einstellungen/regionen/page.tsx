@@ -47,6 +47,9 @@ export default async function RegionsPage() {
       <Link href="/einstellungen" className="text-sm text-muted hover:text-petrol">
         ← Einstellungen
       </Link>
+      <p className="mb-2 text-sm">
+        Ausführliches Regionswissen (Preisniveau, Auslastung, Zweitwohnsitz, Risiken) pflegen Sie unter <Link href="/wissen" className="underline">Wissen</Link>.
+      </p>
       <PageHeader title="Regionen und Vermietungsregeln" subtitle="Stammdaten für Suchprofile, Objekte und Matching. Die Regel-Kurzinfo speist die Genehmigungsampel (Worte wie „Vergabestopp“ setzen Objekte ohne Lizenz auf Rot)." />
       <div className="space-y-4">
         {[...byCountry.entries()].map(([country, list]) => (

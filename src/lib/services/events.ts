@@ -30,7 +30,8 @@ export type MandateEventType =
   | "PARTNER_SUBMISSION"
   | "INSPECTION"
   | "TRIP"
-  | "TEMPLATE";
+  | "TEMPLATE"
+  | "PORTAL_SEARCH";
 
 export const MANDATE_EVENT_LABEL: Record<MandateEventType, string> = {
   CREATED: "Suchauftrag angelegt",
@@ -60,6 +61,7 @@ export const MANDATE_EVENT_LABEL: Record<MandateEventType, string> = {
   INSPECTION: "Besichtigungsprotokoll",
   TRIP: "Reise",
   TEMPLATE: "Dokument aus Vorlage",
+  PORTAL_SEARCH: "Suchwunsch aus dem Portal",
 };
 
 export async function logEvent(mandateId: string, type: MandateEventType, payload: Prisma.InputJsonValue, user: Pick<SessionUser, "id" | "name"> | { id: string; name?: string }) {

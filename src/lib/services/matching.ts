@@ -64,6 +64,14 @@ async function upsertMatch(mandateId: string, propertyId: string, result: MatchR
 
 /** Läuft beim Speichern eines Objekts gegen alle aktiven Profile (synchron, Konzept §8.5). */
 export async function runMatchingForProperty(propertyId: string): Promise<{ created: number; updated: number; removed: number }> {
+  const out = await runMatchingForPropertyInner(propertyId);
+  // Phase 3: Kandidaten aus gespeicherten Portal-Suchen nachziehen (nach den Treffern, damit Treffer Vorrang haben)
+  const { runCandidatesForProperty } = await import("./candidates");
+  await runCandidatesForProperty(propertyId);
+  return out;
+}
+
+async function runMatchingForPropertyInner(propertyId: string): Promise<{ created: number; updated: number; removed: number }> {
   const property = await prisma.property.findUniqueOrThrow({ where: { id: propertyId } });
   const out = { created: 0, updated: 0, removed: 0 };
   if (!property.active || property.availability === "VERKAUFT" || property.availability === "ZURUECKGEZOGEN") return out;

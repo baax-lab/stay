@@ -114,8 +114,20 @@ function MarketBody({ c, lang }: { c: MarketReportContent; lang: Lang }) {
           <dl className="mt-2 space-y-3 text-sm">
             <div>
               <dt className="text-xs font-semibold uppercase tracking-wide text-muted">{t(lang, "report.rental_rules")}</dt>
-              <dd>{r.licenseRule || <span className="text-muted">{t(lang, "report.no_rule")}</span>}</dd>
+              <dd className="whitespace-pre-wrap">{r.licenseRule || <span className="text-muted">{t(lang, "report.no_rule")}</span>}</dd>
             </div>
+            {r.secondHomeRules && (
+              <div>
+                <dt className="text-xs font-semibold uppercase tracking-wide text-muted">{t(lang, "report.second_home")}</dt>
+                <dd className="whitespace-pre-wrap">{r.secondHomeRules}</dd>
+              </div>
+            )}
+            {r.taxNote && (
+              <div>
+                <dt className="text-xs font-semibold uppercase tracking-wide text-muted">{t(lang, "report.tax_note")}</dt>
+                <dd className="whitespace-pre-wrap">{r.taxNote}</dd>
+              </div>
+            )}
             <div>
               <dt className="text-xs font-semibold uppercase tracking-wide text-muted">{t(lang, "report.side_costs")}</dt>
               <dd>

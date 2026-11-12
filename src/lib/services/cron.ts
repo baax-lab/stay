@@ -10,6 +10,7 @@ import { LEAD_SOURCE_LABEL } from "@/lib/labels";
 import { previousMonth } from "@/lib/reports";
 import { fetchEcbRates } from "./fx";
 import { createMonthlyDrafts } from "./reports";
+import { isStale } from "@/lib/analytics";
 
 /** Tägliche Jobs (Konzept §8.7, §8.17, §11). Aufruf über /api/cron/daily, 7:30 Uhr. */
 
@@ -185,6 +186,11 @@ export async function sendReminders(now: Date = new Date()): Promise<number> {
   const followUps = await prisma.followUp.findMany({ where: { doneAt: null, dueAt: { lte: new Date(now.getTime() + 7 * day) } }, include: { mandate: true } });
   for (const f of followUps) {
     items.push({ key: `followup:${f.id}`, to: f.mandate.ownerEmail, line: `Nachgespräch fällig am ${f.dueAt.toLocaleDateString("de-DE")}: ${f.mandate.title} – ${env.appUrl}/auftraege/${f.mandateId}?tab=nachbetreuung` });
+  }
+  // Länderwissen: Schwerpunktregionen ohne Prüfung seit 12 Monaten, einmal je Monat an den Admin
+  const staleRegions = (await prisma.region.findMany({ where: { focus: true } })).filter((r) => isStale(r.reviewedAt, now));
+  if (staleRegions.length) {
+    items.push({ key: `knowledge:${now.getFullYear()}-${now.getMonth() + 1}`, to: env.adminEmail ?? null, line: `Regionswissen prüfen (${staleRegions.length}): ${staleRegions.map((r) => r.name).join(", ")} – ${env.appUrl}/wissen` });
   }
   const sentKeys = new Set((await prisma.reminderLog.findMany({ where: { key: { in: items.map((i) => i.key) } } })).map((r) => r.key));
   const byTo = new Map<string, typeof items>();

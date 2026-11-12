@@ -98,3 +98,48 @@ export async function requestNewLinkAction(token: string): Promise<PortalActionR
   await requestNewLink(token, addr);
   return { ok: true };
 }
+
+// ---------- Phase 3: gespeicherte Suchwünsche ----------
+export async function savePortalSearchAction(token: string, formData: FormData): Promise<PortalActionResult> {
+  const r = await lookupPortal(token);
+  if (r.state !== "valid") return { ok: false, error: "denied" };
+  if (!rateLimit(`portal-search:${hashPortalToken(token)}`, 20, 60 * 60 * 1000).ok) return { ok: false, error: "rate" };
+  const active = await prisma.portalSearch.count({ where: { mandateId: r.mandate.id, active: true } });
+  if (active >= 5) return { ok: false, error: "limit" };
+  const num = (k: string) => {
+    const v = String(formData.get(k) ?? "").replace(/[^\d]/g, "");
+    return v ? Number(v) : null;
+  };
+  const segments = formData.getAll("segments").map(String).filter((x): x is "FEWO" | "APARTMENTHAUS" | "PENSION_HOTEL" => ["FEWO", "APARTMENTHAUS", "PENSION_HOTEL"].includes(x));
+  const regionKeys = formData.getAll("regions").map(String);
+  const regions = (await prisma.region.findMany({ where: { key: { in: regionKeys } }, select: { key: true } })).map((x) => x.key);
+  const allCriteria = new Set((await prisma.criterion.findMany({ select: { key: true } })).map((c) => c.key));
+  const features = formData.getAll("features").map(String).filter((f) => allCriteria.has(f)).slice(0, 15);
+  const priceMax = num("priceMax");
+  if (!priceMax || (!regions.length && !segments.length)) return { ok: false, error: "invalid" };
+  const name = String(formData.get("name") ?? "").trim().slice(0, 80) || regions.join(", ");
+  const search = await prisma.portalSearch.create({
+    data: { mandateId: r.mandate.id, name, segments, regions, countries: Array.from(new Set(regions.map((x) => x.slice(0, 2).toUpperCase()))), priceMin: num("priceMin"), priceMax, minUnits: num("minUnits"), features, note: String(formData.get("note") ?? "").trim().slice(0, 1000) || null },
+  });
+  const { runCandidatesForSearch } = await import("@/lib/services/candidates");
+  const found = await runCandidatesForSearch(search.id);
+  await logEvent(r.mandate.id, "PORTAL_SEARCH", { searchId: search.id, name, regions, priceMax, candidates: found }, buyer(r.mandate.buyerName));
+  await audit({ action: "PORTAL_ACTION", entity: "Mandate", entityId: r.mandate.id, meta: { action: "SUCHWUNSCH", searchId: search.id, accessId: r.access.id }, ip: await ip() });
+  if (r.mandate.ownerEmail) {
+    await sendMail({ to: r.mandate.ownerEmail, subject: `Neuer Suchwunsch im Portal: ${r.mandate.title}`, text: `${r.mandate.buyerName} hat im Portal einen Suchwunsch gespeichert („${name}“). Gefundene Kandidaten: ${found}.\n\n${env.appUrl}/auftraege/${r.mandate.id}?tab=kandidaten`, purpose: "portal-search", entity: "Mandate", entityId: r.mandate.id });
+  }
+  revalidatePath(`/portal/${token}`);
+  return { ok: true };
+}
+
+export async function deletePortalSearchAction(token: string, searchId: string): Promise<PortalActionResult> {
+  const r = await lookupPortal(token);
+  if (r.state !== "valid") return { ok: false, error: "denied" };
+  const s = await prisma.portalSearch.findFirst({ where: { id: searchId, mandateId: r.mandate.id } });
+  if (!s) return { ok: false, error: "denied" };
+  await prisma.portalSearch.update({ where: { id: s.id }, data: { active: false } });
+  await prisma.searchCandidate.deleteMany({ where: { portalSearchId: s.id, status: "NEU" } });
+  await audit({ action: "PORTAL_ACTION", entity: "Mandate", entityId: r.mandate.id, meta: { action: "SUCHWUNSCH_GELOESCHT", searchId, accessId: r.access.id }, ip: await ip() });
+  revalidatePath(`/portal/${token}`);
+  return { ok: true };
+}

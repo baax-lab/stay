@@ -51,6 +51,8 @@ export const can = {
   viewRewards: (role: Role) => roleAtLeast(role, "LEITUNG"),
   /** CSV-Import: Leitung und Admin. */
   importData: (role: Role) => roleAtLeast(role, "LEITUNG"),
+  /** Auswertung: ab Mitarbeiter; Honorarteile zusätzlich viewFees. */
+  viewAnalytics: (role: Role) => roleAtLeast(role, "MITARBEITER"),
   /** Versand nach außen (Partner-Mail): ab Mitarbeiter. */
   sendExternal: (role: Role) => roleAtLeast(role, "MITARBEITER"),
 } as const;

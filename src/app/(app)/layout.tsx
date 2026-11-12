@@ -21,8 +21,10 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     { href: "/besichtigungen", label: "Besichtigungen", icon: Icons.camera },
     { href: "/partner", label: "Partner", icon: Icons.handshake },
     { href: "/tippgeber", label: "Tippgeber", icon: Icons.gift },
+    { href: "/wissen", label: "Wissen", icon: Icons.globe },
     { href: "/suche", label: "Suche", icon: Icons.search },
   ];
+  if (can.viewAnalytics(user.role)) items.push({ href: "/auswertung", label: "Auswertung", icon: Icons.chart });
   if (can.editEventSetting(user.role)) {
     items.push({ href: "/einstellungen", label: "Einstellungen", icon: Icons.settings });
   }

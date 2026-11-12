@@ -134,6 +134,20 @@ async function main() {
     await prisma.documentTemplate.upsert({ where: { kind_lang: { kind, lang } }, update: {}, create: { kind, lang, name, body } });
   }
 
+  // Länderwissen (Phase 3): Startinhalte ohne Prüfdatum – inhaltlich prüfen und als geprüft markieren
+  const countries: Array<{ code: string; name: string; nameEn: string; currency?: string; overview?: string; buyingProcess?: string; foreignBuyers?: string; taxesNote?: string; typicalDuration?: string }> = [
+    { code: "DE", name: "Deutschland", nameEn: "Germany", buyingProcess: "Beurkundung beim Notar, Auflassungsvormerkung, Kaufpreiszahlung nach Fälligkeitsmitteilung, Eigentumsumschreibung im Grundbuch.", foreignBuyers: "Keine generellen Beschränkungen für ausländische Käufer.", taxesNote: "Grunderwerbsteuer je Bundesland 3,5–6,5 %; Zweitwohnungssteuer und Zweckentfremdungssatzungen der Gemeinden beachten.", typicalDuration: "6–10 Wochen ab Einigung" },
+    { code: "AT", name: "Österreich", nameEn: "Austria", buyingProcess: "Kaufvertrag mit Treuhänder (Notar/Anwalt), Grundverkehrsgenehmigung je nach Bundesland, Grundbucheintragung.", foreignBuyers: "Grundverkehrsgesetze der Länder; Erwerb durch Nicht-EU-Bürger genehmigungspflichtig. Freizeitwohnsitze in Tirol und Salzburg stark beschränkt.", taxesNote: "Grunderwerbsteuer 3,5 %, Eintragungsgebühr 1,1 %.", typicalDuration: "2–4 Monate inkl. Grundverkehr" },
+    { code: "IT", name: "Italien", nameEn: "Italy", buyingProcess: "Proposta d'acquisto, Compromesso mit Caparra, Rogito beim Notaio, Eintragung im Catasto.", foreignBuyers: "Codice fiscale erforderlich; für EU-Bürger keine Beschränkungen.", taxesNote: "Registersteuer auf Zweitwohnungen meist 9 % auf den Katasterwert; touristische Vermietung mit CIN/CIR.", typicalDuration: "2–3 Monate" },
+    { code: "ES", name: "Spanien", nameEn: "Spain", buyingProcess: "Reservierung, Contrato de arras (meist 10 %), Escritura beim Notario, Eintragung im Registro de la Propiedad.", foreignBuyers: "NIE und spanisches Bankkonto erforderlich; für EU-Bürger keine Beschränkungen.", taxesNote: "ITP je Autonomer Gemeinschaft (Balearen progressiv); touristische Vermietung je Region reguliert (ETV/ETVPL).", typicalDuration: "6–12 Wochen" },
+    { code: "PT", name: "Portugal", nameEn: "Portugal" },
+    { code: "FR", name: "Frankreich", nameEn: "France" },
+    { code: "CH", name: "Schweiz", nameEn: "Switzerland", currency: "CHF", foreignBuyers: "Lex Koller: Erwerb von Ferienwohnungen durch Personen im Ausland bewilligungspflichtig und kontingentiert; Zweitwohnungsgesetz (max. 20 % je Gemeinde)." },
+    { code: "HR", name: "Kroatien", nameEn: "Croatia" },
+    { code: "GR", name: "Griechenland", nameEn: "Greece" },
+  ];
+  for (const c of countries) await prisma.country.upsert({ where: { code: c.code }, update: {}, create: { currency: "EUR", ...c } });
+
   console.log(`Seed fertig: ${regions.length} Regionen, aktives Event, Honorarstaffel und Ziel gesetzt.`);
 }
 

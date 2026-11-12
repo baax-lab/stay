@@ -68,6 +68,17 @@ export const Icons = {
       <circle cx="12" cy="13.5" r="3.5" />
     </svg>
   ),
+  globe: (
+    <svg viewBox="0 0 24 24" {...p}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18" />
+    </svg>
+  ),
+  chart: (
+    <svg viewBox="0 0 24 24" {...p}>
+      <path d="M4 20V10M10 20V4M16 20v-7M22 20H2" />
+    </svg>
+  ),
   qr: (
     <svg viewBox="0 0 24 24" {...p}>
       <rect x="3" y="3" width="7" height="7" rx="1.5" />

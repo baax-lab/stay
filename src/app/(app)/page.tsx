@@ -44,6 +44,7 @@ export default async function DashboardPage() {
     prisma.mandate.findMany({ where: { status: { in: ACTIVE_STATUSES }, endDate: { lte: new Date(now.getTime() + 14 * 86400000) } }, select: { id: true, title: true, endDate: true }, take: 10 }),
   ]);
 
+  const candidates = await prisma.searchCandidate.count({ where: { status: "NEU" } });
   const statusCount = Object.fromEntries(mandatesByStatus.map((m) => [m.status, m._count._all])) as Partial<Record<MandateStatus, number>>;
   const activeMandates = ACTIVE_STATUSES.reduce((n, s) => n + (statusCount[s] ?? 0), 0);
   const daysLeft = Math.max(0, Math.ceil((goalEnd.getTime() - now.getTime()) / 86400000));
@@ -69,7 +70,7 @@ export default async function DashboardPage() {
         <Stat label="Offene Leads" value={openLeads} href="/leads?status=NEU" />
         <Stat label="Aktive Suchaufträge" value={activeMandates} href="/auftraege" />
         <Stat label="Neue Treffer" value={newMatches.length} href="/auftraege" tone={newMatches.length > 0 ? "warn" : "neutral"} />
-        <Stat label="Ohne Hub-Übergabe" value={pendingHub} href="/leads?sync=PENDING" tone={pendingHub > 0 ? "warn" : "ok"} />
+        <Stat label={candidates > 0 ? `Ohne Hub-Übergabe · ${candidates} Kandidaten` : "Ohne Hub-Übergabe"} value={pendingHub} href="/leads?sync=PENDING" tone={pendingHub > 0 ? "warn" : "ok"} />
       </div>
 
       <div className="mt-4 grid gap-4 lg:grid-cols-3">

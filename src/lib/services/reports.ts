@@ -3,7 +3,7 @@ import type { Report } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { audit } from "@/lib/audit";
 import { selectCostRules } from "@/lib/costs";
-import { groupRejected, rejectGroup, type MarketReportContent, type RejectedEntry, type SearchReportContent } from "@/lib/reports";
+import { groupRejected, knowledgeToMarket, rejectGroup, type MarketReportContent, type RejectedEntry, type SearchReportContent } from "@/lib/reports";
 import { BUYER_REJECT_REASONS } from "@/lib/portal";
 import { ACTIVE_STATUSES } from "@/lib/mandates";
 import { t } from "@/lib/i18n";
@@ -75,15 +75,18 @@ export async function buildMarketReport(mandateId: string, keep?: MarketReportCo
     conclusion: keep?.conclusion ?? "",
     regions: regions.map((r) => {
       const prev = keep?.regions.find((x) => x.key === r.key);
+      const k = knowledgeToMarket(r);
       return {
         key: r.key,
         name: r.name,
         country: r.country,
-        licenseRule: r.licenseRule,
+        licenseRule: r.rentalRules || r.licenseRule,
+        secondHomeRules: r.secondHomeRules,
+        taxNote: r.taxNote,
         costs: selectCostRules(rules, r.country, r.key).map((c) => ({ label: c.label, pct: c.pct, flat: c.flat, note: c.note ?? null })),
-        priceLevel: prev?.priceLevel ?? "",
-        occupancy: prev?.occupancy ?? "",
-        risks: prev?.risks ?? "",
+        priceLevel: prev?.priceLevel || k.priceLevel,
+        occupancy: prev?.occupancy || k.occupancy,
+        risks: prev?.risks || k.risks,
       };
     }),
   };

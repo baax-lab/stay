@@ -112,12 +112,29 @@ model AuditLog {
 }
 
 model Region {
-  id          String  @id @default(cuid())
-  country     String // ISO 3166-1 alpha-2
-  key         String  @unique // z. B. "es-mallorca"
-  name        String
-  focus       Boolean @default(false)
-  licenseRule String?
+  id              String    @id @default(cuid())
+  country         String // ISO 3166-1 alpha-2
+  key             String    @unique // z. B. "es-mallorca"
+  name            String
+  focus           Boolean   @default(false)
+  licenseRule     String?
+  // Phase 3: Regionswissen
+  description     String?
+  rentalRules     String? // ausführlich: touristische Vermietung, Lizenzen, Registrierung
+  secondHomeRules String? // Zweitwohnsitz, Grundverkehr, Erwerb durch Ausländer
+  taxNote         String?
+  seasonality     String?
+  pricePerSqmMin  Int?
+  pricePerSqmMax  Int?
+  occupancyMin    Float?
+  occupancyMax    Float?
+  adrMin          Int?
+  adrMax          Int?
+  airportNote     String?
+  risks           String?
+  sources         String?
+  reviewedAt      DateTime?
+  reviewedByName  String?
 
   @@index([country])
 }
@@ -257,23 +274,25 @@ model Mandate {
   createdAt         DateTime       @default(now())
   updatedAt         DateTime       @updatedAt
 
-  profile        SearchProfile?
-  fee            FeeAgreement?
-  matches        Match[]
-  events         MandateEvent[]
-  presentations  Presentation[]
-  offers         Offer[]
-  closing        Closing?
-  followUps      FollowUp[]
-  documents      MandateDocument[]
-  rewards        ReferralReward[]
-  partnerSends   PartnerSend[]
-  portalAccesses PortalAccess[]
-  reports        Report[]
-  notifications  BuyerNotification[]
-  inspections    Inspection[]
-  trips          Trip[]
-  partnerRatings PartnerRating[]
+  profile          SearchProfile?
+  fee              FeeAgreement?
+  matches          Match[]
+  events           MandateEvent[]
+  presentations    Presentation[]
+  offers           Offer[]
+  closing          Closing?
+  followUps        FollowUp[]
+  documents        MandateDocument[]
+  rewards          ReferralReward[]
+  partnerSends     PartnerSend[]
+  portalAccesses   PortalAccess[]
+  reports          Report[]
+  notifications    BuyerNotification[]
+  inspections      Inspection[]
+  trips            Trip[]
+  partnerRatings   PartnerRating[]
+  portalSearches   PortalSearch[]
+  searchCandidates SearchCandidate[]
 
   @@index([status])
   @@index([ownerId])
@@ -363,6 +382,7 @@ model Property {
   precheck             Precheck?
   inspections          Inspection[]
   submittedViaAccessId String? // Einreichung über Partnerzugang
+  searchCandidates     SearchCandidate[]
 
   @@index([country, region])
   @@index([segment])
@@ -883,4 +903,73 @@ model ReminderLog {
   id     String   @id @default(cuid())
   key    String   @unique
   sentAt DateTime @default(now())
+}
+
+// ---------------------------------------------------------------------------
+// Phase 3
+// ---------------------------------------------------------------------------
+
+// Länderwissen (Kaufablauf, Erwerb durch Ausländer, Steuern)
+model Country {
+  code            String    @id // ISO 3166-1 alpha-2
+  name            String
+  nameEn          String?
+  currency        String    @default("EUR")
+  overview        String?
+  buyingProcess   String?
+  foreignBuyers   String?
+  taxesNote       String?
+  typicalDuration String?
+  financingNote   String?
+  sources         String?
+  reviewedAt      DateTime?
+  reviewedByName  String?
+  updatedAt       DateTime  @updatedAt
+}
+
+enum CandidateStatus {
+  NEU
+  UEBERNOMMEN
+  VERWORFEN
+}
+
+// Suchwunsch, den der Käufer im Portal speichert; erzeugt Kandidaten, nie direkt Treffer
+model PortalSearch {
+  id         String            @id @default(cuid())
+  mandateId  String
+  mandate    Mandate           @relation(fields: [mandateId], references: [id], onDelete: Cascade)
+  name       String
+  segments   Segment[]
+  countries  String[]          @default([])
+  regions    String[]          @default([])
+  priceMin   Int?
+  priceMax   Int
+  minUnits   Int?
+  features   String[]          @default([])
+  note       String?
+  active     Boolean           @default(true)
+  createdAt  DateTime          @default(now())
+  updatedAt  DateTime          @updatedAt
+  candidates SearchCandidate[]
+
+  @@index([mandateId])
+}
+
+model SearchCandidate {
+  id             String          @id @default(cuid())
+  portalSearchId String
+  portalSearch   PortalSearch    @relation(fields: [portalSearchId], references: [id], onDelete: Cascade)
+  mandateId      String
+  mandate        Mandate         @relation(fields: [mandateId], references: [id], onDelete: Cascade)
+  propertyId     String
+  property       Property        @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  score          Int
+  reasons        Json
+  status         CandidateStatus @default(NEU)
+  decidedById    String?
+  decidedAt      DateTime?
+  createdAt      DateTime        @default(now())
+
+  @@unique([portalSearchId, propertyId])
+  @@index([mandateId, status])
 }
