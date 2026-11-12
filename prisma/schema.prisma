@@ -1,0 +1,128 @@
+// Baax Stay – Datenmodell Phase 0
+// Phase-1-Modelle (Mandate, SearchProfile, Property, Match, Fee*, ...) folgen nach Abnahme Phase 0.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  LEITUNG
+  MITARBEITER
+  PRAKTIKANT
+}
+
+enum LeadSource {
+  MESSE
+  AGENTUR
+  MULTIPLIKATOR
+  WEBSITE
+  EMPFEHLUNG
+  LINKEDIN
+  BESTAND
+  SONSTIGES
+}
+
+enum LeadStatus {
+  NEU
+  KONTAKTIERT
+  ERSTGESPRAECH
+  UMGEWANDELT
+  VERWORFEN
+}
+
+enum LeadRole {
+  KAEUFER
+  VERKAEUFER
+  PARTNER
+  MULTIPLIKATOR
+}
+
+enum Segment {
+  FEWO
+  APARTMENTHAUS
+  PENSION_HOTEL
+}
+
+enum HubSync {
+  PENDING
+  SYNCED
+  FAILED
+}
+
+model Lead {
+  id            String     @id @default(cuid())
+  clientId      String?    @unique // Idempotenz für Offline-Nachsendung
+  hubContactId  String?
+  hubSync       HubSync    @default(PENDING)
+  hubSyncError  String?
+  hubSyncedAt   DateTime?
+  duplicateOfId String?
+  duplicateOf   Lead?      @relation("LeadDuplicates", fields: [duplicateOfId], references: [id])
+  duplicates    Lead[]     @relation("LeadDuplicates")
+  name          String
+  company       String?
+  email         String?
+  phone         String?
+  phoneNorm     String? // nur Ziffern mit Ländervorwahl, für die Dubletten-Prüfung
+  role          LeadRole   @default(KAEUFER)
+  source        LeadSource
+  sourceDetail  String?
+  referrerId    String?
+  interest      String?
+  segment       Segment?
+  regions       String[]   @default([])
+  budgetMin     Int?
+  budgetMax     Int?
+  consentEmail  Boolean    @default(false)
+  consentAt     DateTime?
+  status        LeadStatus @default(NEU)
+  note          String?
+  createdById   String // Hub-User-ID oder "public" für das Interessenformular
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  @@index([email])
+  @@index([phoneNorm])
+  @@index([status])
+  @@index([source])
+  @@index([createdAt])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  action    String
+  entity    String
+  entityId  String?
+  meta      Json     @default("{}")
+  ip        String?
+  createdAt DateTime @default(now())
+
+  @@index([entity, entityId])
+  @@index([createdAt])
+}
+
+model Region {
+  id          String  @id @default(cuid())
+  country     String // ISO 3166-1 alpha-2
+  key         String  @unique // z. B. "es-mallorca"
+  name        String
+  focus       Boolean @default(false)
+  licenseRule String?
+
+  @@index([country])
+}
+
+// Schlüssel-Wert-Einstellungen, z. B. aktives Event für die Lead-Erfassung
+model Setting {
+  key       String   @id
+  value     Json
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+}

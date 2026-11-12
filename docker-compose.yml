@@ -1,0 +1,66 @@
+# Lokaler Betrieb / Vorlage für Coolify (Docker Compose Deployment).
+# Bei Coolify: Domain stay.baax.de auf den Dienst "app" legen, Caddy/Traefik übernimmt TLS.
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: stay
+      POSTGRES_USER: stay
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-stay}
+    volumes:
+      - db-data:/var/lib/postgresql/data
+      - db-backups:/backups
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U stay -d stay"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://stay:${POSTGRES_PASSWORD:-stay}@db:5432/stay?schema=public
+      APP_URL: ${APP_URL:-https://stay.baax.de}
+      SESSION_SECRET: ${SESSION_SECRET}
+      HUB_URL: ${HUB_URL}
+      HUB_LOGIN_PATH: ${HUB_LOGIN_PATH:-/sso/login}
+      HUB_JWT_SECRET: ${HUB_JWT_SECRET}
+      HUB_JWKS_URL: ${HUB_JWKS_URL}
+      HUB_JWT_ISSUER: ${HUB_JWT_ISSUER}
+      HUB_JWT_AUDIENCE: ${HUB_JWT_AUDIENCE:-baax-stay}
+      HUB_ROLE_CLAIM: ${HUB_ROLE_CLAIM:-role}
+      HUB_API_URL: ${HUB_API_URL}
+      HUB_API_TOKEN: ${HUB_API_TOKEN}
+      AUTH_DEV_LOGIN: "false"
+    ports:
+      - "3000:3000"
+
+  # Tägliches Backup, 30 Tage Aufbewahrung (Konzept §11)
+  backup:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PGPASSWORD: ${POSTGRES_PASSWORD:-stay}
+    volumes:
+      - db-backups:/backups
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        while true; do
+          ts=$$(date +%F)
+          pg_dump -h db -U stay -d stay -Fc -f /backups/stay-$$ts.dump && echo "Backup $$ts ok"
+          find /backups -name 'stay-*.dump' -mtime +30 -delete
+          sleep 86400
+        done
+
+volumes:
+  db-data:
+  db-backups:

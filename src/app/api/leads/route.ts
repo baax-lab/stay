@@ -1,0 +1,34 @@
+import { NextResponse, type NextRequest } from "next/server";
+import { clientIp, getSessionUser } from "@/lib/auth";
+import { can } from "@/lib/permissions";
+import { createLead } from "@/lib/lead-service";
+import { syncLeadToHub } from "@/lib/hub";
+import type { LeadInput } from "@/lib/leads";
+
+/**
+ * Nachsenden aus dem Offline-Puffer (IndexedDB). Gleiche Prüfung wie die Server Action.
+ * Idempotent über clientId.
+ */
+export async function POST(req: NextRequest) {
+  const user = await getSessionUser();
+  if (!user) return NextResponse.json({ error: "Nicht angemeldet" }, { status: 401 });
+  if (!can.createLead(user.role)) return NextResponse.json({ error: "Keine Berechtigung" }, { status: 403 });
+
+  let body: LeadInput;
+  try {
+    body = (await req.json()) as LeadInput;
+  } catch {
+    return NextResponse.json({ error: "Ungültiger Body" }, { status: 400 });
+  }
+
+  const result = await createLead(body, { userId: user.id, ip: await clientIp() });
+  if (!result.ok) return NextResponse.json({ error: "Validierung fehlgeschlagen", errors: result.errors }, { status: 422 });
+
+  if (!result.alreadyExisted) await syncLeadToHub(result.lead.id, user.id);
+
+  return NextResponse.json({
+    id: result.lead.id,
+    alreadyExisted: result.alreadyExisted,
+    duplicates: result.duplicates.map((d) => ({ id: d.id, name: d.name })),
+  });
+}
