@@ -2,7 +2,7 @@
 
 Internes Arbeitswerkzeug der Baax Immobilien GmbH für die Suchmakler-Tätigkeit bei touristisch genutzten Immobilien (ausschließlich Käuferseite). Bauvorlage: [docs/KONZEPT.md](docs/KONZEPT.md).
 
-**Stand: Phase 0, Phase 1 (Kern), Phase 1b (Kundenerlebnis) und Phase 2 umgesetzt.** Phase 0: Lead-Schnellerfassung mit Offline-Puffer, Lead-Liste mit CSV-Export, öffentliches Interessenformular, Hub-Login und Hub-Übergabe mit PENDING-Mechanik. Phase 1: Suchaufträge mit Statuslogik, Erstgespräch, Suchprofile, Objekte, Matching, Vorrang, Honorar, Angebote, Kaufabwicklung, Nachbetreuung, Partner, Tippgeber, Import, Automatisierungen. Phase 2: Partnerzugang mit Objekt-Einreichung (DE/EN/ES/IT/FR), Partnerbewertung und Leistungsübersicht, Vorprüfung je Segment und Land, mobile Besichtigung mit Kamera, Reisen mit Reisekosten, Vorlagen (Suchauftrag, Partnervereinbarung, Tippgeberbestätigung), Erinnerungsmails, pflegbarer Kriterienkatalog. Phase 1b: Käuferportal mit Magic Link, Genehmigungsampel mit Begründung, Gesamtkosten mit Nebenkosten und Wechselkursen, Renditespanne in drei Szenarien, Objektdossier als Weblink und PDF (DE/EN), Such- und Marktbericht mit Freigabe, Benachrichtigungen an Käufer als Entwurf.
+**Stand: alle Phasen des Konzepts umgesetzt (0, 1, 1b, 2, 3).** Phase 3: Länder- und Regionswissen mit Prüfdatum und Kennzahlen aus eigenen Daten, vollständige Auswertung (Quelle → Lead → Auftrag → Kauf, Dauer je Status, Honorar je Monat, Leistung je Tippgeber und Partner), gespeicherte Portal-Suchen als Kandidaten. Phase 0: Lead-Schnellerfassung mit Offline-Puffer, Lead-Liste mit CSV-Export, öffentliches Interessenformular, Hub-Login und Hub-Übergabe mit PENDING-Mechanik. Phase 1: Suchaufträge mit Statuslogik, Erstgespräch, Suchprofile, Objekte, Matching, Vorrang, Honorar, Angebote, Kaufabwicklung, Nachbetreuung, Partner, Tippgeber, Import, Automatisierungen. Phase 2: Partnerzugang mit Objekt-Einreichung (DE/EN/ES/IT/FR), Partnerbewertung und Leistungsübersicht, Vorprüfung je Segment und Land, mobile Besichtigung mit Kamera, Reisen mit Reisekosten, Vorlagen (Suchauftrag, Partnervereinbarung, Tippgeberbestätigung), Erinnerungsmails, pflegbarer Kriterienkatalog. Phase 1b: Käuferportal mit Magic Link, Genehmigungsampel mit Begründung, Gesamtkosten mit Nebenkosten und Wechselkursen, Renditespanne in drei Szenarien, Objektdossier als Weblink und PDF (DE/EN), Such- und Marktbericht mit Freigabe, Benachrichtigungen an Käufer als Entwurf.
 
 ## Stack
 
@@ -49,6 +49,9 @@ Ohne konfigurierten Hub steht unter `/auth/dev` ein Entwickler-Login mit wählba
 | `/besichtigungen`, `/besichtigungen/[id]` | Besichtigungsprotokoll mobil, Fotos aus der Kamera, Übernahme ins Objekt | |
 | `/auftraege/[id]?tab=reisen` | Reisen, Reisekosten mit Belegen, Vergleich zur Reisepauschale | |
 | `/vorlage/[art]/[id]` | Dokument aus Vorlage (Vorschau; PDF über `/api/pdf/vorlage/...`) | ab Mitarbeiter oder Druck-Token |
+| `/wissen`, `/wissen/[land]`, `/wissen/region/[key]` | Länder- und Regionswissen, Kennzahlen aus eigenen Objekten, Nebenkosten, Checklisten | lesen alle; pflegen Leitung, Admin |
+| `/auswertung` | Trichter je Quelle, Dauer je Status, Honorar je Monat, Leistung je Tippgeber und Partner; CSV | ab Mitarbeiter; Honorar und Export Leitung, Admin |
+| `/auftraege/[id]?tab=kandidaten` | Kandidaten aus Suchwünschen des Käufers, Übernahme als Treffer, „Suchprofil erweitern?“ | |
 | `/einstellungen` | Ziel, aktives Event, QR-Kennungen, Systemstatus; Unterseiten Honorarstaffel, Regionen, Kaufnebenkosten, Wechselkurse, Kriterienkatalog, Vorlagen | Leitung, Admin |
 | `/api/cron/daily` | Tägliche Jobs (Bearer `CRON_SECRET`) | Cron |
 | `/datenschutz` | Datenschutzhinweise zum Formular (Platzhalter, prüfen) | öffentlich |
@@ -79,6 +82,8 @@ Beides sind Annahmen bis die Hub-Schnittstelle feststeht (offener Punkt im Konze
 - `src/lib/templates.ts`: Vorlagen mit `{{platzhalter}}` und `{{#if}}`, Markdown-Subset
 - `src/lib/partner-stats.ts`: Partnerbewertung und Trefferquote
 - `src/lib/i18n/partner.ts`: Texte des Partnerzugangs in fünf Sprachen
+- `src/lib/analytics.ts`: Trichter je Quelle, Dauer je Status, Dauer bis Kauf, Honorar je Monat, Wissensstand, Regionskennzahlen
+- `src/lib/candidates.ts`: Suchwunsch als Matching-Profil, Abweichung vom Suchprofil
 
 Ampel, Gesamtkosten und Rendite kommen intern, im Portal und im Dossier aus `src/lib/services/figures.ts`.
 
@@ -86,7 +91,7 @@ Ampel, Gesamtkosten und Rendite kommen intern, im Portal und im Dossier aus `src
 
 ```bash
 pnpm test                       # Unit (Vitest): Matching, Honorar, Statuslogik, Ampel, Validierung, Rechte, Session, Rate-Limit
-pnpm test:e2e                   # Playwright: Phase 0, 1 (Lead bis Kauf, Rechte, Vorrang), 1b (Portal, Dossier, Berichte), 2 (Partnerzugang, Vorprüfung, Besichtigung, Reisen, Vorlagen)
+pnpm test:e2e                   # Playwright: Phase 0, 1 (Lead bis Kauf, Rechte, Vorrang), 1b (Portal, Dossier, Berichte), 2 (Partnerzugang, Vorprüfung, Besichtigung, Reisen, Vorlagen), 3 (Wissen, Kandidaten, Auswertung)
 ```
 
 Die E2E-Tests starten einen Dev-Server (Turbopack, eigener Build-Ordner `.next-e2e`) auf Port 3100 und brauchen die Datenbank aus `.env`. Mit abweichendem Chromium-Pfad: `PW_CHROMIUM_PATH=/pfad/zu/chromium pnpm test:e2e`.
@@ -124,5 +129,6 @@ Die E2E-Tests starten einen Dev-Server (Turbopack, eigener Build-Ordner `.next-e
 - Vorlagen (Suchauftrag, Partnervereinbarung, Tippgeberbestätigung) unter `/einstellungen/vorlagen` rechtlich prüfen lassen
 - Vorprüfungs-Checklisten je Segment und Land (`src/lib/precheck.ts`) mit Partnern vor Ort abstimmen
 - Hub-Termine (`POST /appointments`) sind wie die übrigen Hub-Endpunkte eine Annahme
+- Länderwissen unter `/wissen` inhaltlich prüfen (Startinhalte für DE, AT, IT, ES, CH ohne Prüfdatum) und Schwerpunktregionen befüllen
 - Datenschutzhinweise unter `/datenschutz` inhaltlich prüfen
 - QR-Code mit `https://stay.baax.de/interesse?q=superstay26` erzeugen
