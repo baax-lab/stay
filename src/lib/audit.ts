@@ -27,7 +27,12 @@ export type AuditAction =
   | "EMAIL_SENT"
   | "IMPORT"
   | "EXPORT"
-  | "CRON";
+  | "CRON"
+  | "PORTAL_LINK"
+  | "PORTAL_VIEW"
+  | "PORTAL_ACTION"
+  | "PORTAL_DENIED"
+  | "REPORT_UPDATE";
 
 export async function audit(input: {
   userId?: string | null;

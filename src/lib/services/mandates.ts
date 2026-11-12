@@ -8,6 +8,7 @@ import { closingTemplate } from "@/lib/checklists";
 import type { SessionUser } from "@/lib/session";
 import { logEvent } from "./events";
 import { runMatchingForMandate } from "./matching";
+import { draftStatusNotification } from "./notifications";
 
 /** Lead in Suchauftrag umwandeln (Konzept §8.1). */
 export async function createMandateFromLead(leadId: string, user: SessionUser, input: { title?: string }) {
@@ -117,6 +118,7 @@ export async function changeMandateStatus(
   }
 
   await logEvent(mandateId, "STATUS_CHANGE", { from: mandate.status, to: target, endReason: opts.endReason ?? null, purchasePrice: opts.purchasePrice ?? null }, user);
+  await draftStatusNotification(mandateId, target);
   await audit({ userId: user.id, action: "MANDATE_UPDATE", entity: "Mandate", entityId: mandateId, meta: { status: target } });
   return { ok: true };
 }

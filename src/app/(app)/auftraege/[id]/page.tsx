@@ -26,9 +26,23 @@ import { ClosingPanel } from "@/components/mandates/closing-panel";
 import { FollowUpPanel } from "@/components/mandates/followup-panel";
 import { DocumentsPanel } from "@/components/mandates/documents-panel";
 import { PartnerSendPanel } from "@/components/mandates/partner-send-panel";
+import { PortalPanel } from "@/components/mandates/portal-panel";
+import { ReportsPanel } from "@/components/mandates/reports-panel";
+import { suggestProfileAdjustments } from "@/lib/portal";
 import { saveHeaderAction, saveNoteAction, setGwgAction } from "../actions";
 import type { ProfileInput } from "../actions";
 import { cn } from "@/lib/cn";
+
+const BUYER_REASON_LABEL: Record<string, string> = {
+  preis: "Preis zu hoch",
+  lage: "Lage passt nicht",
+  lage_touristisch: "Lage zu touristisch",
+  zustand: "Zustand / Renovierungsbedarf",
+  groesse: "Größe / Aufteilung",
+  lizenz: "Lizenz / Rechtliches",
+  zahlen: "Zahlen / Rendite",
+  sonstiges: "Sonstiges",
+};
 
 const TABS = [
   ["uebersicht", "Übersicht"],
@@ -39,6 +53,8 @@ const TABS = [
   ["kauf", "Kaufabwicklung"],
   ["honorar", "Honorar"],
   ["dokumente", "Dokumente"],
+  ["portal", "Käuferportal"],
+  ["berichte", "Berichte"],
   ["partner", "Partner"],
   ["nachbetreuung", "Nachbetreuung"],
   ["verlauf", "Verlauf"],
@@ -271,6 +287,23 @@ export default async function MandatePage({ params, searchParams }: { params: Pr
 
       {tab === "profil" && (
         <Card>
+          {(() => {
+            const suggestions = suggestProfileAdjustments(mandate.matches.filter((m) => m.buyerAction === "ABGELEHNT").map((m) => ({ category: m.buyerReasonCategory })));
+            return suggestions.length > 0 ? (
+              <div className="mb-5">
+                <Notice tone="brand">
+                  <div className="font-medium">Rückmeldungen aus dem Käuferportal</div>
+                  <ul className="mt-1 list-disc pl-5">
+                    {suggestions.map((sg) => (
+                      <li key={sg.category}>
+                        {sg.count} Ablehnungen wegen „{BUYER_REASON_LABEL[sg.category]}“ – {sg.suggestion}?
+                      </li>
+                    ))}
+                  </ul>
+                </Notice>
+              </div>
+            ) : null;
+          })()}
           <ProfileForm mandateId={mandate.id} initial={profileInput} regions={regions} canEdit={canEdit} />
         </Card>
       )}
@@ -290,6 +323,10 @@ export default async function MandatePage({ params, searchParams }: { params: Pr
       {tab === "honorar" && canFees && <FeeTab mandateId={mandate.id} userId={user.id} canEdit={canEdit} country={mandate.closing?.country ?? mandate.profile?.countries[0] ?? null} />}
 
       {tab === "dokumente" && <DocumentsTab mandateId={mandate.id} documents={mandate.documents} canEdit={canEdit} canSeeGwg={can.viewGwgDocuments(user.role)} />}
+
+      {tab === "portal" && <PortalPanel mandate={mandate} canEdit={canEdit} canSend={can.sendExternal(user.role)} />}
+
+      {tab === "berichte" && <ReportsPanel mandateId={mandate.id} canEdit={canEdit} status={mandate.status} />}
 
       {tab === "partner" && (
         <PartnerSendPanel mandateId={mandate.id} sends={mandate.partnerSends} countries={mandate.profile?.countries ?? []} regions={mandate.profile?.regions ?? []} canSend={can.sendExternal(user.role)} />
@@ -342,7 +379,8 @@ async function MatchesTab({ mandate, canEdit, canApprove }: { mandate: Pick<Mand
       viewingNote: m.viewingNote,
       rank: { rank: rank.rank, total: rank.total, firstTitle: rank.first?.title },
       priorKnowledge: isPriorKnowledge(m.property.knownSince, mandate.contractSignedAt),
-      presentation: presentation ? { channel: presentation.channel, askingPrice: presentation.askingPrice, sentAt: presentation.sentAt.toISOString() } : null,
+      presentation: presentation ? { channel: presentation.channel, askingPrice: presentation.askingPrice, sentAt: presentation.sentAt.toISOString(), viewedAt: presentation.viewedAt?.toISOString() ?? null } : null,
+      buyer: { action: m.buyerAction, category: m.buyerReasonCategory ? (BUYER_REASON_LABEL[m.buyerReasonCategory] ?? m.buyerReasonCategory) : null, text: m.buyerReasonText, at: m.buyerActionAt?.toISOString() ?? null },
       property: {
         id: m.property.id,
         title: m.property.title,

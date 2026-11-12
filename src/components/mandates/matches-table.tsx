@@ -22,7 +22,8 @@ export type MatchRow = {
   viewingNote: string | null;
   rank: { rank: number; total: number; firstTitle?: string };
   priorKnowledge: boolean;
-  presentation: { channel: string; askingPrice: number; sentAt: string } | null;
+  presentation: { channel: string; askingPrice: number; sentAt: string; viewedAt: string | null } | null;
+  buyer: { action: string | null; category: string | null; text: string | null; at: string | null };
   property: { id: string; title: string; locality: string | null; region: string; country: string; price: number; segment: string; licenseLight: string; availability: string; knownSince: string };
 };
 
@@ -103,6 +104,14 @@ function MatchCard({ m, mandateId, canEdit, canApprove, expanded, onToggle }: { 
               Vorgestellt am {new Date(m.presentation.sentAt).toLocaleDateString("de-DE")} ({m.presentation.channel}), Angebotspreis eingefroren: {m.presentation.askingPrice.toLocaleString("de-DE")} €
             </div>
           )}
+          {m.presentation?.viewedAt && <div className="mt-1 text-xs text-muted">Im Portal angesehen am {new Date(m.presentation.viewedAt).toLocaleDateString("de-DE")}</div>}
+          {m.buyer.action && (
+            <div className="mt-1 text-xs font-medium text-petrol">
+              Käufer im Portal: {m.buyer.action === "GEMERKT" ? "gemerkt" : m.buyer.action === "BESICHTIGUNG" ? "Besichtigung angefragt" : "abgelehnt"}
+              {m.buyer.category ? ` (${m.buyer.category})` : ""}
+              {m.buyer.text ? ` – ${m.buyer.text}` : ""}
+            </div>
+          )}
           {m.priorKnowledge && <div className="mt-1 text-xs font-medium text-warn">Vorkenntnis – Honoraranspruch prüfen (Objekt seit {new Date(m.property.knownSince).toLocaleDateString("de-DE")} bekannt, vor Beauftragung)</div>}
           {secondBuyer && m.status !== "AN_KAEUFER" && (
             <div className="mt-1 text-xs text-warn">
@@ -119,9 +128,12 @@ function MatchCard({ m, mandateId, canEdit, canApprove, expanded, onToggle }: { 
         </div>
         <div className="text-right">
           <div className="text-2xl font-semibold text-petrol">{m.score}</div>
-          <button type="button" onClick={onToggle} className="text-xs text-brand-strong">
+          <button type="button" onClick={onToggle} className="block text-xs text-brand-strong">
             {expanded ? "Begründung ausblenden" : "Begründung"}
           </button>
+          <Link href={`/dossier/${m.property.id}?m=${mandateId}`} target="_blank" className="text-xs text-brand-strong">
+            Dossier
+          </Link>
         </div>
       </div>
 

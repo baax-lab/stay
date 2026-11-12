@@ -7,6 +7,9 @@ import { createHubTask } from "@/lib/hub";
 import { ACTIVE_STATUSES } from "@/lib/mandates";
 import { formatEur } from "@/lib/fees";
 import { LEAD_SOURCE_LABEL } from "@/lib/labels";
+import { previousMonth } from "@/lib/reports";
+import { fetchEcbRates } from "./fx";
+import { createMonthlyDrafts } from "./reports";
 
 /** Tägliche Jobs (Konzept §8.7, §8.17, §11). Aufruf über /api/cron/daily, 7:30 Uhr. */
 
@@ -17,6 +20,8 @@ export type CronReport = {
   followUpTasks: number;
   expiryTasks: number;
   deletedLeads: number;
+  fxUpdated: number;
+  reportDrafts: number;
   errors: string[];
 };
 
@@ -31,7 +36,7 @@ function addBusinessDays(date: Date, days: number): Date {
 }
 
 export async function runDailyJobs(now = new Date()): Promise<CronReport> {
-  const report: CronReport = { leadFollowUpTasks: 0, digestMails: 0, digestMatches: 0, followUpTasks: 0, expiryTasks: 0, deletedLeads: 0, errors: [] };
+  const report: CronReport = { leadFollowUpTasks: 0, digestMails: 0, digestMatches: 0, followUpTasks: 0, expiryTasks: 0, deletedLeads: 0, fxUpdated: 0, reportDrafts: 0, errors: [] };
 
   // 1. Lead ohne Kontakt nach 2 Werktagen → Aufgabe im Hub
   try {
@@ -134,6 +139,21 @@ export async function runDailyJobs(now = new Date()): Promise<CronReport> {
     report.deletedLeads = r.count;
   } catch (e) {
     report.errors.push(`Löschkonzept: ${e instanceof Error ? e.message : e}`);
+  }
+
+  // 6. Wechselkurse (EZB) täglich
+  const fx = await fetchEcbRates();
+  report.fxUpdated = fx.updated.length;
+  if (fx.error) report.errors.push(`Wechselkurse: ${fx.error}`);
+
+  // 7. Monatserster: Suchbericht-Entwürfe für den Vormonat
+  if (now.getDate() === 1) {
+    try {
+      const { start, end } = previousMonth(now);
+      report.reportDrafts = await createMonthlyDrafts(start, end);
+    } catch (e) {
+      report.errors.push(`Suchbericht-Entwürfe: ${e instanceof Error ? e.message : e}`);
+    }
   }
 
   await audit({ userId: "cron", action: "CRON", entity: "Cron", meta: { ...report } });

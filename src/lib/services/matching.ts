@@ -6,6 +6,7 @@ import { ACTIVE_STATUSES } from "@/lib/mandates";
 import { logEvent } from "./events";
 import type { SessionUser } from "@/lib/session";
 import { can } from "@/lib/permissions";
+import { draftObjectNotification } from "./notifications";
 
 type ProfileRow = Prisma.SearchProfileGetPayload<{ include: { mandate: { select: { id: true; status: true } } } }>;
 type PropertyRow = Prisma.PropertyGetPayload<Record<string, never>>;
@@ -158,6 +159,9 @@ export async function setMatchStatus(
     }
     return m;
   });
+
+  // Freigabe an den Käufer → Mail-Entwurf (Versand erst nach Sichtung)
+  if (status === "AN_KAEUFER") await draftObjectNotification(match.mandateId, match.propertyId);
 
   if (approved) {
     await logEvent(match.mandateId, "MATCH_APPROVED", { propertyId: match.propertyId, propertyTitle: match.property.title }, user);

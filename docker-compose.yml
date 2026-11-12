@@ -47,6 +47,7 @@ services:
       ADMIN_EMAIL: ${ADMIN_EMAIL:-mail@baax.de}
       CRON_SECRET: ${CRON_SECRET}
       UPLOAD_DIR: /app/uploads
+      INTERNAL_URL: http://localhost:3000
       AUTH_DEV_LOGIN: "false"
     volumes:
       - uploads:/app/uploads

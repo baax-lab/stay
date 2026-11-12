@@ -28,11 +28,11 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
   const f = await prisma.storedFile.findUnique({ where: { id } });
   if (!f) return NextResponse.json({ error: "Nicht gefunden" }, { status: 404 });
   if (f.kind === "GWG_NACHWEIS" && !can.viewGwgDocuments(user.role)) return NextResponse.json({ error: "Keine Berechtigung" }, { status: 403 });
-  if (f.entity === "Mandate" && !can.viewBuyerDetails(user.role) && f.kind !== "PHOTO") return NextResponse.json({ error: "Keine Berechtigung" }, { status: 403 });
+  if (f.entity === "Mandate" && !can.viewBuyerDetails(user.role) && f.kind !== "PHOTO" && f.kind !== "OWNER_PHOTO") return NextResponse.json({ error: "Keine Berechtigung" }, { status: 403 });
 
   try {
     const data = await readFile(filePath(f.storedName));
-    if (f.kind !== "PHOTO") await audit({ userId: user.id, action: "FILE_VIEW", entity: f.entity, entityId: f.entityId, meta: { fileId: f.id } });
+    if (f.kind !== "PHOTO" && f.kind !== "OWNER_PHOTO") await audit({ userId: user.id, action: "FILE_VIEW", entity: f.entity, entityId: f.entityId, meta: { fileId: f.id } });
     return new NextResponse(data, {
       headers: {
         "content-type": f.mimeType,

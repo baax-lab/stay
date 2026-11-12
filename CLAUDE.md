@@ -1,6 +1,8 @@
 # Baax Stay – Hinweise für Claude Code
 
-- Bauvorlage ist `docs/KONZEPT.md`. Phase 0 und Phase 1 sind umgesetzt; nächster Schritt ist Phase 1b (Schritt 19 ff. in Konzept §13: i18n, Ampel-Details, Nebenkosten, Wechselkurse, Gesamtkosten, Rendite, Dossier, Käuferportal, Suchbericht).
+- Bauvorlage ist `docs/KONZEPT.md`. Phase 0, Phase 1 und Phase 1b sind umgesetzt; als Nächstes käme Phase 2 (Konzept §10).
+- Alles, was Käufer sehen (Portal, Dossier, Berichte, Mails), läuft über `src/lib/i18n` (de/en). Ampel, Gesamtkosten und Rendite nur über `src/lib/services/figures.ts` berechnen, damit sie überall gleich sind.
+- Käufer-Mails nie automatisch senden: immer `BuyerNotification`-Entwurf, Versand nach Sichtung.
 - Fachlogik liegt als reine Funktionen in `src/lib/*.ts` (Matching, Honorar, Status, Ampel, Checklisten) mit Unit-Tests; Datenbankzugriffe in `src/lib/services/*`.
 - E2E-Tests nutzen den Dev-Server mit Turbopack in `.next-e2e`; `pnpm dev` baut in `.next-dev`, `pnpm build` in `.next`.
 - Sprache im UI und in Kommentaren: Deutsch. Enum-Werte und Code: Englisch bzw. wie im Konzept.

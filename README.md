@@ -2,7 +2,7 @@
 
 Internes Arbeitswerkzeug der Baax Immobilien GmbH für die Suchmakler-Tätigkeit bei touristisch genutzten Immobilien (ausschließlich Käuferseite). Bauvorlage: [docs/KONZEPT.md](docs/KONZEPT.md).
 
-**Stand: Phase 0 und Phase 1 (Kern) umgesetzt.** Phase 0: Lead-Schnellerfassung mit Offline-Puffer, Lead-Liste mit CSV-Export, öffentliches Interessenformular, Hub-Login und Hub-Übergabe mit PENDING-Mechanik. Phase 1: Suchaufträge mit Statuslogik, Erstgespräch, Suchprofile, Objekte, Matching, Vorrang, Honorar, Angebote, Kaufabwicklung, Nachbetreuung, Partner, Tippgeber, Import, Automatisierungen. Phase 1b (Käuferportal, Ampel-Details, Gesamtkosten, Rendite, Dossier, Suchbericht) folgt.
+**Stand: Phase 0, Phase 1 (Kern) und Phase 1b (Kundenerlebnis) umgesetzt.** Phase 0: Lead-Schnellerfassung mit Offline-Puffer, Lead-Liste mit CSV-Export, öffentliches Interessenformular, Hub-Login und Hub-Übergabe mit PENDING-Mechanik. Phase 1: Suchaufträge mit Statuslogik, Erstgespräch, Suchprofile, Objekte, Matching, Vorrang, Honorar, Angebote, Kaufabwicklung, Nachbetreuung, Partner, Tippgeber, Import, Automatisierungen. Phase 1b: Käuferportal mit Magic Link, Genehmigungsampel mit Begründung, Gesamtkosten mit Nebenkosten und Wechselkursen, Renditespanne in drei Szenarien, Objektdossier als Weblink und PDF (DE/EN), Such- und Marktbericht mit Freigabe, Benachrichtigungen an Käufer als Entwurf.
 
 ## Stack
 
@@ -38,7 +38,12 @@ Ohne konfigurierten Hub steht unter `/auth/dev` ein Entwickler-Login mit wählba
 | `/partner`, `/tippgeber` | Partner-Stammdaten; Tippgeber mit Prämien | Prämien nur Leitung/Admin |
 | `/suche` | Globale Suche über alle Bereiche | |
 | `/leads/import`, `/objekte/import`, `/partner/import` | CSV-Import mit Spaltenzuordnung, Vorschau, Dubletten | Leitung, Admin |
-| `/einstellungen` | Ziel, aktives Event, QR-Kennungen, Systemstatus; Unterseiten Honorarstaffel, Regionen | Leitung, Admin |
+| `/auftraege/[id]?tab=portal` | Portal-Links (erzeugen, senden, verlängern, widerrufen), Ansprechpartner, Benachrichtigungs-Entwürfe, Portal-Zugriffe | |
+| `/auftraege/[id]?tab=berichte` | Suchbericht und Marktbericht: Entwurf, Bearbeiten, Freigabe, PDF | |
+| `/objekte/[id]?tab=kosten` | Ampel, Gesamtkosten, Renditespanne, Angaben für Dossier, Dossier-Links | |
+| `/dossier/[id]` | Objektdossier DE/EN (Weblink; PDF über `/api/pdf/dossier/[id]`) | Login oder Druck-Token |
+| `/portal/[token]` | Käuferportal: Status, nächste Schritte, Ansprechpartner, freigegebene Objekte, Berichte; merken, ablehnen mit Grund, Besichtigung anfragen | öffentlich mit Token |
+| `/einstellungen` | Ziel, aktives Event, QR-Kennungen, Systemstatus; Unterseiten Honorarstaffel, Regionen, Kaufnebenkosten, Wechselkurse | Leitung, Admin |
 | `/api/cron/daily` | Tägliche Jobs (Bearer `CRON_SECRET`) | Cron |
 | `/datenschutz` | Datenschutzhinweise zum Formular (Platzhalter, prüfen) | öffentlich |
 
@@ -57,19 +62,33 @@ Beides sind Annahmen bis die Hub-Schnittstelle feststeht (offener Punkt im Konze
 - `src/lib/mandates.ts`: erlaubte Statusübergänge, GwG-Pflicht, Pflichtgrund, Kaufpreis-Pflicht
 - `src/lib/license.ts`: Genehmigungsampel aus Lizenzstatus und Regionsregel
 - `src/lib/checklists.ts`: Kaufabwicklung je Land (DE, AT, IT, ES, allgemein)
+- `src/lib/costs.ts`: Gesamtkosten aus Kaufpreis, Nebenkosten (Region vor Land, jüngster Stand), Honorar, Renovierung, Währung
+- `src/lib/yield.ts`: Renditespanne vorsichtig/mittel/gut (±15 %), Annahmen werden ausgewiesen
+- `src/lib/portal.ts`: Token (32 Byte, nur Hash gespeichert), Gültigkeit, Rückfluss der Ablehnungsgründe ins Suchprofil
+- `src/lib/reports.ts`: Gruppierung des Aussortierten nach Preis, Lizenz, Lage, Zustand, Zahlen
+- `src/lib/i18n/`: Deutsch und Englisch für Portal, Dossier, Berichte und Mails
+
+Ampel, Gesamtkosten und Rendite kommen intern, im Portal und im Dossier aus `src/lib/services/figures.ts`.
 
 ## Tests
 
 ```bash
 pnpm test                       # Unit (Vitest): Matching, Honorar, Statuslogik, Ampel, Validierung, Rechte, Session, Rate-Limit
-pnpm test:e2e                   # Playwright: Phase 0 (Erfassung, Offline, QR, Export) und Phase 1 (Lead bis Kauf, Rechte, Vorrang)
+pnpm test:e2e                   # Playwright: Phase 0, Phase 1 (Lead bis Kauf, Rechte, Vorrang) und Phase 1b (Portal, Dossier, Berichte)
 ```
 
 Die E2E-Tests starten einen Dev-Server (Turbopack, eigener Build-Ordner `.next-e2e`) auf Port 3100 und brauchen die Datenbank aus `.env`. Mit abweichendem Chromium-Pfad: `PW_CHROMIUM_PATH=/pfad/zu/chromium pnpm test:e2e`.
 
 ## Automatisierungen
 
-`GET /api/cron/daily` mit `Authorization: Bearer <CRON_SECRET>` (im Compose übernimmt das der Dienst `cron`, 7:30 Uhr): Lead ohne Kontakt nach 2 Werktagen → Hub-Aufgabe; tägliche Trefferübersicht per Mail an Verantwortliche; Nachgespräche und Laufzeitende → Hub-Aufgaben; verworfene Leads nach 12 Monaten löschen. Fehler gehen per Mail an `ADMIN_EMAIL`.
+`GET /api/cron/daily` mit `Authorization: Bearer <CRON_SECRET>` (im Compose übernimmt das der Dienst `cron`, 7:30 Uhr): Lead ohne Kontakt nach 2 Werktagen → Hub-Aufgabe; tägliche Trefferübersicht per Mail an Verantwortliche; Nachgespräche und Laufzeitende → Hub-Aufgaben; verworfene Leads nach 12 Monaten löschen; Wechselkurse von der EZB; am Monatsersten Suchbericht-Entwürfe für den Vormonat. Fehler gehen per Mail an `ADMIN_EMAIL`.
+
+## Käuferportal und Benachrichtigungen
+
+- Der Portal-Link ist ein persönlicher Magic Link (32 Byte, nur als SHA-256-Hash gespeichert), 30 Tage gültig, verlängerbar und widerrufbar. Der Klartext ist nur beim Erzeugen sichtbar.
+- Jede Benachrichtigung an den Käufer (neues Objekt, Bericht, Statuswechsel) entsteht als Entwurf im Tab „Käuferportal“ und wird erst nach Sichtung gesendet; sie enthält jeweils einen frischen Link.
+- Abgelaufene Links zeigen eine Hinweisseite mit Kontakt und der Möglichkeit, einen neuen Link an die hinterlegte Adresse anzufordern. Widerrufene Links nicht.
+- Jeder Portalaufruf und jede Aktion steht im AuditLog und im Tab „Käuferportal“.
 
 ## Deployment (Coolify)
 
@@ -87,5 +106,8 @@ Die E2E-Tests starten einen Dev-Server (Turbopack, eigener Build-Ordner `.next-e
 - Honorarstaffel-Startwerte unter `/einstellungen/honorar` festlegen
 - Regionsregeln (Vermietung, Zweitwohnsitz) unter `/einstellungen/regionen` als Kurztext pflegen
 - Checklisten der Kaufabwicklung (`src/lib/checklists.ts`) mit Partnern vor Ort abstimmen
+- Kaufnebenkosten-Richtwerte unter `/einstellungen/nebenkosten` prüfen (Startwerte für DE-Bayern, AT, IT, ES-Balearen)
+- Standardannahmen der Renditeschätzung (`src/lib/yield.ts`: Verwaltung 20 %, Rücklagen 3 %, Steuern 25 %, Betriebskosten 15 % vom Umsatz) bestätigen
+- Englische Texte in `src/lib/i18n/en.json` gegenlesen
 - Datenschutzhinweise unter `/datenschutz` inhaltlich prüfen
 - QR-Code mit `https://stay.baax.de/interesse?q=superstay26` erzeugen
