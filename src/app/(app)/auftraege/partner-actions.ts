@@ -37,7 +37,8 @@ export async function sendProfileToPartnersAction(mandateId: string, formData: F
       results.push(`${partner.name}: keine E-Mail`);
       continue;
     }
-    const lang = partner.language === "en" ? "en" : "de";
+    // Suchprofil-Text gibt es auf Deutsch und Englisch; ES/IT/FR erhalten Englisch
+    const lang = partner.language === "de" ? "de" : "en";
     const t = profileToText(mandate.profile, regionNames, lang, ref, labels);
     let text = profileTextPlain(t, intro);
     let html = profileTextHtml(t, intro);

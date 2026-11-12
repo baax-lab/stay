@@ -36,13 +36,13 @@ export default async function InspectionPage({ params }: { params: Promise<{ id:
       />
       <Card className="mb-4">
         <CardTitle action={photos.length > 0 && can.editProperty(user.role) ? <ActionButton action={adoptInspectionPhotosAction.bind(null, i.id)}>Ins Objekt übernehmen</ActionButton> : undefined}>Fotos ({photos.length})</CardTitle>
-        {canEdit && <InspectionPhotoUpload id={i.id} />}
+        {!locked && <InspectionPhotoUpload id={i.id} />}
         <div className="mt-3 grid grid-cols-3 gap-2" data-testid="inspection-photos">
           {photos.map((f) => (
             <figure key={f} className="relative">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={`/api/files/${f}`} alt="" className="aspect-square w-full rounded-xl object-cover" loading="lazy" />
-              {canEdit && (
+              {!locked && (
                 <div className="absolute right-1 top-1">
                   <ActionButton action={deleteInspectionPhotoAction.bind(null, i.id, f)} variant="danger" confirm="Foto löschen?">
                     ×

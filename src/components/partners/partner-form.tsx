@@ -37,6 +37,9 @@ export function PartnerFields({ p, regions, disabled }: { p?: Partner | null; re
           <Select name="language" defaultValue={p?.language ?? "de"} disabled={disabled}>
             <option value="de">Deutsch</option>
             <option value="en">Englisch</option>
+            <option value="es">Spanisch</option>
+            <option value="it">Italienisch</option>
+            <option value="fr">Französisch</option>
           </Select>
         </Field>
         <Field label="Land" required>

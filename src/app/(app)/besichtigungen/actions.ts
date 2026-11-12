@@ -68,6 +68,7 @@ export async function saveInspectionAction(id: string, payload: InspectionPayloa
 export async function uploadInspectionPhotosAction(id: string, formData: FormData): Promise<ActionResult> {
   const user = await requirePermission("editMandates");
   const insp = await prisma.inspection.findUniqueOrThrow({ where: { id } });
+  if (insp.status === "ABGESCHLOSSEN") return { ok: false, error: "Protokoll ist abgeschlossen." };
   const ids: string[] = [];
   const errors: string[] = [];
   for (const f of formData.getAll("photos")) {
@@ -90,6 +91,7 @@ export async function uploadInspectionPhotosAction(id: string, formData: FormDat
 export async function deleteInspectionPhotoAction(id: string, fileId: string): Promise<ActionResult> {
   await requirePermission("editMandates");
   const insp = await prisma.inspection.findUniqueOrThrow({ where: { id } });
+  if (insp.status === "ABGESCHLOSSEN") return { ok: false, error: "Protokoll ist abgeschlossen." };
   await prisma.inspection.update({ where: { id }, data: { photos: (insp.photos as string[]).filter((x) => x !== fileId) } });
   await deleteFile(fileId);
   revalidatePath(`/besichtigungen/${id}`);

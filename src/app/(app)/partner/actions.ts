@@ -22,7 +22,7 @@ function partnerData(fd: FormData) {
     company: str(fd, "company") || null,
     email: str(fd, "email").toLowerCase() || null,
     phone: str(fd, "phone") || null,
-    language: str(fd, "language") === "en" ? "en" : "de",
+    language: ["de", "en", "es", "it", "fr"].includes(str(fd, "language")) ? str(fd, "language") : "de",
     type: (str(fd, "type") || "MAKLER") as PartnerType,
     country: str(fd, "country").toUpperCase(),
     regions: fd.getAll("regions").filter((v): v is string => typeof v === "string" && v !== ""),
