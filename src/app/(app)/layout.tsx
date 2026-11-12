@@ -7,6 +7,7 @@ import { BottomNav, SideNav, type NavItem } from "@/components/layout/nav";
 import { Icons } from "@/components/layout/icons";
 import { getActiveEvent } from "@/lib/settings";
 import { PendingBadge } from "@/components/leads/pending-badge";
+import { ServiceWorkerRegister } from "@/components/layout/sw-register";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const user = await requireUser();
@@ -32,6 +33,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="min-h-dvh md:grid md:grid-cols-[240px_1fr]">
+      <ServiceWorkerRegister />
       <aside className="hidden border-r border-line bg-surface p-4 md:sticky md:top-0 md:flex md:h-dvh md:flex-col">
         <Link href="/" className="mb-6 px-2 pt-1">
           <Logo />

@@ -128,3 +128,17 @@ describe("Rechtstexte", () => {
     expect(parseLegalText("  \n\n ")).toEqual([]);
   });
 });
+
+import { serviceWorkerSource } from "@/lib/sw-script";
+
+describe("Service Worker", () => {
+  it("ist gültiges JavaScript mit eingesetzter Version", () => {
+    const src = serviceWorkerSource('1.2.3"; alert(1); "');
+    expect(() => new Function(src)).not.toThrow();
+    expect(src).toContain('const VERSION = "1.2.3\\"; alert(1); \\"";');
+  });
+  it("cacht keine API, Dateien, Anmeldung oder Portal", () => {
+    const src = serviceWorkerSource("x");
+    for (const p of ["/api/", "/auth/", "/portal/", "/partner-zugang/"]) expect(src).toContain(`"${p}"`);
+  });
+});

@@ -5,7 +5,7 @@ export const metadata: Metadata = {
   title: { default: "Baax Stay", template: "%s · Baax Stay" },
   description: "Suchmakler für touristisch genutzte Immobilien – internes Arbeitswerkzeug der Baax Immobilien GmbH",
   manifest: "/manifest.webmanifest",
-  icons: { icon: "/icons/icon.svg", apple: "/icons/icon.svg" },
+  icons: { icon: [{ url: "/icons/icon.svg", type: "image/svg+xml" }, { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" }], apple: "/icons/apple-touch-icon.png" },
   appleWebApp: { capable: true, title: "Baax Stay", statusBarStyle: "default" },
   robots: { index: false, follow: false },
 };
