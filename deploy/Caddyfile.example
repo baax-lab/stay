@@ -7,10 +7,13 @@ stay.baax.de {
 	}
 }
 
-# Variante B (Caddy als Container im Netz PROXY_NETWORK): Dienstname statt localhost
+# Variante B (Caddy als Container im Netz PROXY_NETWORK): Netzname statt localhost
 # stay.baax.de {
 # 	encode zstd gzip
-# 	reverse_proxy baax-stay-app-1:3000
+# 	reverse_proxy baax-stay:3000   # eindeutiger Netzname (STAY_ROUTER), nicht „app“
+# 	request_body {
+# 		max_size 60MB
+# 	}
 # }
 
 # Staging (eigenes Compose-Projekt baax-stay-staging, z. B. Port 3011)

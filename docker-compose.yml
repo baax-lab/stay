@@ -28,6 +28,10 @@ services:
       TZ: Europe/Berlin
     volumes:
       - db-data:/var/lib/postgresql/data
+    networks:
+      default:
+        # eindeutiger Name: „db“ könnte in einem geteilten Proxy-Netz auch ein anderes Programm sein
+        aliases: [stay-db]
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U stay -d stay"]
       interval: 10s
@@ -54,7 +58,7 @@ services:
       - "3000"
     shm_size: 256mb # Chromium für PDF
     environment:
-      DATABASE_URL: postgresql://stay:${POSTGRES_PASSWORD}@db:5432/stay?schema=public
+      DATABASE_URL: postgresql://stay:${POSTGRES_PASSWORD}@stay-db:5432/stay?schema=public
       APP_URL: ${APP_URL:?APP_URL fehlt}
       SESSION_SECRET: ${SESSION_SECRET:?SESSION_SECRET fehlt}
       CRON_SECRET: ${CRON_SECRET:?CRON_SECRET fehlt}
@@ -136,7 +140,7 @@ services:
       db:
         condition: service_healthy
     environment:
-      PGHOST: db
+      PGHOST: stay-db
       PGUSER: stay
       PGDATABASE: stay
       PGPASSWORD: ${POSTGRES_PASSWORD}

@@ -13,5 +13,10 @@
 - Rechte immer serverseitig prüfen: `requirePermission()` in Server Actions und Route Handlern, `can.*` aus `src/lib/permissions.ts`.
 - Jede Änderung nach außen (Export, Versand, Hub) ins `AuditLog` (`src/lib/audit.ts`).
 - Hub-SSO und Hub-API sind Annahmen (`src/lib/auth.ts`, `src/lib/hub.ts`); bei Klärung der Schnittstelle nur dort anpassen.
+- DSGVO-Regeln (Löschen, Anonymisieren, Aufbewahren) nur in `src/lib/privacy.ts`; Ausführung in `src/lib/services/privacy.ts`. Neue Tabellen mit Personenbezug dort in Suche, Export und Löschung aufnehmen.
+- Abmelden nur per POST (`/auth/logout`); keine Links mit Seiteneffekten, Next lädt Links in Produktion vorab.
+- Service Worker kommt aus `src/lib/sw-script.ts` (Route `/sw.js`, nur Produktion); neue öffentliche oder personenbezogene Pfade in dessen `NEVER`-Liste prüfen.
+- Hausfarbe nur über `BRAND_COLOR` (`/brand.css`), Rechtstexte über Setting `legal`.
+- Betrieb auf geteiltem Docker-Server: `deploy/README.md`, `deploy/stay.sh`. Keine festen Containernamen, keine Host-Ports im Basis-Compose, Datenbank als `stay-db` ansprechen.
 - Befehle: `pnpm dev`, `pnpm test` (Vitest), `pnpm test:e2e` (Playwright, braucht DB), `pnpm db:migrate`, `pnpm db:seed`, `pnpm build`.
 - Nach jedem Schritt: lauffähig, getestet, committet.

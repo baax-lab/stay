@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Baax Stay – Bedienung auf dem VPS. Aufruf aus dem Repository-Verzeichnis:
 #   deploy/stay.sh <umgebung> <befehl>     umgebung: production | staging
-# Befehle: up, down, logs, ps, update, backup, restore-test, restore <dump> [uploads.tar.gz], health
+# Befehle: up, down, logs, ps, update, rollback <version>, images, backup, restore-test, restore <dump> [uploads.tar.gz], health
 set -euo pipefail
 
 ENVNAME="${1:-}"; CMD="${2:-}"; shift 2 || true
@@ -17,6 +17,8 @@ MODE=$(grep -E '^STAY_PROXY_MODE=' "$ENVFILE" | cut -d= -f2 || true)
 FILES=(-f docker-compose.yml)
 if [ "${MODE:-port}" = "network" ]; then FILES+=(-f deploy/compose.proxy-network.yml); else FILES+=(-f deploy/compose.port.yml); fi
 if grep -qE '^BACKUP_HOST_DIR=.+' "$ENVFILE"; then FILES+=(-f deploy/compose.backup-host.yml); fi
+# Image-Tag = Git-Stand (für Rollback); ein APP_VERSION in der Umgebung hat Vorrang
+export APP_VERSION="${APP_VERSION:-$(git rev-parse --short HEAD 2>/dev/null || echo latest)}"
 DC=(docker compose -p "$PROJECT" --env-file "$ENVFILE" "${FILES[@]}")
 
 case "$CMD" in
@@ -26,8 +28,21 @@ case "$CMD" in
   ps)      "${DC[@]}" ps ;;
   update)
     git pull --ff-only
-    echo "Backup vor dem Update …"; "${DC[@]}" exec -T backup sh -c 'ts=$(date +%F_%H%M)-pre-update; pg_dump -Fc -f /backups/stay-$ts.dump && tar -czf /backups/uploads-$ts.tar.gz -C /uploads . && echo "Backup $ts ok"'
+    APP_VERSION="$(git rev-parse --short HEAD)"; export APP_VERSION
+    echo "Update auf $APP_VERSION, Backup vorher …"; "${DC[@]}" exec -T backup sh -c 'umask 077; ts=$(date +%F_%H%M)-pre-update; pg_dump -Fc -f /backups/stay-$ts.dump && tar -czf /backups/uploads-$ts.tar.gz -C /uploads . && echo "Backup $ts ok"'
     "${DC[@]}" up -d --build
+    ;;
+  rollback)
+    # Älteres Image ohne Neubau starten. Achtung: hat das neuere Update die Datenbank migriert,
+    # zusätzlich das Backup „pre-update“ zurückspielen (restore), sonst passt das Schema nicht.
+    VER="${1:?Version angeben, siehe: deploy/stay.sh $ENVNAME images}"
+    docker image inspect "baax-stay:$VER" >/dev/null || { echo "Image baax-stay:$VER nicht vorhanden"; exit 1; }
+    APP_VERSION="$VER" "${DC[@]}" up -d --no-build app cron
+    ;;
+  images)
+    docker image ls baax-stay --format 'table {{.Tag}}\t{{.CreatedSince}}\t{{.Size}}'
+    id=$("${DC[@]}" ps -q app 2>/dev/null || true)
+    echo "Laufend: ${id:+$(docker inspect -f '{{.Config.Image}}' "$id")}"
     ;;
   backup)
     "${DC[@]}" exec -T backup sh -c 'umask 077; ts=$(date +%F_%H%M)-manuell; pg_dump -Fc -f /backups/stay-$ts.dump && tar -czf /backups/uploads-$ts.tar.gz -C /uploads . && ls -lh /backups | tail -4'
@@ -59,5 +74,5 @@ case "$CMD" in
     "${DC[@]}" start app cron
     ;;
   health)  "${DC[@]}" exec -T app node -e "fetch('http://127.0.0.1:3000/api/health').then(r=>r.text()).then(console.log)" ;;
-  *) echo "Befehle: up | down | logs | ps | update | backup | restore-test | restore <dump> [uploads.tar.gz] | health"; exit 1 ;;
+  *) echo "Befehle: up | down | logs | ps | update | rollback <version> | images | backup | restore-test | restore <dump> [uploads.tar.gz] | health"; exit 1 ;;
 esac

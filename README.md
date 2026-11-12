@@ -53,14 +53,18 @@ Ohne konfigurierten Hub steht unter `/auth/dev` ein Entwickler-Login mit wählba
 | `/auswertung` | Trichter je Quelle, Dauer je Status, Honorar je Monat, Leistung je Tippgeber und Partner; CSV | ab Mitarbeiter; Honorar und Export Leitung, Admin |
 | `/auftraege/[id]?tab=kandidaten` | Kandidaten aus Suchwünschen des Käufers, Übernahme als Treffer, „Suchprofil erweitern?“ | |
 | `/einstellungen` | Ziel, aktives Event, QR-Kennungen, Systemstatus; Unterseiten Honorarstaffel, Regionen, Kaufnebenkosten, Wechselkurse, Kriterienkatalog, Vorlagen | Leitung, Admin |
+| `/einstellungen/texte` | Datenschutzhinweise, Impressum-Link, Kontakt für Datenschutzanfragen | Leitung, Admin |
+| `/einstellungen/protokoll` | AuditLog mit Filtern (Aktion, Bereich, Datensatz, Nutzer, Zeitraum) und CSV | Admin |
+| `/einstellungen/datenschutz` | DSGVO: Person suchen, Auskunft als JSON, Löschung bzw. Anonymisierung mit Fristprüfung | Admin |
 | `/api/cron/daily` | Tägliche Jobs (Bearer `CRON_SECRET`) | Cron |
-| `/datenschutz` | Datenschutzhinweise zum Formular (Platzhalter, prüfen) | öffentlich |
+| `/api/health` | Zustand für Healthcheck und Monitoring (`{ok, db, version}`) | öffentlich |
+| `/datenschutz` | Datenschutzhinweise zum Formular (Text pflegbar, sonst Standardtext) | öffentlich |
 
 ## Hub-Anbindung
 
 **Login (SSO):** `/auth/login` leitet zu `HUB_URL + HUB_LOGIN_PATH?redirect_uri=…/auth/callback`. Der Hub leitet mit `?token=<JWT>` zurück. Das Token wird mit `HUB_JWT_SECRET` (HS256) oder `HUB_JWKS_URL` geprüft; die Rolle kommt aus dem Claim `HUB_ROLE_CLAIM` (Standard `role`, String oder Array; erkannt werden admin, leitung, mitarbeiter, praktikant und gängige Aliase). Danach setzt Baax Stay ein eigenes Session-Cookie (12 h).
 
-**Kontakt- und Aufgabenübergabe:** `POST {HUB_API_URL}/contacts` und `POST {HUB_API_URL}/tasks` mit `Authorization: Bearer HUB_API_TOKEN` (Annahme, siehe `src/lib/hub.ts`). Ist die API nicht konfiguriert, bleibt jeder Lead auf `PENDING` und kann einzeln oder gesammelt nachgereicht werden.
+**Kontakt- und Aufgabenübergabe:** `POST {HUB_API_URL}/contacts` und `POST {HUB_API_URL}/tasks` (Pfade über `HUB_*_PATH` änderbar) mit `Authorization: Bearer HUB_API_TOKEN` (Annahme, siehe `src/lib/hub.ts`). Ist die API nicht konfiguriert, bleibt jeder Lead auf `PENDING` und kann einzeln oder gesammelt nachgereicht werden.
 
 Beides sind Annahmen bis die Hub-Schnittstelle feststeht (offener Punkt im Konzept §14). Anpassungen betreffen nur `src/lib/auth.ts` und `src/lib/hub.ts`.
 
@@ -84,6 +88,8 @@ Beides sind Annahmen bis die Hub-Schnittstelle feststeht (offener Punkt im Konze
 - `src/lib/i18n/partner.ts`: Texte des Partnerzugangs in fünf Sprachen
 - `src/lib/analytics.ts`: Trichter je Quelle, Dauer je Status, Dauer bis Kauf, Honorar je Monat, Wissensstand, Regionskennzahlen
 - `src/lib/candidates.ts`: Suchwunsch als Matching-Profil, Abweichung vom Suchprofil
+- `src/lib/privacy.ts`: Lösch- und Aufbewahrungsregeln (GwG, Prämienbelege), Deutung des Suchbegriffs
+- `src/lib/brand.ts`, `src/lib/audit-filter.ts`, `src/lib/legal.ts`, `src/lib/sw-script.ts`: Hausfarbe, Protokollfilter, Rechtstext-Format, Service Worker
 
 Ampel, Gesamtkosten und Rendite kommen intern, im Portal und im Dossier aus `src/lib/services/figures.ts`.
 
@@ -91,7 +97,7 @@ Ampel, Gesamtkosten und Rendite kommen intern, im Portal und im Dossier aus `src
 
 ```bash
 pnpm test                       # Unit (Vitest): Matching, Honorar, Statuslogik, Ampel, Validierung, Rechte, Session, Rate-Limit
-pnpm test:e2e                   # Playwright: Phase 0, 1 (Lead bis Kauf, Rechte, Vorrang), 1b (Portal, Dossier, Berichte), 2 (Partnerzugang, Vorprüfung, Besichtigung, Reisen, Vorlagen), 3 (Wissen, Kandidaten, Auswertung)
+pnpm test:e2e                   # Playwright: Phase 0, 1 (Lead bis Kauf, Rechte, Vorrang), 1b (Portal, Dossier, Berichte), 2 (Partnerzugang, Vorprüfung, Besichtigung, Reisen, Vorlagen), 3 (Wissen, Kandidaten, Auswertung), Betrieb (DSGVO, Protokoll, Rechtstexte, Abmelden)
 ```
 
 Die E2E-Tests starten einen Dev-Server (Turbopack, eigener Build-Ordner `.next-e2e`) auf Port 3100 und brauchen die Datenbank aus `.env`. Mit abweichendem Chromium-Pfad: `PW_CHROMIUM_PATH=/pfad/zu/chromium pnpm test:e2e`.
@@ -107,19 +113,30 @@ Die E2E-Tests starten einen Dev-Server (Turbopack, eigener Build-Ordner `.next-e
 - Abgelaufene Links zeigen eine Hinweisseite mit Kontakt und der Möglichkeit, einen neuen Link an die hinterlegte Adresse anzufordern. Widerrufene Links nicht.
 - Jeder Portalaufruf und jede Aktion steht im AuditLog und im Tab „Käuferportal“.
 
-## Deployment (Coolify)
+## Datenschutz und Protokoll
 
-- `Dockerfile` baut ein Standalone-Image mit Chromium (PDF); `docker-entrypoint.sh` führt `prisma migrate deploy` beim Start aus.
-- `docker-compose.yml` enthält App, PostgreSQL, Cron-Dienst, Upload-Volume und einen Backup-Dienst (täglich, 30 Tage Aufbewahrung).
+- **Auskunft:** `/einstellungen/datenschutz` findet eine Person über E-Mail, Telefon, Name oder Hub-Kontakt-ID in Leads, Suchaufträgen, Tippgebern und Partnern und exportiert alles als JSON (inkl. Verlauf und Protokolleinträge). Suche und Export laufen per POST, damit Adressen nicht in URLs und Proxy-Logs landen.
+- **Löschung** (Regeln in `src/lib/privacy.ts`, getestet): Leads ohne Auftrag werden gelöscht. Laufende Aufträge sind gesperrt. Aufträge mit GwG-Identifizierung oder Kauf bleiben 5 Jahre ab Ende des Kalenderjahres, in dem die Geschäftsbeziehung endete; Tippgeber mit ausgezahlter Prämie 10 Jahre. Alles andere wird anonymisiert: Name, Kontakt, Notizen, Erstgespräch, Dokumente samt Dateien, Portal-Links, Berichte und Entwürfe weg; Objekte und Vorstellungen bleiben ohne Personenbezug als Nachweis für Honoraransprüche. Ältere Protokollinhalte zu den Datensätzen werden geschwärzt, die Löschung selbst wird protokolliert. Hub-Kontakt-IDs werden angezeigt, damit der Kontakt auch im Hub gelöscht wird.
+- **Protokoll:** `/einstellungen/protokoll` zeigt das AuditLog mit Namen aus den Anmeldungen; Export ist selbst protokolliert.
+
+## Offline auf der Messe
+
+Ein Service Worker (`/sw.js`, Quelle `src/lib/sw-script.ts`, nur im Produktionsbuild) hält `/leads/neu` samt Skripten im Cache. Ohne Netz startet die Erfassung trotzdem; gespeicherte Kontakte landen im Offline-Puffer (IndexedDB) und werden automatisch nachgesendet. Andere Seiten zeigen ohne Netz einen Hinweis mit Link zur Erfassung. API, Dateien, Anmeldung, Portal und Partnerzugang werden nie gecacht; beim Abmelden wird der Seiten-Cache geleert, der Puffer mit noch nicht gesendeten Kontakten bleibt.
+
+## Deployment
+
+Anleitung für den vorhandenen Docker-Server (Varianten mit Host-Proxy oder Proxy-Container, Staging, Update, Rollback, Backup und Wiederherstellung, Go-live-Checkliste): **[deploy/README.md](deploy/README.md)**.
+
+- `Dockerfile` baut ein Standalone-Image mit Chromium (PDF), nur Produktionsabhängigkeiten, Healthcheck auf `/api/health`; `docker-entrypoint.sh` führt `prisma migrate deploy` und den idempotenten Seed aus.
+- `docker-compose.yml`: App, PostgreSQL, Cron und Backup als Projekt `baax-stay`, ohne veröffentlichte Ports, mit Speicher- und Loggrenzen.
 - Uploads liegen auf dem Volume `/app/uploads` (Nextcloud/WebDAV ist offener Punkt).
-- Umgebungsvariablen siehe `.env.example`. In Produktion `AUTH_DEV_LOGIN` nicht setzen.
-- Domain: `stay.baax.de` (Vorschlag, zu bestätigen).
+- Hausfarbe über `BRAND_COLOR` (zur Laufzeit über `/brand.css`, kein Neubau nötig).
 
 ## Offene Punkte vor Veröffentlichung
 
-- Hub-Endpunkte und Token-Format bestätigen (siehe oben); Hub-Aufgaben nutzen dieselbe API
+- Hub-Endpunkte und Token-Format bestätigen (siehe oben); Pfade über `HUB_CONTACTS_PATH`, `HUB_TASKS_PATH`, `HUB_APPOINTMENTS_PATH` anpassbar
 - SMTP-Zugang und HTML-Signatur der GmbH (`MAIL_SIGNATURE_HTML`) eintragen
-- Exakten Hex-Wert Baax-Cyan in `src/app/globals.css` (`--brand`) eintragen
+- Exakten Hex-Wert Baax-Cyan als `BRAND_COLOR` eintragen (Standard in `src/app/globals.css` bei Gelegenheit nachziehen)
 - Honorarstaffel-Startwerte unter `/einstellungen/honorar` festlegen
 - Regionsregeln (Vermietung, Zweitwohnsitz) unter `/einstellungen/regionen` als Kurztext pflegen
 - Checklisten der Kaufabwicklung (`src/lib/checklists.ts`) mit Partnern vor Ort abstimmen
@@ -130,5 +147,6 @@ Die E2E-Tests starten einen Dev-Server (Turbopack, eigener Build-Ordner `.next-e
 - Vorprüfungs-Checklisten je Segment und Land (`src/lib/precheck.ts`) mit Partnern vor Ort abstimmen
 - Hub-Termine (`POST /appointments`) sind wie die übrigen Hub-Endpunkte eine Annahme
 - Länderwissen unter `/wissen` inhaltlich prüfen (Startinhalte für DE, AT, IT, ES, CH ohne Prüfdatum) und Schwerpunktregionen befüllen
-- Datenschutzhinweise unter `/datenschutz` inhaltlich prüfen
+- Datenschutzhinweise unter Einstellungen → Rechtstexte prüfen bzw. den Text von baax.de übernehmen, Impressum-Link bestätigen
+- PDF-Erzeugung im fertigen Image einmal prüfen (Chromium kommt aus den Debian-Paketen; in der Entwicklungsumgebung waren die Paketquellen gesperrt)
 - QR-Code mit `https://stay.baax.de/interesse?q=superstay26` erzeugen

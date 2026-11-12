@@ -6,16 +6,18 @@
 services:
   app:
     networks:
-      - default
-      - proxy
+      default:
+      proxy:
+        # Im Proxy-Netz unter eindeutigem Namen erreichbar (Caddy/nginx: reverse_proxy baax-stay:3000), nie als „app“
+        aliases: ["${STAY_ROUTER:-baax-stay}"]
     labels:
-      # Für Traefik (wird von Caddy/nginx ignoriert)
+      # Für Traefik (wird von Caddy/nginx ignoriert). STAY_ROUTER je Umgebung eindeutig (Produktion/Staging)
       - traefik.enable=true
       - traefik.docker.network=${PROXY_NETWORK:-proxy}
-      - traefik.http.routers.baax-stay.rule=Host(`${STAY_DOMAIN:-stay.baax.de}`)
-      - traefik.http.routers.baax-stay.entrypoints=${TRAEFIK_ENTRYPOINT:-websecure}
-      - traefik.http.routers.baax-stay.tls.certresolver=${TRAEFIK_CERTRESOLVER:-letsencrypt}
-      - traefik.http.services.baax-stay.loadbalancer.server.port=3000
+      - traefik.http.routers.${STAY_ROUTER:-baax-stay}.rule=Host(`${STAY_DOMAIN:-stay.baax.de}`)
+      - traefik.http.routers.${STAY_ROUTER:-baax-stay}.entrypoints=${TRAEFIK_ENTRYPOINT:-websecure}
+      - traefik.http.routers.${STAY_ROUTER:-baax-stay}.tls.certresolver=${TRAEFIK_CERTRESOLVER:-letsencrypt}
+      - traefik.http.services.${STAY_ROUTER:-baax-stay}.loadbalancer.server.port=3000
 
 networks:
   proxy:
