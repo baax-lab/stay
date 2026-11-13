@@ -2,7 +2,9 @@
 // Phase-1-Modelle (Mandate, SearchProfile, Property, Match, Fee*, ...) folgen nach Abnahme Phase 0.
 
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
+  // Im Docker-Image ist OpenSSL 3 installiert, beim Bauen aber noch nicht: beide Varianten erzeugen
+  binaryTargets = ["native", "debian-openssl-3.0.x"]
 }
 
 datasource db {
