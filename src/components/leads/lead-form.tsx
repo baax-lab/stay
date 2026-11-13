@@ -3,9 +3,11 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import type { LeadRole, LeadSource, Segment } from "@prisma/client";
-import { BUDGET_BANDS, type LeadInput } from "@/lib/leads";
+import { BUDGET_BANDS } from "@/lib/leads";
 import { LEAD_ROLE_LABEL, LEAD_SOURCE_LABEL, SEGMENT_LABEL, entries } from "@/lib/labels";
-import { addPending, newClientId, submitLead, type SubmitOutcome } from "@/lib/offline-store";
+import { addPending, newClientId, submitLead, type LeadPayload, type SubmitOutcome } from "@/lib/offline-store";
+import { compressImage } from "@/lib/image-compress";
+import { CONTACT_CHANNELS, CONTACT_CHANNEL_LABEL, FINANCING_LABEL, FINANCING_OPTIONS, LEAD_LANGUAGES, TIME_HORIZONS, TIME_HORIZON_LABEL, type ContactChannel, type Financing, type LeadLanguage, type TimeHorizon } from "@/lib/form-options";
 import { Button } from "@/components/ui/button";
 import { Checkbox, ChipGroup, Field, Input, Select, Textarea } from "@/components/ui/field";
 import { Notice } from "@/components/ui/card";
@@ -37,7 +39,22 @@ const emptyState = (source: LeadSource, sourceDetail: string) => ({
   budgetBand: null as (typeof BUDGET_BANDS)[number]["key"] | null,
   consentEmail: false,
   note: "",
+  language: null as LeadLanguage | null,
+  callbackAt: "", // datetime-local (Ortszeit)
+  contactChannel: null as ContactChannel | null,
+  timeHorizon: null as TimeHorizon | null,
+  financing: null as Financing | null,
+  cardImage: null as string | null, // verkleinertes Foto als data:-Adresse
 });
+
+/** Wert für datetime-local in Ortszeit, z. B. heute 17:00 oder morgen 10:00 */
+function localSlot(daysAhead: number, hour: number): string {
+  const d = new Date();
+  d.setDate(d.getDate() + daysAhead);
+  d.setHours(hour, 0, 0, 0);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
 
 export function LeadForm({ defaultSource, defaultSourceDetail, regionOptions }: Props) {
   const [form, setForm] = useState(() => emptyState(defaultSource, defaultSourceDetail));
@@ -45,6 +62,8 @@ export function LeadForm({ defaultSource, defaultSourceDetail, regionOptions }: 
   const [feedback, setFeedback] = useState<Feedback | null>(null);
   const [busy, setBusy] = useState(false);
   const [showMore, setShowMore] = useState(false);
+  const [photoBusy, setPhotoBusy] = useState(false);
+  const [photoError, setPhotoError] = useState<string | null>(null);
   const nameRef = useRef<HTMLInputElement>(null);
   const { count, online, syncing, flush, items } = usePending();
 
@@ -80,7 +99,8 @@ export function LeadForm({ defaultSource, defaultSourceDetail, regionOptions }: 
     setErrors({});
     setFeedback(null);
 
-    const payload: LeadInput = { ...form, clientId: newClientId() };
+    // Rückruftermin mit Zeitzone senden, damit der Server ihn richtig einordnet
+    const payload: LeadPayload = { ...form, callbackAt: form.callbackAt ? new Date(form.callbackAt).toISOString() : null, clientId: newClientId() };
     const name = form.name.trim();
 
     let outcome: SubmitOutcome;
@@ -172,6 +192,46 @@ export function LeadForm({ defaultSource, defaultSourceDetail, regionOptions }: 
         </Notice>
       )}
 
+      {/* Visitenkarte: Foto statt Abtippen, wird mit dem Kontakt gespeichert (auch offline) */}
+      {form.cardImage ? (
+        <div className="flex items-center gap-3 rounded-xl border border-line-strong/50 bg-surface-solid/70 p-2">
+          {/* eslint-disable-next-line @next/next/no-img-element -- data:-Vorschau ohne Next-Bildoptimierung */}
+          <img src={form.cardImage} alt="Visitenkarte" className="h-16 w-24 rounded-md object-cover" />
+          <div className="flex-1 text-sm">
+            <div className="font-medium">Visitenkarte aufgenommen</div>
+            <div className="text-xs text-muted">Wird mit dem Kontakt gespeichert. Name und Telefon bitte trotzdem kurz eintragen.</div>
+          </div>
+          <Button type="button" size="sm" variant="ghost" onClick={() => set("cardImage", null)}>
+            Entfernen
+          </Button>
+        </div>
+      ) : (
+        <label className="flex h-12 cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-line-strong bg-surface-solid/60 text-sm font-medium text-ink hover:bg-brand-soft">
+          <input
+            type="file"
+            accept="image/*"
+            capture="environment"
+            className="sr-only"
+            onChange={async (e) => {
+              const file = e.target.files?.[0];
+              e.target.value = "";
+              if (!file) return;
+              setPhotoBusy(true);
+              setPhotoError(null);
+              try {
+                set("cardImage", await compressImage(file));
+              } catch (err) {
+                setPhotoError(err instanceof Error ? err.message : "Foto konnte nicht verarbeitet werden");
+              } finally {
+                setPhotoBusy(false);
+              }
+            }}
+          />
+          {photoBusy ? "Foto wird verkleinert …" : "Visitenkarte fotografieren"}
+        </label>
+      )}
+      {photoError && <p className="text-sm text-danger">{photoError}</p>}
+
       <Field label="Name" required error={errors.name}>
         <Input ref={nameRef} name="name" autoComplete="off" autoCapitalize="words" enterKeyHint="next" value={form.name} onChange={(e) => set("name", e.target.value)} placeholder="Vor- und Nachname" />
       </Field>
@@ -210,11 +270,46 @@ export function LeadForm({ defaultSource, defaultSourceDetail, regionOptions }: 
       />
 
       <button type="button" onClick={() => setShowMore((s) => !s)} className="text-sm font-medium text-brand-strong">
-        {showMore ? "Weniger Felder" : "Mehr Felder (Firma, Segment, Regionen, Notiz, Quelle)"}
+        {showMore ? "Weniger Felder" : "Mehr Felder (Sprache, Rückruf, Firma, Segment, Regionen, Notiz, Quelle)"}
       </button>
 
       {showMore && (
         <div className="space-y-5 rounded-2xl border border-line bg-canvas p-4">
+          <Field label="Sprache" group>
+            <ChipGroup name="Sprache" options={LEAD_LANGUAGES.map((l) => ({ value: l.value, label: l.label }))} value={form.language} onChange={(v) => set("language", form.language === v ? null : v)} />
+          </Field>
+          <Field label="Rückrufwunsch" hint="wird im Hub als Aufgabe zu diesem Termin angelegt" error={errors.callbackAt}>
+            <Input name="callbackAt" type="datetime-local" value={form.callbackAt} onChange={(e) => set("callbackAt", e.target.value)} />
+            <span className="mt-2 flex flex-wrap gap-2">
+              {[
+                ["Heute 17 Uhr", localSlot(0, 17)],
+                ["Morgen 10 Uhr", localSlot(1, 10)],
+                ["In einer Woche", localSlot(7, 10)],
+              ].map(([label, value]) => (
+                <button key={label} type="button" onClick={() => set("callbackAt", value)} className="rounded-md border border-line-strong/60 bg-surface-solid px-2.5 py-1 text-xs hover:bg-brand-soft">
+                  {label}
+                </button>
+              ))}
+              {form.callbackAt && (
+                <button type="button" onClick={() => set("callbackAt", "")} className="rounded-md px-2.5 py-1 text-xs text-muted hover:bg-surface-2">
+                  kein Rückruf
+                </button>
+              )}
+            </span>
+          </Field>
+          <Field label="Bevorzugter Kontaktweg" group>
+            <ChipGroup name="Kontaktweg" options={CONTACT_CHANNELS.map((c) => ({ value: c, label: CONTACT_CHANNEL_LABEL[c] }))} value={form.contactChannel} onChange={(v) => set("contactChannel", form.contactChannel === v ? null : v)} />
+          </Field>
+          {form.role === "KAEUFER" && (
+            <>
+              <Field label="Zeithorizont" group>
+                <ChipGroup name="Zeithorizont" options={TIME_HORIZONS.map((h) => ({ value: h, label: TIME_HORIZON_LABEL[h] }))} value={form.timeHorizon} onChange={(v) => set("timeHorizon", form.timeHorizon === v ? null : v)} />
+              </Field>
+              <Field label="Finanzierung" group>
+                <ChipGroup name="Finanzierung" options={FINANCING_OPTIONS.map((f) => ({ value: f, label: FINANCING_LABEL[f] }))} value={form.financing} onChange={(v) => set("financing", form.financing === v ? null : v)} />
+              </Field>
+            </>
+          )}
           <Field label="Firma" error={errors.company}>
             <Input name="company" value={form.company} onChange={(e) => set("company", e.target.value)} />
           </Field>
@@ -224,7 +319,7 @@ export function LeadForm({ defaultSource, defaultSourceDetail, regionOptions }: 
           <Field label="Regionen" hint="Vorschläge oder Freitext" group>
             <RegionTags value={form.regions} onChange={(v) => set("regions", v)} options={regionOptions} />
           </Field>
-          <Field label="Notiz" error={errors.note}>
+          <Field label="Notiz" hint="Tipp: mit dem Mikrofon der Handytastatur diktieren" error={errors.note}>
             <Textarea name="note" rows={3} value={form.note} onChange={(e) => set("note", e.target.value)} />
           </Field>
           <div className="grid gap-4 sm:grid-cols-2">

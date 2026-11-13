@@ -4,6 +4,7 @@ import { env } from "./env";
 import { audit } from "./audit";
 import { LEAD_SOURCE_LABEL, SEGMENT_LABEL } from "./labels";
 import { dueInDays, leadToHubContactInput } from "./oidc";
+import { leadExtras } from "./form-options";
 
 /**
  * Client für die REST-API des Baax Hub (docs/API.md im Hub-Repository).
@@ -126,6 +127,7 @@ export async function syncLeadToHub(leadId: string, userId: string | null): Prom
           segmentLabel: lead.segment ? SEGMENT_LABEL[lead.segment] : null,
           interest: lead.interest,
           note: lead.note,
+          extras: leadExtras(lead),
         }),
       );
       if (!r.json.data?.hubId) throw new Error("Hub lieferte keine Kontakt-ID");
@@ -140,7 +142,8 @@ export async function syncLeadToHub(leadId: string, userId: string | null): Prom
       body: [`Quelle: ${LEAD_SOURCE_LABEL[lead.source]}${lead.sourceDetail ? ` – ${lead.sourceDetail}` : ""}`, lead.interest && `Interesse: ${lead.interest}`].filter(Boolean).join("\n"),
       url: `${env.appUrl}/leads/${lead.id}`,
       occurredAt: lead.createdAt.toISOString(),
-      task: { title: `Nachfassen: ${lead.name}`, dueInDays: 2 },
+      // Rückrufwunsch geht vor: Aufgabe zum gewünschten Termin, sonst Nachfassen in 2 Tagen
+      task: lead.callbackAt ? { title: `Rückruf: ${lead.name}`, dueInDays: dueInDays(lead.callbackAt) } : { title: `Nachfassen: ${lead.name}`, dueInDays: 2 },
     });
     await prisma.lead.update({ where: { id: lead.id }, data: { hubSync: "SYNCED", hubSyncError: null, hubSyncedAt: new Date() } });
     await audit({ userId, action: "HUB_SYNC", entity: "Lead", entityId: lead.id, meta: { ok: true, hubContactId, existing } });

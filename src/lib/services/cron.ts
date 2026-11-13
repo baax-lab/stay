@@ -4,6 +4,7 @@ import { env } from "@/lib/env";
 import { audit } from "@/lib/audit";
 import { sendMail } from "@/lib/mail";
 import { createHubTask } from "@/lib/hub";
+import { deleteLeadFiles } from "./lead-files";
 import { ACTIVE_STATUSES } from "@/lib/mandates";
 import { formatEur } from "@/lib/fees";
 import { LEAD_SOURCE_LABEL } from "@/lib/labels";
@@ -137,7 +138,9 @@ export async function runDailyJobs(now = new Date()): Promise<CronReport> {
   try {
     const cutoff = new Date(now);
     cutoff.setMonth(cutoff.getMonth() - env.retentionDiscardedLeadsMonths);
-    const r = await prisma.lead.deleteMany({ where: { status: "VERWORFEN", updatedAt: { lt: cutoff }, mandate: null, sellerProperties: { none: {} } } });
+    const old = await prisma.lead.findMany({ where: { status: "VERWORFEN", updatedAt: { lt: cutoff }, mandate: null, sellerProperties: { none: {} } }, select: { id: true } });
+    await deleteLeadFiles(old.map((l) => l.id));
+    const r = await prisma.lead.deleteMany({ where: { id: { in: old.map((l) => l.id) } } });
     report.deletedLeads = r.count;
   } catch (e) {
     report.errors.push(`Löschkonzept: ${e instanceof Error ? e.message : e}`);

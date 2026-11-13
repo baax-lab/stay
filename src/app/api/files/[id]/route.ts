@@ -28,6 +28,8 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
   const f = await prisma.storedFile.findUnique({ where: { id } });
   if (!f) return NextResponse.json({ error: "Nicht gefunden" }, { status: 404 });
   if (f.kind === "GWG_NACHWEIS" && !can.viewGwgDocuments(user.role)) return NextResponse.json({ error: "Keine Berechtigung" }, { status: 403 });
+  // Visitenkarte enthält Kontaktdaten: wie Kontaktdaten am Lead erst ab Mitarbeiter
+  if (f.entity === "Lead" && !can.viewLeadContactDetails(user.role)) return NextResponse.json({ error: "Keine Berechtigung" }, { status: 403 });
   if (f.entity === "Mandate" && !can.viewBuyerDetails(user.role) && f.kind !== "PHOTO" && f.kind !== "OWNER_PHOTO") return NextResponse.json({ error: "Keine Berechtigung" }, { status: 403 });
 
   try {

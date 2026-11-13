@@ -84,3 +84,44 @@ describe("Suchprofil aus Lead", () => {
     expect(p.financing).toBeNull();
   });
 });
+
+import { parseImageDataUrl } from "@/lib/data-url";
+import { leadToHubContactInput } from "@/lib/oidc";
+
+describe("Visitenkartenfoto", () => {
+  const jpeg = "data:image/jpeg;base64," + Buffer.from([0xff, 0xd8, 0xff, 0xe0, 1, 2, 3]).toString("base64");
+  it("nimmt echte Bilder an", () => {
+    const r = parseImageDataUrl(jpeg);
+    expect(r?.mime).toBe("image/jpeg");
+    expect(r?.bytes.length).toBe(7);
+  });
+  it("weist falsche Typen, falsche Köpfe und zu große Bilder ab", () => {
+    expect(parseImageDataUrl("data:text/html;base64,PGI+")).toBeNull();
+    expect(parseImageDataUrl("data:image/png;base64," + Buffer.from("not a png").toString("base64"))).toBeNull();
+    expect(parseImageDataUrl("data:image/svg+xml;base64,PHN2Zz4=")).toBeNull();
+    expect(parseImageDataUrl(jpeg, 3)).toBeNull();
+    expect(parseImageDataUrl({})).toBeNull();
+  });
+});
+
+describe("Kontakt für den Hub mit Zusatzangaben", () => {
+  it("schreibt Sprache und Rückruf in die Notiz", () => {
+    const c = leadToHubContactInput({ name: "Ana López", company: null, email: null, phone: "+34 600", role: "KAEUFER", sourceLabel: "Messe", sourceDetail: null, segmentLabel: null, interest: null, note: null, extras: ["Sprache: Spanisch", "Rückrufwunsch: 20.11.2026, 10:00"] });
+    expect(c.notes).toBe("Sprache: Spanisch\nRückrufwunsch: 20.11.2026, 10:00");
+  });
+});
+
+import { leadExtras } from "@/lib/form-options";
+
+describe("Zusatzangaben am Lead", () => {
+  it("fasst sie lesbar zusammen und ignoriert Unbekanntes", () => {
+    expect(leadExtras({ language: "es", callbackAt: "2026-11-20T09:00:00Z", contactChannel: "WHATSAPP", timeHorizon: "SOFORT", financing: "OFFEN" })).toEqual([
+      "Sprache: Spanisch",
+      "Rückrufwunsch: 20.11.26, 10:00",
+      "Bevorzugter Kontaktweg: WhatsApp",
+      "Zeithorizont: so bald wie möglich",
+      "Finanzierung: noch offen",
+    ]);
+    expect(leadExtras({ language: "xx", contactChannel: "FAX" })).toEqual([]);
+  });
+});

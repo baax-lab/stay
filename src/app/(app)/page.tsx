@@ -23,7 +23,7 @@ export default async function DashboardPage() {
   const endOfToday = new Date(now);
   endOfToday.setHours(23, 59, 59, 999);
 
-  const [event, openLeads, totalLeads, weekLeads, pendingHub, bySource, byRole, recentLeads, mandatesByStatus, newMatches, goalMandates, funnelLeads, funnelInterview, funnelMandates, closings, followUps, staleLeads, expiring] = await Promise.all([
+  const [event, openLeads, totalLeads, weekLeads, pendingHub, bySource, byRole, recentLeads, mandatesByStatus, newMatches, goalMandates, funnelLeads, funnelInterview, funnelMandates, closings, followUps, staleLeads, expiring, callbacks] = await Promise.all([
     getActiveEvent(),
     prisma.lead.count({ where: { status: "NEU" } }),
     prisma.lead.count(),
@@ -42,6 +42,13 @@ export default async function DashboardPage() {
     prisma.followUp.findMany({ where: { doneAt: null, dueAt: { lte: endOfToday } }, include: { mandate: { select: { id: true, title: true } } }, take: 10 }),
     prisma.lead.findMany({ where: { status: "NEU", createdAt: { lte: new Date(now.getTime() - 2 * 86400000) } }, orderBy: { createdAt: "asc" }, take: 10, select: { id: true, name: true, createdAt: true } }),
     prisma.mandate.findMany({ where: { status: { in: ACTIVE_STATUSES }, endDate: { lte: new Date(now.getTime() + 14 * 86400000) } }, select: { id: true, title: true, endDate: true }, take: 10 }),
+    // Rückrufwünsche bis Ende heute, solange der Lead offen ist
+    prisma.lead.findMany({
+      where: { callbackAt: { lte: new Date(new Date().setHours(23, 59, 59, 999)) }, status: { in: ["NEU", "KONTAKTIERT"] } },
+      orderBy: { callbackAt: "asc" },
+      take: 20,
+      select: { id: true, name: true, callbackAt: true },
+    }),
   ]);
 
   const candidates = await prisma.searchCandidate.count({ where: { status: "NEU" } });
@@ -140,6 +147,15 @@ export default async function DashboardPage() {
         <Card>
           <CardTitle>Aufgaben heute</CardTitle>
           <ul className="space-y-2 text-sm">
+            {callbacks.map((l) => (
+              <li key={`cb-${l.id}`}>
+                <Badge tone={l.callbackAt! < new Date() ? "danger" : "warn"}>Rückruf</Badge>{" "}
+                <Link href={`/leads/${l.id}`} className="hover:underline">
+                  {l.name}
+                </Link>{" "}
+                <span className="text-xs text-muted">{l.callbackAt!.toLocaleString("de-DE", { timeZone: "Europe/Berlin", dateStyle: "short", timeStyle: "short" })}</span>
+              </li>
+            ))}
             {staleLeads.map((l) => (
               <li key={l.id}>
                 <Badge tone="warn">Lead</Badge>{" "}
@@ -176,7 +192,7 @@ export default async function DashboardPage() {
                 <span className="text-xs text-muted">endet {m.endDate?.toLocaleDateString("de-DE")}</span>
               </li>
             ))}
-            {staleLeads.length + dueClosingItems.length + followUps.length + expiring.length === 0 && <li className="text-muted">Nichts fällig.</li>}
+            {callbacks.length + staleLeads.length + dueClosingItems.length + followUps.length + expiring.length === 0 && <li className="text-muted">Nichts fällig.</li>}
           </ul>
         </Card>
       </div>

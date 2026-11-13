@@ -5,6 +5,7 @@ import { clientIp, getSessionUser } from "@/lib/auth";
 import { can } from "@/lib/permissions";
 import { audit } from "@/lib/audit";
 import { csvCell, formatBudget } from "@/lib/leads";
+import { CONTACT_CHANNEL_LABEL, FINANCING_LABEL, LEAD_LANGUAGES, TIME_HORIZON_LABEL, oneOf, CONTACT_CHANNELS, FINANCING_OPTIONS, TIME_HORIZONS } from "@/lib/form-options";
 import { LEAD_ROLE_LABEL, LEAD_SOURCE_LABEL, LEAD_STATUS_LABEL, SEGMENT_LABEL, HUB_SYNC_LABEL } from "@/lib/labels";
 
 /** CSV-Export (nur LEITUNG/ADMIN), protokolliert im AuditLog. */
@@ -29,6 +30,7 @@ export async function GET(req: NextRequest) {
   const header = [
     "ID", "Erfasst am", "Name", "Firma", "E-Mail", "Telefon", "Rolle", "Quelle", "Quelle Detail", "Interesse", "Segment", "Regionen",
     "Budget", "Budget von", "Budget bis", "Einwilligung E-Mail", "Einwilligung am", "Status", "Hub-Übergabe", "Hub-Kontakt-ID", "Dublette von", "Notiz",
+    "Sprache", "Rückrufwunsch", "Kontaktweg", "Zeithorizont", "Finanzierung",
   ];
   const rows = leads.map((l) => [
     l.id,
@@ -53,6 +55,11 @@ export async function GET(req: NextRequest) {
     l.hubContactId,
     l.duplicateOfId,
     l.note,
+    LEAD_LANGUAGES.find((x) => x.value === l.language)?.label ?? "",
+    l.callbackAt?.toLocaleString("de-DE", { timeZone: "Europe/Berlin" }) ?? "",
+    (() => { const c = oneOf(CONTACT_CHANNELS, l.contactChannel); return c ? CONTACT_CHANNEL_LABEL[c] : ""; })(),
+    (() => { const h = oneOf(TIME_HORIZONS, l.timeHorizon); return h ? TIME_HORIZON_LABEL[h] : ""; })(),
+    (() => { const f = oneOf(FINANCING_OPTIONS, l.financing); return f ? FINANCING_LABEL[f] : ""; })(),
   ]);
 
   // Semikolon als Trennzeichen und BOM, damit Excel (DE) die Datei direkt richtig öffnet.

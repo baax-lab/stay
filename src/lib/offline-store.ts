@@ -2,6 +2,9 @@
 
 import type { LeadInput } from "./leads";
 
+/** Kontakt wie gesendet, dazu optional das verkleinerte Visitenkartenfoto als data:-Adresse */
+export type LeadPayload = LeadInput & { cardImage?: string | null };
+
 /**
  * Offline-Puffer für die Lead-Erfassung (Konzept §7.4).
  * Leads, die ohne Netz gespeichert werden, landen in IndexedDB und werden
@@ -14,7 +17,7 @@ export const PENDING_EVENT = "stay:pending-changed";
 
 export type PendingLead = {
   clientId: string;
-  payload: LeadInput;
+  payload: LeadPayload;
   createdAt: number;
   attempts: number;
   lastError?: string;
@@ -97,7 +100,7 @@ export type SubmitOutcome =
   | { kind: "network"; error: string };
 
 /** Sendet einen Lead an die API. Netzfehler werden vom Validierungsfehler unterschieden. */
-export async function submitLead(payload: LeadInput, timeoutMs = 8000): Promise<SubmitOutcome> {
+export async function submitLead(payload: LeadPayload, timeoutMs = 8000): Promise<SubmitOutcome> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {

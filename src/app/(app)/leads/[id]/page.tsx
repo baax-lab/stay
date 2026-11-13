@@ -6,6 +6,7 @@ import { requireUser } from "@/lib/auth";
 import { can } from "@/lib/permissions";
 import { HUB_SYNC_LABEL, LEAD_ROLE_LABEL, LEAD_SOURCE_LABEL, LEAD_STATUS_LABEL, SEGMENT_LABEL } from "@/lib/labels";
 import { formatBudget } from "@/lib/leads";
+import { leadExtras } from "@/lib/form-options";
 import { findDuplicates } from "@/lib/lead-service";
 import { Card, CardTitle, Notice, PageHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -23,6 +24,8 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
   if (!lead) notFound();
 
   const showDetails = can.viewLeadContactDetails(user.role);
+  const extras = leadExtras(lead);
+  const cardFiles = showDetails ? await prisma.storedFile.findMany({ where: { entity: "Lead", entityId: lead.id, kind: "VISITENKARTE" }, orderBy: { createdAt: "asc" } }) : [];
   const canEdit = can.editLead(user.role);
   const dupes = showDetails ? await findDuplicates({ email: lead.email, phone: lead.phone }, lead.id) : [];
 
@@ -107,6 +110,25 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
             <Row k="Interesse" v={lead.interest ? <span className="whitespace-pre-wrap">{lead.interest}</span> : "–"} />
           </dl>
         </Card>
+
+        {(extras.length > 0 || cardFiles.length > 0) && (
+          <Card>
+            <CardTitle>Gesprächsangaben</CardTitle>
+            {extras.length > 0 && (
+              <ul className="space-y-1 text-sm">
+                {extras.map((x) => (
+                  <li key={x}>{x}</li>
+                ))}
+              </ul>
+            )}
+            {cardFiles.map((f) => (
+              <a key={f.id} href={`/api/files/${f.id}`} target="_blank" rel="noopener noreferrer" className="mt-3 block">
+                {/* eslint-disable-next-line @next/next/no-img-element -- geschützte Datei, Auslieferung über /api/files */}
+                <img src={`/api/files/${f.id}`} alt="Visitenkarte" className="max-h-56 rounded-lg border border-line object-contain" />
+              </a>
+            ))}
+          </Card>
+        )}
 
         <Card>
           <CardTitle>Hub</CardTitle>

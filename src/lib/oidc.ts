@@ -91,13 +91,15 @@ export type LeadForHub = {
   segmentLabel: string | null;
   interest: string | null;
   note: string | null;
+  /** Zusatzangaben für das Team im Hub (Sprache, Rückrufwunsch, Kontaktweg, Zeithorizont, Finanzierung) */
+  extras?: string[];
 };
 
 /** Kontakt für POST /api/v1/contacts. Einwilligung in E-Mail-Kontakt ist kein Newsletter, daher kein consentNewsletter. */
 export function leadToHubContactInput(l: LeadForHub) {
   const { firstName, lastName } = splitName(l.name);
   const source = `Baax Stay: ${l.sourceLabel}${l.sourceDetail ? ` – ${l.sourceDetail}` : ""}`.slice(0, 120);
-  const notes = [l.interest && `Interesse: ${l.interest}`, l.note].filter(Boolean).join("\n\n").slice(0, 4000);
+  const notes = [l.interest && `Interesse: ${l.interest}`, l.extras?.length ? l.extras.join("\n") : null, l.note].filter(Boolean).join("\n\n").slice(0, 4000);
   return {
     firstName,
     lastName: lastName.slice(0, 120),

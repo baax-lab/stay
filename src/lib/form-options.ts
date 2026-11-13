@@ -77,3 +77,21 @@ export function formatDistance(meters: number | null | undefined, lang: "de" | "
   const km = meters / 1000;
   return `${new Intl.NumberFormat(lang === "en" ? "en-GB" : "de-DE", { maximumFractionDigits: km < 10 ? 1 : 0 }).format(km)} km`;
 }
+
+/** Zusatzangaben eines Leads als kurze Zeilen (Hub-Notiz, Lead-Detail). */
+export function leadExtras(l: { language?: string | null; callbackAt?: Date | string | null; contactChannel?: string | null; timeHorizon?: string | null; financing?: string | null }): string[] {
+  const out: string[] = [];
+  const lang = LEAD_LANGUAGES.find((x) => x.value === l.language);
+  if (lang) out.push(`Sprache: ${lang.label}`);
+  if (l.callbackAt) {
+    const d = new Date(l.callbackAt);
+    if (!Number.isNaN(d.getTime())) out.push(`Rückrufwunsch: ${d.toLocaleString("de-DE", { timeZone: "Europe/Berlin", dateStyle: "short", timeStyle: "short" })}`);
+  }
+  const ch = oneOf(CONTACT_CHANNELS, l.contactChannel);
+  if (ch) out.push(`Bevorzugter Kontaktweg: ${CONTACT_CHANNEL_LABEL[ch]}`);
+  const h = oneOf(TIME_HORIZONS, l.timeHorizon);
+  if (h) out.push(`Zeithorizont: ${TIME_HORIZON_LABEL[h]}`);
+  const f = oneOf(FINANCING_OPTIONS, l.financing);
+  if (f) out.push(`Finanzierung: ${FINANCING_LABEL[f]}`);
+  return out;
+}

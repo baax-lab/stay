@@ -3,6 +3,7 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { audit } from "@/lib/audit";
 import { deleteFile } from "./files";
+import { deleteLeadFiles } from "./lead-files";
 import {
   ANONYMIZED_NAME,
   decideLead,
@@ -112,7 +113,10 @@ export async function buildExport(s: PrivacySubjects) {
     }),
     prisma.referrer.findMany({ where: { id: { in: referrerIds } }, include: { rewards: true } }),
     prisma.partner.findMany({ where: { id: { in: partnerIds } }, include: { sends: true, ratings: true, accesses: { select: { id: true, createdAt: true, expiresAt: true, revokedAt: true, lastSeenAt: true } } } }),
-    prisma.storedFile.findMany({ where: { entity: "Mandate", entityId: { in: mandateIds } }, select: { id: true, fileName: true, mimeType: true, size: true, kind: true, createdAt: true } }),
+    prisma.storedFile.findMany({
+      where: { OR: [{ entity: "Mandate", entityId: { in: mandateIds } }, { entity: "Lead", entityId: { in: leadIds } }] },
+      select: { id: true, entity: true, entityId: true, fileName: true, mimeType: true, size: true, kind: true, createdAt: true },
+    }),
     prisma.auditLog.findMany({ where: { entityId: { in: [...leadIds, ...mandateIds, ...referrerIds, ...partnerIds] } }, orderBy: { createdAt: "asc" } }),
   ]);
   return {
@@ -172,6 +176,8 @@ export async function executeErasure(items: ErasureItem[], userId: string): Prom
     if (it.entity === "Lead") {
       const lead = await prisma.lead.findUnique({ where: { id: it.id }, select: { hubContactId: true } });
       if (lead?.hubContactId) result.hubContactIds.push(lead.hubContactId);
+      // Visitenkartenfoto gehört zur Person: bei Löschung und Anonymisierung weg
+      await deleteLeadFiles([it.id]);
       if (it.action === "DELETE") {
         await prisma.$transaction([
           prisma.property.updateMany({ where: { sellerLeadId: it.id }, data: { sellerLeadId: null } }),
