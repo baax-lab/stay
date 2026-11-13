@@ -9,6 +9,7 @@ import type { SessionUser } from "@/lib/session";
 import { logEvent } from "./events";
 import { runMatchingForMandate } from "./matching";
 import { draftStatusNotification } from "./notifications";
+import { profileFromLead } from "@/lib/profile-prefill";
 
 /** Lead in Suchauftrag umwandeln (Konzept §8.1). */
 export async function createMandateFromLead(leadId: string, user: SessionUser, input: { title?: string }) {
@@ -17,6 +18,13 @@ export async function createMandateFromLead(leadId: string, user: SessionUser, i
   if (lead.role !== "KAEUFER") throw new Error("Nur Käufer-Leads werden zu Suchaufträgen; Verkäufer werden zu Objekten");
 
   const title = input.title?.trim() || [lead.segment ? SEGMENT_SHORT[lead.segment] : null, lead.regions[0], lead.name].filter(Boolean).join(" ");
+  // Suchprofil aus den Angaben des Leads vorbelegen (Regionen, Länder, Budget, Zeithorizont, Finanzierung)
+  const [regionList, countryList] = await Promise.all([
+    prisma.region.findMany({ select: { key: true, name: true, country: true } }),
+    prisma.country.findMany({ select: { code: true, name: true } }),
+  ]);
+  const prefill = profileFromLead(lead, regionList, countryList);
+  const note = [lead.note, prefill.unmatched.length ? `Weitere Wunschregionen laut Lead: ${prefill.unmatched.join(", ")}` : null].filter(Boolean).join("\n\n") || null;
 
   const mandate = await prisma.$transaction(async (tx) => {
     const m = await tx.mandate.create({
@@ -31,14 +39,17 @@ export async function createMandateFromLead(leadId: string, user: SessionUser, i
         ownerName: user.name,
         ownerEmail: user.email,
         referrerId: lead.referrerId,
-        note: lead.note,
+        note,
+        buyerLang: lead.language === "en" ? "en" : "de",
         profile: {
           create: {
-            segments: lead.segment ? [lead.segment] : [],
-            countries: [],
-            regions: [],
-            priceMin: lead.budgetMin,
-            priceMax: lead.budgetMax ?? lead.budgetMin ?? 1_000_000,
+            segments: prefill.segments,
+            countries: prefill.countries,
+            regions: prefill.regions,
+            priceMin: prefill.priceMin,
+            priceMax: prefill.priceMax,
+            horizon: prefill.horizon,
+            financing: prefill.financing,
             mustCriteria: [],
             wishCriteria: [],
             active: false, // erst nach Pflege des Suchprofils aktiv

@@ -79,6 +79,19 @@ export const leadInputSchema = z
     budgetBand: z.enum(["bis300", "300-1000", "1000-3000", "ueber3000"]).nullable().optional(),
     consentEmail: z.boolean().default(false),
     note: optionalText(4000),
+    // Formular-Ausbau
+    language: z.enum(["de", "en", "it", "es", "fr", "nl"]).nullable().optional(),
+    callbackAt: z
+      .string()
+      .trim()
+      .max(40)
+      .nullable()
+      .optional()
+      .transform((v) => (v ? new Date(v) : null))
+      .refine((d) => d === null || !Number.isNaN(d.getTime()), "Rückruftermin ungültig"),
+    timeHorizon: z.enum(["SOFORT", "MONATE_6", "MONATE_12", "SPAETER"]).nullable().optional(),
+    financing: z.enum(["EIGENKAPITAL", "FINANZIERUNG", "OFFEN"]).nullable().optional(),
+    contactChannel: z.enum(["TELEFON", "EMAIL", "WHATSAPP"]).nullable().optional(),
   })
   .refine((v) => Boolean(v.email || v.phone), {
     message: "Mindestens Telefon oder E-Mail angeben",
@@ -113,6 +126,11 @@ export function leadInputFromFormData(fd: FormData): LeadInput {
     budgetBand: (str("budgetBand") || null) as LeadInput["budgetBand"],
     consentEmail: fd.get("consentEmail") === "on" || fd.get("consentEmail") === "true",
     note: str("note"),
+    language: (str("language") || null) as LeadInput["language"],
+    callbackAt: str("callbackAt") || null,
+    timeHorizon: (str("timeHorizon") || null) as LeadInput["timeHorizon"],
+    financing: (str("financing") || null) as LeadInput["financing"],
+    contactChannel: (str("contactChannel") || null) as LeadInput["contactChannel"],
   };
 }
 

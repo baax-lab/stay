@@ -86,6 +86,12 @@ model Lead {
   status           LeadStatus @default(NEU)
   note             String?
   followUpTaskAt   DateTime? // Aufgabe „Nachfassen“ im Hub angelegt (Lead ohne Kontakt nach 2 Werktagen)
+  // Formular-Ausbau: Messe und Interessenformular
+  language         String? // de, en, it, es, fr, nl
+  callbackAt       DateTime? // Rückrufwunsch
+  timeHorizon      String? // SOFORT, MONATE_6, MONATE_12, SPAETER
+  financing        String? // EIGENKAPITAL, FINANZIERUNG, OFFEN
+  contactChannel   String? // TELEFON, EMAIL, WHATSAPP
   createdById      String // Hub-User-ID oder "public" für das Interessenformular
   createdAt        DateTime   @default(now())
   updatedAt        DateTime   @updatedAt
@@ -322,61 +328,72 @@ model SearchProfile {
 }
 
 model Property {
-  id               String        @id @default(cuid())
-  title            String
-  segment          Segment
-  country          String
-  region           String // Region-Key
-  locality         String?
-  address          String?
-  price            Int
-  currency         String        @default("EUR")
-  units            Int?
-  livingArea       Int?
-  licenseStatus    LicenseStatus @default(UNKLAR)
-  licenseNote      String?
-  licenseLight     LicenseLight  @default(GRAU)
-  occupancyPct     Float?
-  adr              Int?
-  revenueYear      Int?
-  features         Json          @default("[]") // string[]
-  description      String?
-  titleEn          String?
-  descriptionEn    String?
+  id                String        @id @default(cuid())
+  title             String
+  segment           Segment
+  country           String
+  region            String // Region-Key
+  locality          String?
+  address           String?
+  price             Int
+  currency          String        @default("EUR")
+  units             Int?
+  livingArea        Int?
+  // Eckdaten (Formular-Ausbau)
+  yearBuilt         Int?
+  condition         String? // NEUWERTIG, GEPFLEGT, MODERNISIERUNG, SANIERUNG
+  plotArea          Int?
+  bedrooms          Int?
+  bathrooms         Int?
+  distanceBeachM    Int?
+  distanceSkiM      Int?
+  distanceAirportKm Int?
+  energyClass       String?
+  mapUrl            String?
+  licenseStatus     LicenseStatus @default(UNKLAR)
+  licenseNote       String?
+  licenseLight      LicenseLight  @default(GRAU)
+  occupancyPct      Float?
+  adr               Int?
+  revenueYear       Int?
+  features          Json          @default("[]") // string[]
+  description       String?
+  titleEn           String?
+  descriptionEn     String?
   // Phase 1b: Gesamtkosten, Rendite, Dossier
-  renovationBudget Int?
-  opCostsYear      Int? // Betriebskosten p. a. (Nebenkosten, Versicherung, Instandhaltung)
-  managementPct    Float? // Verwaltung/Agentur in % vom Umsatz
-  reservesPct      Float? // Rücklagen in % vom Umsatz
-  taxPct           Float? // Steuern grob in % vom Überschuss
-  scenarioSpread   Float? // Szenario-Spanne, Standard 0,15
-  strengths        String?
-  risks            String?
-  strengthsEn      String?
-  risksEn          String?
-  precheckNote     String? // Vorprüfungsstand
-  source           ObjectSource
-  sourceDetail     String?
-  knownSince       DateTime      @default(now())
-  knownSourceNote  String?
-  sellerLeadId     String?
-  sellerLead       Lead?         @relation("SellerLeadProperties", fields: [sellerLeadId], references: [id])
-  offmarket        Boolean       @default(false)
-  referrerId       String?
-  referrer         Referrer?     @relation(fields: [referrerId], references: [id])
-  partnerId        String?
-  partner          Partner?      @relation(fields: [partnerId], references: [id])
-  availability     Availability  @default(VERFUEGBAR)
-  priceHistory     Json          @default("[]") // { price, at, note? }[]
-  documents        Json          @default("[]") // StoredFile-IDs
-  photos           Json          @default("[]") // StoredFile-IDs
-  duplicateOfId    String?
-  duplicateOf      Property?     @relation("PropertyDuplicates", fields: [duplicateOfId], references: [id])
-  duplicates       Property[]    @relation("PropertyDuplicates")
-  active           Boolean       @default(true)
-  createdById      String
-  createdAt        DateTime      @default(now())
-  updatedAt        DateTime      @updatedAt
+  renovationBudget  Int?
+  opCostsYear       Int? // Betriebskosten p. a. (Nebenkosten, Versicherung, Instandhaltung)
+  managementPct     Float? // Verwaltung/Agentur in % vom Umsatz
+  reservesPct       Float? // Rücklagen in % vom Umsatz
+  taxPct            Float? // Steuern grob in % vom Überschuss
+  scenarioSpread    Float? // Szenario-Spanne, Standard 0,15
+  strengths         String?
+  risks             String?
+  strengthsEn       String?
+  risksEn           String?
+  precheckNote      String? // Vorprüfungsstand
+  source            ObjectSource
+  sourceDetail      String?
+  knownSince        DateTime      @default(now())
+  knownSourceNote   String?
+  sellerLeadId      String?
+  sellerLead        Lead?         @relation("SellerLeadProperties", fields: [sellerLeadId], references: [id])
+  offmarket         Boolean       @default(false)
+  referrerId        String?
+  referrer          Referrer?     @relation(fields: [referrerId], references: [id])
+  partnerId         String?
+  partner           Partner?      @relation(fields: [partnerId], references: [id])
+  availability      Availability  @default(VERFUEGBAR)
+  priceHistory      Json          @default("[]") // { price, at, note? }[]
+  documents         Json          @default("[]") // StoredFile-IDs
+  photos            Json          @default("[]") // StoredFile-IDs
+  duplicateOfId     String?
+  duplicateOf       Property?     @relation("PropertyDuplicates", fields: [duplicateOfId], references: [id])
+  duplicates        Property[]    @relation("PropertyDuplicates")
+  active            Boolean       @default(true)
+  createdById       String
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
 
   matches              Match[]
   presentations        Presentation[]

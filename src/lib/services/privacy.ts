@@ -182,7 +182,7 @@ export async function executeErasure(items: ErasureItem[], userId: string): Prom
       } else {
         await prisma.lead.update({
           where: { id: it.id },
-          data: { name: ANONYMIZED_NAME, company: null, email: null, phone: null, phoneNorm: null, hubContactId: null, hubSyncError: null, interest: null, note: null, consentEmail: false, consentAt: null, clientId: null },
+          data: { name: ANONYMIZED_NAME, company: null, email: null, phone: null, phoneNorm: null, hubContactId: null, hubSyncError: null, interest: null, note: null, consentEmail: false, consentAt: null, clientId: null, language: null, callbackAt: null, timeHorizon: null, financing: null, contactChannel: null },
         });
         result.anonymized++;
       }
