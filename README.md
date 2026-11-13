@@ -101,7 +101,7 @@ Ampel, Gesamtkosten und Rendite kommen intern, im Portal und im Dossier aus `src
 
 ```bash
 pnpm test                       # Unit (Vitest): Matching, Honorar, Statuslogik, Ampel, Validierung, Rechte, Session, Rate-Limit
-pnpm test:e2e                   # Playwright: Phase 0, 1 (Lead bis Kauf, Rechte, Vorrang), 1b (Portal, Dossier, Berichte), 2 (Partnerzugang, Vorprüfung, Besichtigung, Reisen, Vorlagen), 3 (Wissen, Kandidaten, Auswertung), Betrieb (DSGVO, Protokoll, Rechtstexte, Abmelden)
+pnpm test:e2e                   # Playwright: Phase 0, 1 (Lead bis Kauf, Rechte, Vorrang), 1b (Portal, Dossier, Berichte), 2 (Partnerzugang, Vorprüfung, Besichtigung, Reisen, Vorlagen), 3 (Wissen, Kandidaten, Auswertung), Betrieb (DSGVO, Protokoll, Rechtstexte, Abmelden), Formulare (Interessenformular EN, Visitenkarte, Entwurf, Eckdaten)
 ```
 
 Die E2E-Tests starten einen Dev-Server (Turbopack, eigener Build-Ordner `.next-e2e`) auf Port 3100 und brauchen die Datenbank aus `.env`. Mit abweichendem Chromium-Pfad: `PW_CHROMIUM_PATH=/pfad/zu/chromium pnpm test:e2e`.
@@ -116,6 +116,14 @@ Die E2E-Tests starten einen Dev-Server (Turbopack, eigener Build-Ordner `.next-e
 - Jede Benachrichtigung an den Käufer (neues Objekt, Bericht, Statuswechsel) entsteht als Entwurf im Tab „Käuferportal“ und wird erst nach Sichtung gesendet; sie enthält jeweils einen frischen Link.
 - Abgelaufene Links zeigen eine Hinweisseite mit Kontakt und der Möglichkeit, einen neuen Link an die hinterlegte Adresse anzufordern. Widerrufene Links nicht.
 - Jeder Portalaufruf und jede Aktion steht im AuditLog und im Tab „Käuferportal“.
+
+## Formulare
+
+- **Zahlen** mit Tausenderpunkten (`NumberInput`): zeigt 1.250.000, liest gängige Schreibweisen; in Server-Formularen trägt ein verstecktes Feld den Rohwert.
+- **Entwürfe und Warnung** (`useFormSafety`): Objekt, Suchprofil und Erstgespräch speichern ungesicherte Änderungen als Entwurf auf dem Gerät (7 Tage, beim Abmelden gelöscht) und warnen beim Verlassen.
+- **Objekt:** weitere Eckdaten (Baujahr, Zustand, Energieklasse, Schlafzimmer, Bäder, Grundstück, Entfernungen zu Strand, Piste und Flughafen, Kartenlink), Fotos gleich beim Anlegen; Eckdaten auch im Dossier (de/en), Adresse und Karte bleiben intern.
+- **Messe-Erfassung:** Visitenkarte fotografieren (verkleinert, offline mitgepuffert, nur ab Mitarbeiter sichtbar, in DSGVO-Auskunft und Löschung enthalten), Sprache, Rückrufwunsch (wird Aufgabe „Rückruf“ im Hub und steht auf der Startseite), Kontaktweg, Zeithorizont, Finanzierung.
+- **Interessenformular** auf Deutsch und Englisch (`/interesse?lang=en`): Art der Immobilie, Regionen zum Anklicken, Budget, Zeithorizont, Finanzierung, Kontaktweg. Beim Umwandeln in einen Suchauftrag werden Segment, Regionen, Länder, Budget, Zeithorizont, Finanzierung und Käufersprache vorbelegt (`src/lib/profile-prefill.ts`).
 
 ## Datenschutz und Protokoll
 

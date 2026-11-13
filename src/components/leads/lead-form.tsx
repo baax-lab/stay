@@ -278,7 +278,7 @@ export function LeadForm({ defaultSource, defaultSourceDetail, regionOptions }: 
           <Field label="Sprache" group>
             <ChipGroup name="Sprache" options={LEAD_LANGUAGES.map((l) => ({ value: l.value, label: l.label }))} value={form.language} onChange={(v) => set("language", form.language === v ? null : v)} />
           </Field>
-          <Field label="Rückrufwunsch" hint="wird im Hub als Aufgabe zu diesem Termin angelegt" error={errors.callbackAt}>
+          <Field label="Rückrufwunsch" hint="wird Aufgabe im Hub" error={errors.callbackAt}>
             <Input name="callbackAt" type="datetime-local" value={form.callbackAt} onChange={(e) => set("callbackAt", e.target.value)} />
             <span className="mt-2 flex flex-wrap gap-2">
               {[

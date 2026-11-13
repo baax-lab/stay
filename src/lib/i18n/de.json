@@ -229,5 +229,73 @@
     "report_body": "Ihr {title} für den Zeitraum {period} steht im Portal für Sie bereit.",
     "status_subject": "Neuer Stand Ihres Suchauftrags",
     "status_body": "Ihr Suchauftrag hat einen neuen Stand: {status}. {next}"
+  },
+  "interest": {
+    "page_title": "Interesse mitteilen",
+    "headline": "Suchen Sie eine Ferienimmobilie?",
+    "intro": "Baax sucht ausschließlich im Auftrag von Käufern: Ferienwohnungen, Apartmenthäuser, Pensionen und kleine Hotels in Europa. Sagen Sie uns kurz, was Sie suchen oder anbieten. Wir melden uns persönlich.",
+    "via": "Kontakt über: {source}",
+    "i_am": "Ich bin …",
+    "role_KAEUFER": "Käufer",
+    "role_VERKAEUFER": "Verkäufer",
+    "role_PARTNER": "Partner",
+    "role_MULTIPLIKATOR": "Multiplikator",
+    "hint_KAEUFER": "Ich suche eine Immobilie",
+    "hint_VERKAEUFER": "Ich biete eine Immobilie an",
+    "hint_PARTNER": "Ich bin Makler, Anwalt, Finanzierer o. Ä.",
+    "hint_MULTIPLIKATOR": "Ich kann Kontakte vermitteln",
+    "name": "Name",
+    "email": "E-Mail",
+    "phone": "Telefon",
+    "optional": "optional",
+    "what_seek": "Was suchen Sie?",
+    "what_offer": "Was bieten Sie an?",
+    "placeholder_seek": "z. B. Ferienwohnung auf Mallorca, zur Vermietung, mit Pool",
+    "placeholder_offer": "z. B. Apartmenthaus mit 6 Einheiten am Gardasee",
+    "property_type": "Art der Immobilie",
+    "where": "Wo suchen Sie?",
+    "where_offer": "Wo liegt die Immobilie?",
+    "other_region": "Weitere Region",
+    "other_region_placeholder": "z. B. Allgäu, Algarve",
+    "budget": "Budget",
+    "price_idea": "Preisvorstellung",
+    "budget_bis300": "bis 300 T€",
+    "budget_300-1000": "300 T€ – 1 Mio. €",
+    "budget_1000-3000": "1 – 3 Mio. €",
+    "budget_ueber3000": "über 3 Mio. €",
+    "horizon": "Wann möchten Sie kaufen?",
+    "financing": "Finanzierung",
+    "channel": "Wie dürfen wir Sie erreichen?",
+    "consent": "Ich bin einverstanden, dass die Baax Immobilien GmbH meine Angaben speichert und mich per E-Mail oder Telefon zu meiner Anfrage kontaktiert. Die Einwilligung kann ich jederzeit widerrufen.",
+    "privacy": "Datenschutzhinweise",
+    "submit": "Absenden",
+    "sending": "Sende …",
+    "thanks": "Vielen Dank!",
+    "thanks_text": "Wir haben Ihre Nachricht erhalten und melden uns in Kürze persönlich.",
+    "error_generic": "Senden fehlgeschlagen. Bitte später erneut versuchen.",
+    "error_offline": "Keine Verbindung. Bitte später erneut versuchen.",
+    "error_check": "Bitte Eingaben prüfen.",
+    "error_rate": "Zu viele Anfragen. Bitte in einigen Minuten erneut versuchen.",
+    "err_name": "Bitte Namen angeben",
+    "err_email": "Bitte gültige E-Mail angeben",
+    "err_consent": "Ohne Einwilligung können wir Sie nicht kontaktieren."
+  },
+  "options": {
+    "time_horizon": {
+      "SOFORT": "so bald wie möglich",
+      "MONATE_6": "innerhalb von 6 Monaten",
+      "MONATE_12": "innerhalb von 12 Monaten",
+      "SPAETER": "später / noch offen"
+    },
+    "financing": {
+      "EIGENKAPITAL": "Eigenkapital",
+      "FINANZIERUNG": "Finanzierung geplant",
+      "OFFEN": "noch offen"
+    },
+    "contact_channel": {
+      "TELEFON": "Telefon",
+      "EMAIL": "E-Mail",
+      "WHATSAPP": "WhatsApp"
+    }
   }
 }

@@ -229,5 +229,73 @@
     "report_body": "Your {title} for the period {period} is ready in the portal.",
     "status_subject": "Update on your search mandate",
     "status_body": "Your search mandate has a new status: {status}. {next}"
+  },
+  "interest": {
+    "page_title": "Get in touch",
+    "headline": "Looking for a holiday property?",
+    "intro": "Baax works exclusively on behalf of buyers: holiday apartments, apartment buildings, guesthouses and small hotels across Europe. Tell us briefly what you are looking for or offering. We will get back to you personally.",
+    "via": "Contact via: {source}",
+    "i_am": "I am …",
+    "role_KAEUFER": "Buyer",
+    "role_VERKAEUFER": "Seller",
+    "role_PARTNER": "Partner",
+    "role_MULTIPLIKATOR": "Introducer",
+    "hint_KAEUFER": "I am looking for a property",
+    "hint_VERKAEUFER": "I am offering a property",
+    "hint_PARTNER": "I am an agent, lawyer, lender or similar",
+    "hint_MULTIPLIKATOR": "I can introduce contacts",
+    "name": "Name",
+    "email": "Email",
+    "phone": "Phone",
+    "optional": "optional",
+    "what_seek": "What are you looking for?",
+    "what_offer": "What are you offering?",
+    "placeholder_seek": "e.g. holiday apartment in Mallorca, for letting, with pool",
+    "placeholder_offer": "e.g. apartment building with 6 units on Lake Garda",
+    "property_type": "Property type",
+    "where": "Where are you looking?",
+    "where_offer": "Where is the property?",
+    "other_region": "Other region",
+    "other_region_placeholder": "e.g. Allgäu, Algarve",
+    "budget": "Budget",
+    "price_idea": "Asking price",
+    "budget_bis300": "up to €300k",
+    "budget_300-1000": "€300k – €1m",
+    "budget_1000-3000": "€1m – €3m",
+    "budget_ueber3000": "over €3m",
+    "horizon": "When would you like to buy?",
+    "financing": "Financing",
+    "channel": "How may we contact you?",
+    "consent": "I agree that Baax Immobilien GmbH stores my details and contacts me by email or phone about my enquiry. I can withdraw this consent at any time.",
+    "privacy": "Privacy notice",
+    "submit": "Send",
+    "sending": "Sending …",
+    "thanks": "Thank you!",
+    "thanks_text": "We have received your message and will be in touch personally shortly.",
+    "error_generic": "Sending failed. Please try again later.",
+    "error_offline": "No connection. Please try again later.",
+    "error_check": "Please check your entries.",
+    "error_rate": "Too many requests. Please try again in a few minutes.",
+    "err_name": "Please enter your name",
+    "err_email": "Please enter a valid email address",
+    "err_consent": "We cannot contact you without your consent."
+  },
+  "options": {
+    "time_horizon": {
+      "SOFORT": "as soon as possible",
+      "MONATE_6": "within 6 months",
+      "MONATE_12": "within 12 months",
+      "SPAETER": "later / undecided"
+    },
+    "financing": {
+      "EIGENKAPITAL": "equity",
+      "FINANZIERUNG": "financing planned",
+      "OFFEN": "not yet decided"
+    },
+    "contact_channel": {
+      "TELEFON": "Phone",
+      "EMAIL": "Email",
+      "WHATSAPP": "WhatsApp"
+    }
   }
 }

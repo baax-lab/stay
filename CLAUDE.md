@@ -18,5 +18,8 @@
 - Service Worker kommt aus `src/lib/sw-script.ts` (Route `/sw.js`, nur Produktion); neue öffentliche oder personenbezogene Pfade in dessen `NEVER`-Liste prüfen.
 - Gestaltung wie der Baax Hub: Tokens nur in `src/app/globals.css` (`brand` = Baax-Cyan, Schrift darauf immer `text-on-brand`; Links und Cyan-Text auf hellem Grund `text-brand-strong`; `surface` = Milchglas, `surface-solid` = Formularfelder). Karten und Tabellen über `.glass rounded-2xl`, Tabellenköpfe `.eyebrow`, Schrift Inter über `@fontsource/inter`. Primärfarbe zur Laufzeit über `BRAND_COLOR` (`/brand.css`), Rechtstexte über Setting `legal`.
 - Betrieb auf geteiltem Docker-Server: `deploy/README.md`, `deploy/stay.sh`. Keine festen Containernamen, keine Host-Ports im Basis-Compose, Datenbank als `stay-db` ansprechen.
+- Formulare: Beträge über `NumberInput` (`src/components/ui/number-input.tsx`), längere Formulare mit `useFormSafety` (Entwurf auf dem Gerät, Präfix `stay-draft:`, beim Abmelden gelöscht), seltene Felder in `MoreOptions`. Auswahlwerte und deutsche Beschriftungen in `src/lib/form-options.ts`, Käufertexte in `src/lib/i18n` (`interest.*`, `options.*`).
+- Visitenkartenfoto liegt als `StoredFile` mit `entity: "Lead"`, `kind: "VISITENKARTE"` (`src/lib/services/lead-files.ts`); beim Löschen von Leads immer `deleteLeadFiles` mit aufrufen.
+- Lead → Suchauftrag belegt das Suchprofil über `profileFromLead` (`src/lib/profile-prefill.ts`) vor.
 - Befehle: `pnpm dev`, `pnpm test` (Vitest), `pnpm test:e2e` (Playwright, braucht DB), `pnpm db:migrate`, `pnpm db:seed`, `pnpm build`.
 - Nach jedem Schritt: lauffähig, getestet, committet.
