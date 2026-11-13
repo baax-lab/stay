@@ -22,6 +22,7 @@ import { deletePropertyAction, deletePropertyFileAction, markDuplicateAction, se
 import { cn } from "@/lib/cn";
 import { FiguresTab } from "@/components/properties/figures-tab";
 import { PrecheckPanel } from "@/components/properties/precheck-panel";
+import { ENERGY_CLASSES, PROPERTY_CONDITIONS, PROPERTY_CONDITION_LABEL, formatDistance, mapsLink, oneOf } from "@/lib/form-options";
 
 const LIGHT: Record<string, string> = { GRUEN: "bg-ok", GELB: "bg-warn", ROT: "bg-danger", GRAU: "bg-muted" };
 
@@ -64,7 +65,11 @@ export default async function PropertyPage({ params, searchParams }: { params: P
     ...property,
     knownSince: property.knownSince.toISOString().slice(0, 10),
     features: property.features as string[],
+    condition: oneOf(PROPERTY_CONDITIONS, property.condition),
+    energyClass: oneOf(ENERGY_CLASSES, property.energyClass),
   };
+  const condition = oneOf(PROPERTY_CONDITIONS, property.condition);
+  const map = mapsLink(property);
 
   const tabs = [
     ["uebersicht", "Übersicht"],
@@ -145,11 +150,19 @@ export default async function PropertyPage({ params, searchParams }: { params: P
               <Dt>Auslastung</Dt><Dd>{property.occupancyPct != null ? `${property.occupancyPct} %` : "–"}</Dd>
               <Dt>Ø Tagespreis</Dt><Dd>{property.adr ? formatEur(property.adr) : "–"}</Dd>
               <Dt>Jahresumsatz</Dt><Dd>{property.revenueYear ? formatEur(property.revenueYear) : "–"}</Dd>
+              {property.yearBuilt != null && (<><Dt>Baujahr</Dt><Dd>{property.yearBuilt}</Dd></>)}
+              {condition && (<><Dt>Zustand</Dt><Dd>{PROPERTY_CONDITION_LABEL[condition]}</Dd></>)}
+              {(property.bedrooms != null || property.bathrooms != null) && (<><Dt>Schlafzimmer / Bäder</Dt><Dd>{property.bedrooms ?? "–"} / {property.bathrooms ?? "–"}</Dd></>)}
+              {property.plotArea != null && (<><Dt>Grundstück</Dt><Dd>{property.plotArea.toLocaleString("de-DE")} m²</Dd></>)}
+              {property.distanceBeachM != null && (<><Dt>Zum Strand</Dt><Dd>{formatDistance(property.distanceBeachM)}</Dd></>)}
+              {property.distanceSkiM != null && (<><Dt>Zur Piste / zum Lift</Dt><Dd>{formatDistance(property.distanceSkiM)}</Dd></>)}
+              {property.distanceAirportKm != null && (<><Dt>Zum Flughafen</Dt><Dd>{property.distanceAirportKm} km</Dd></>)}
+              {property.energyClass && (<><Dt>Energieklasse</Dt><Dd>{property.energyClass}</Dd></>)}
               <Dt>Quelle</Dt><Dd>{property.source}{property.sourceDetail ? ` · ${property.sourceDetail}` : ""}</Dd>
               <Dt>Partner</Dt><Dd>{property.partner ? <Link href={`/partner/${property.partner.id}`} className="underline">{property.partner.name}</Link> : "–"}</Dd>
               <Dt>Tippgeber</Dt><Dd>{property.referrer ? <Link href={`/tippgeber/${property.referrer.id}`} className="underline">{property.referrer.name}</Link> : "–"}</Dd>
               <Dt>Verkäuferkontakt</Dt><Dd>{property.sellerLead ? <Link href={`/leads/${property.sellerLead.id}`} className="underline">{property.sellerLead.name}</Link> : "–"}</Dd>
-              <Dt>Adresse (intern)</Dt><Dd>{property.address ?? "–"}</Dd>
+              <Dt>Adresse (intern)</Dt><Dd>{property.address ?? "–"}{map && <> · <a href={map} target="_blank" rel="noopener noreferrer" className="text-brand-strong underline">Karte</a></>}</Dd>
               <Dt>Bekannt seit</Dt><Dd>{property.knownSince.toLocaleDateString("de-DE")}{property.knownSourceNote ? ` · ${property.knownSourceNote}` : ""}</Dd>
             </dl>
             {property.description && <p className="mt-4 whitespace-pre-wrap text-sm">{property.description}</p>}

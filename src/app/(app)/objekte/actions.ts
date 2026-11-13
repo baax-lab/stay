@@ -38,6 +38,23 @@ const schema = z.object({
   offmarket: z.boolean(),
   referrerId: z.string().nullable(),
   partnerId: z.string().nullable(),
+  // Eckdaten (optional)
+  yearBuilt: z.number().int().min(1500, "Baujahr prüfen").max(2100, "Baujahr prüfen").nullable().optional(),
+  condition: z.enum(["NEUWERTIG", "GEPFLEGT", "MODERNISIERUNG", "SANIERUNG"]).nullable().optional(),
+  plotArea: z.number().int().nonnegative().nullable().optional(),
+  bedrooms: z.number().int().min(0).max(500).nullable().optional(),
+  bathrooms: z.number().int().min(0).max(500).nullable().optional(),
+  distanceBeachM: z.number().int().nonnegative().nullable().optional(),
+  distanceSkiM: z.number().int().nonnegative().nullable().optional(),
+  distanceAirportKm: z.number().int().nonnegative().nullable().optional(),
+  energyClass: z.enum(["A+", "A", "B", "C", "D", "E", "F", "G", "H"]).nullable().optional(),
+  mapUrl: z
+    .string()
+    .trim()
+    .max(500)
+    .nullable()
+    .optional()
+    .refine((v) => !v || /^https:\/\//.test(v), "Kartenlink muss mit https:// beginnen"),
 });
 
 export type PropertyFormInput = z.input<typeof schema>;

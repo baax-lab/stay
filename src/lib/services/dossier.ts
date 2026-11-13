@@ -19,6 +19,15 @@ export type DossierData = {
   occupancyPct: number | null;
   adr: number | null;
   revenueYear: number | null;
+  yearBuilt: number | null;
+  condition: string | null;
+  bedrooms: number | null;
+  bathrooms: number | null;
+  plotArea: number | null;
+  distanceBeachM: number | null;
+  distanceSkiM: number | null;
+  distanceAirportKm: number | null;
+  energyClass: string | null;
   features: string[];
   description: string | null;
   strengths: string[];
@@ -56,6 +65,15 @@ export async function loadDossier(propertyId: string, mandateId: string | null, 
     occupancyPct: p.occupancyPct,
     adr: p.adr,
     revenueYear: p.revenueYear,
+    yearBuilt: p.yearBuilt,
+    condition: p.condition,
+    bedrooms: p.bedrooms,
+    bathrooms: p.bathrooms,
+    plotArea: p.plotArea,
+    distanceBeachM: p.distanceBeachM,
+    distanceSkiM: p.distanceSkiM,
+    distanceAirportKm: p.distanceAirportKm,
+    energyClass: p.energyClass,
     features: (p.features as string[]).map((k) => (en ? (labels.en[k] ?? labels.de[k] ?? k) : (labels.de[k] ?? k))),
     description: (en && p.descriptionEn) || p.description,
     strengths: lines((en && p.strengthsEn) || p.strengths),

@@ -47,6 +47,16 @@ export default async function NewPropertyPage({ searchParams }: { searchParams: 
     offmarket: Boolean(sellerLead),
     referrerId: sellerLead?.referrerId ?? null,
     partnerId: null,
+    yearBuilt: null,
+    condition: null,
+    plotArea: null,
+    bedrooms: null,
+    bathrooms: null,
+    distanceBeachM: null,
+    distanceSkiM: null,
+    distanceAirportKm: null,
+    energyClass: null,
+    mapUrl: null,
   };
 
   return (

@@ -13,6 +13,9 @@ import { Checkbox, ChipGroup, Field, Input, Select, Textarea } from "@/component
 import { Notice } from "@/components/ui/card";
 import { NumberInput } from "@/components/ui/number-input";
 import { useFormSafety } from "@/components/ui/form-safety";
+import { MoreOptions } from "@/components/ui/more-options";
+import { ENERGY_CLASSES, PROPERTY_CONDITIONS, PROPERTY_CONDITION_LABEL, mapsLink } from "@/lib/form-options";
+import { uploadPropertyFilesAction } from "@/app/(app)/objekte/actions";
 import { COUNTRY_LABEL, type RegionOption } from "@/components/mandates/profile-form";
 
 export const OBJECT_SOURCE_LABEL: Record<ObjectSource, string> = { PARTNER: "Partnermakler", AGENTUR: "Agentur", PORTAL: "Portal", OFFMARKET: "Off-Market", DIREKT: "Direkt (Verkäuferkontakt)" };
@@ -48,7 +51,7 @@ export function PropertyForm({
 
   const countries = useMemo(() => Array.from(new Set(regions.map((r) => r.country))).sort(), [regions]);
   const set = <K extends keyof PropertyFormInput>(k: K, v: PropertyFormInput[K]) => setForm((f) => ({ ...f, [k]: v }));
-  type NumKey = "price" | "units" | "livingArea" | "adr" | "revenueYear" | "occupancyPct";
+  type NumKey = "price" | "units" | "livingArea" | "adr" | "revenueYear" | "occupancyPct" | "yearBuilt" | "plotArea" | "bedrooms" | "bathrooms" | "distanceBeachM" | "distanceSkiM" | "distanceAirportKm";
   const numeric = (k: NumKey) => ({
     value: (form[k] as number | null | undefined) ?? null,
     onValueChange: (n: number | null) => set(k, n as never),
@@ -56,6 +59,10 @@ export function PropertyForm({
     disabled: !canEdit,
   });
   // Entwurf und Warnung bei ungespeicherten Änderungen
+  // Fotos gleich beim Anlegen (werden nach dem Speichern hochgeladen)
+  const [photos, setPhotos] = useState<File[]>([]);
+  const extrasFilled = ["yearBuilt", "condition", "plotArea", "bedrooms", "bathrooms", "distanceBeachM", "distanceSkiM", "distanceAirportKm", "energyClass", "mapUrl"].some((k) => form[k as keyof PropertyFormInput] != null && form[k as keyof PropertyFormInput] !== "");
+  const map = mapsLink({ mapUrl: form.mapUrl, address: form.address, locality: form.locality, country: form.country });
   const safety = useFormSafety(id ? `property:${id}` : "property:new", form, setForm, { enabled: canEdit });
   const fieldError = (k: string) => (result && !result.ok ? result.fieldErrors?.[k] : undefined);
 
@@ -64,6 +71,12 @@ export function PropertyForm({
       const r = id ? await updatePropertyAction(id, form) : await createPropertyAction(form);
       setResult(r);
       if (r.ok) safety.markSaved(form);
+      if (r.ok && !id && photos.length) {
+        const fd = new FormData();
+        fd.set("kind", "PHOTO");
+        for (const f of photos) fd.append("files", f);
+        await uploadPropertyFilesAction(r.id, fd);
+      }
       if (r.ok && !id) router.push(`/objekte/${r.id}?neu=1`);
     });
   }
@@ -172,6 +185,60 @@ export function PropertyForm({
         )}
       </div>
 
+      <MoreOptions label="Weitere Eckdaten" hint="Baujahr, Zustand, Zimmer, Entfernungen, Karte" defaultOpen={extrasFilled}>
+        <div className="grid gap-4 sm:grid-cols-3">
+          <Field label="Baujahr">
+            <NumberInput {...numeric("yearBuilt")} placeholder="z. B. 1998" />
+          </Field>
+          <Field label="Zustand">
+            <Select value={form.condition ?? ""} disabled={!canEdit} onChange={(e) => set("condition", (e.target.value || null) as PropertyFormInput["condition"])}>
+              <option value="">–</option>
+              {PROPERTY_CONDITIONS.map((c) => (
+                <option key={c} value={c}>
+                  {PROPERTY_CONDITION_LABEL[c]}
+                </option>
+              ))}
+            </Select>
+          </Field>
+          <Field label="Energieklasse">
+            <Select value={form.energyClass ?? ""} disabled={!canEdit} onChange={(e) => set("energyClass", (e.target.value || null) as PropertyFormInput["energyClass"])}>
+              <option value="">–</option>
+              {ENERGY_CLASSES.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+            </Select>
+          </Field>
+          <Field label="Schlafzimmer">
+            <NumberInput {...numeric("bedrooms")} />
+          </Field>
+          <Field label="Bäder">
+            <NumberInput {...numeric("bathrooms")} />
+          </Field>
+          <Field label="Grundstück (m²)">
+            <NumberInput {...numeric("plotArea")} />
+          </Field>
+          <Field label="Zum Strand (m)">
+            <NumberInput {...numeric("distanceBeachM")} />
+          </Field>
+          <Field label="Zur Piste / zum Lift (m)">
+            <NumberInput {...numeric("distanceSkiM")} />
+          </Field>
+          <Field label="Zum Flughafen (km)">
+            <NumberInput {...numeric("distanceAirportKm")} />
+          </Field>
+        </div>
+        <Field label="Kartenlink" hint={map ? undefined : "leer = aus Adresse und Ort"} error={fieldError("mapUrl")}>
+          <Input value={form.mapUrl ?? ""} disabled={!canEdit} onChange={(e) => set("mapUrl", e.target.value || null)} placeholder="https://maps.app.goo.gl/…" />
+        </Field>
+        {map && (
+          <a href={map} target="_blank" rel="noopener noreferrer" className="inline-block text-sm text-brand-strong underline">
+            Auf der Karte ansehen
+          </a>
+        )}
+      </MoreOptions>
+
       <div className="grid gap-4 sm:grid-cols-2">
         <Field label={isHotel ? "Konzession / Betriebsgenehmigung" : "Vermietungslizenz"} group>
           <ChipGroup name="Lizenz" options={(Object.keys(LICENSE_STATUS_LABEL) as LicenseStatus[]).map((k) => ({ value: k, label: LICENSE_STATUS_LABEL[k] }))} value={form.licenseStatus as LicenseStatus} onChange={(v) => canEdit && set("licenseStatus", v)} />
@@ -238,6 +305,19 @@ export function PropertyForm({
           </Field>
         </div>
       </div>
+
+      {!id && canEdit && (
+        <Field label="Fotos" hint="optional, werden nach dem Anlegen hochgeladen">
+          <input
+            type="file"
+            accept="image/*"
+            multiple
+            onChange={(e) => setPhotos(Array.from(e.target.files ?? []))}
+            className="block w-full text-sm text-muted file:mr-3 file:rounded-md file:border-0 file:bg-brand-soft file:px-3 file:py-2 file:text-sm file:font-medium file:text-brand-strong hover:file:bg-brand/20"
+          />
+          {photos.length > 0 && <span className="mt-1 block text-xs text-muted">{photos.length} Foto(s) ausgewählt</span>}
+        </Field>
+      )}
 
       {canEdit && (
         <Button size="lg" disabled={pending} onClick={submit}>

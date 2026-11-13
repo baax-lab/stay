@@ -105,7 +105,19 @@
     "photos": "Fotos",
     "prepared_for": "Erstellt für",
     "created": "Stand",
-    "confidential": "Vertraulich. Nur für den persönlichen Gebrauch des Empfängers."
+    "confidential": "Vertraulich. Nur für den persönlichen Gebrauch des Empfängers.",
+    "year_built": "Baujahr",
+    "condition": "Zustand",
+    "condition_NEUWERTIG": "neuwertig",
+    "condition_GEPFLEGT": "gepflegt",
+    "condition_MODERNISIERUNG": "modernisierungsbedürftig",
+    "condition_SANIERUNG": "sanierungsbedürftig",
+    "bedrooms_bathrooms": "Schlafzimmer / Bäder",
+    "plot_area": "Grundstück",
+    "distance_beach": "Zum Strand",
+    "distance_ski": "Zur Piste / zum Lift",
+    "distance_airport": "Zum Flughafen",
+    "energy_class": "Energieklasse"
   },
   "segment": {
     "FEWO": "Ferienwohnung",

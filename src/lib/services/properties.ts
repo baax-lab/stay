@@ -64,6 +64,16 @@ export type PropertyInput = {
   offmarket?: boolean;
   referrerId?: string | null;
   partnerId?: string | null;
+  yearBuilt?: number | null;
+  condition?: string | null;
+  plotArea?: number | null;
+  bedrooms?: number | null;
+  bathrooms?: number | null;
+  distanceBeachM?: number | null;
+  distanceSkiM?: number | null;
+  distanceAirportKm?: number | null;
+  energyClass?: string | null;
+  mapUrl?: string | null;
 };
 
 async function lightFor(region: string, status: Property["licenseStatus"]) {

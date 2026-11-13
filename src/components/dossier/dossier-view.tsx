@@ -1,6 +1,7 @@
 import type { DossierData } from "@/lib/services/dossier";
 import { fmtDate, fmtMoney, fmtNumber, t, type Lang } from "@/lib/i18n";
 import { CostsBlock, LicenseBlock, YieldBlock } from "@/components/figures/figures-view";
+import { formatDistance } from "@/lib/form-options";
 
 /** Objektdossier (Konzept §9.5): Weblink und PDF aus derselben Darstellung, Corporate Design Baax. */
 export function DossierView({ d, lang, photoUrl, print = false }: { d: DossierData; lang: Lang; photoUrl: (fileId: string) => string; print?: boolean }) {
@@ -14,6 +15,18 @@ export function DossierView({ d, lang, photoUrl, print = false }: { d: DossierDa
     [t(lang, "dossier.adr"), d.adr ? fmtMoney(lang, d.adr) : "–"],
     ...(d.revenueYear ? ([[t(lang, "dossier.revenue"), fmtMoney(lang, d.revenueYear)]] as Array<[string, string]>) : []),
   ];
+  // Weitere Eckdaten nur, wenn gepflegt (Adresse und Kartenlink bleiben intern)
+  const extra: Array<[string, string | null]> = [
+    [t(lang, "dossier.year_built"), d.yearBuilt != null ? String(d.yearBuilt) : null],
+    [t(lang, "dossier.condition"), d.condition ? t(lang, `dossier.condition_${d.condition}`) : null],
+    [t(lang, "dossier.bedrooms_bathrooms"), d.bedrooms != null || d.bathrooms != null ? `${d.bedrooms ?? "–"} / ${d.bathrooms ?? "–"}` : null],
+    [t(lang, "dossier.plot_area"), d.plotArea != null ? `${fmtNumber(lang, d.plotArea)} m²` : null],
+    [t(lang, "dossier.distance_beach"), formatDistance(d.distanceBeachM, lang)],
+    [t(lang, "dossier.distance_ski"), formatDistance(d.distanceSkiM, lang)],
+    [t(lang, "dossier.distance_airport"), d.distanceAirportKm != null ? `${fmtNumber(lang, d.distanceAirportKm)} km` : null],
+    [t(lang, "dossier.energy_class"), d.energyClass],
+  ];
+  for (const [k, v] of extra) if (v) keyData.push([k, v]);
 
   return (
     <article className="dossier mx-auto max-w-4xl bg-surface text-ink" data-testid="dossier">

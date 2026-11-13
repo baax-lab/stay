@@ -105,7 +105,19 @@
     "photos": "Photos",
     "prepared_for": "Prepared for",
     "created": "As of",
-    "confidential": "Confidential. For the recipient's personal use only."
+    "confidential": "Confidential. For the recipient's personal use only.",
+    "year_built": "Year built",
+    "condition": "Condition",
+    "condition_NEUWERTIG": "as new",
+    "condition_GEPFLEGT": "well kept",
+    "condition_MODERNISIERUNG": "needs updating",
+    "condition_SANIERUNG": "needs renovation",
+    "bedrooms_bathrooms": "Bedrooms / bathrooms",
+    "plot_area": "Plot",
+    "distance_beach": "To the beach",
+    "distance_ski": "To the slopes / lift",
+    "distance_airport": "To the airport",
+    "energy_class": "Energy class"
   },
   "segment": {
     "FEWO": "Holiday apartment",
