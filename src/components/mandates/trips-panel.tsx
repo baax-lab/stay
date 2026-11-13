@@ -4,6 +4,7 @@ import { formatEur } from "@/lib/fees";
 import { TRIP_COST_CATEGORIES, TRIP_COST_LABEL, tripTotals, type TripCostCategory } from "@/lib/trips";
 import { addTripCostAction, createTripAction, deleteTripAction, deleteTripCostAction, toggleTripBillableAction } from "@/app/(app)/auftraege/reisen-actions";
 import { ActionButton, ActionForm } from "@/components/ui/action-form";
+import { NumberInput } from "@/components/ui/number-input";
 import { Card, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -132,7 +133,7 @@ export async function TripsPanel({ mandateId, canEdit, showFees }: { mandateId: 
                       <Input name="description" />
                     </Field>
                     <Field label="Betrag (€)">
-                      <Input name="amount" inputMode="decimal" required />
+                      <NumberInput name="amount" decimals={2} required />
                     </Field>
                     <Field label="Datum">
                       <Input name="date" type="date" defaultValue={t.startDate.toISOString().slice(0, 10)} />

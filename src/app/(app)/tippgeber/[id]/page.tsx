@@ -6,6 +6,7 @@ import { can } from "@/lib/permissions";
 import { formatEur } from "@/lib/fees";
 import { MANDATE_STATUS_LABEL } from "@/lib/mandates";
 import { Card, CardTitle, PageHeader } from "@/components/ui/card";
+import { NumberInput } from "@/components/ui/number-input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ActionForm } from "@/components/ui/action-form";
@@ -101,7 +102,7 @@ export default async function ReferrerPage({ params }: { params: Promise<{ id: s
                       </Select>
                     </Field>
                     <Field label="Betrag (€)">
-                      <Input name="amount" inputMode="numeric" />
+                      <NumberInput name="amount" />
                     </Field>
                     <Button type="submit" size="sm" variant="secondary">
                       Anlegen

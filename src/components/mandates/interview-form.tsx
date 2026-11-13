@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { NumberInput } from "@/components/ui/number-input";
+import { useFormSafety } from "@/components/ui/form-safety";
 import { useRouter } from "next/navigation";
 import type { Segment, UsageGoal } from "@prisma/client";
 import { ASSESSMENT_OPTIONS, INTERVIEW_QUESTIONS } from "@/lib/interview";
@@ -9,7 +11,7 @@ import { SEGMENT_LABEL, entries } from "@/lib/labels";
 import { USAGE_GOAL_LABEL } from "@/lib/mandates";
 import { saveInterviewAction, saveProfileAction, type ProfileInput } from "@/app/(app)/auftraege/actions";
 import { Button } from "@/components/ui/button";
-import { ChipGroup, Field, Input, Textarea } from "@/components/ui/field";
+import { ChipGroup, Field, Textarea } from "@/components/ui/field";
 import { Notice } from "@/components/ui/card";
 import { COUNTRY_LABEL, type RegionOption } from "./profile-form";
 
@@ -27,11 +29,22 @@ export function InterviewForm({ mandateId, initial, assessment, regions, canEdit
   const set = (k: string, v: unknown) => setNotes((n) => ({ ...n, [k]: v }));
   const toggle = <T,>(list: T[], v: T) => (list.includes(v) ? list.filter((x) => x !== v) : [...list, v]);
   const countries = Array.from(new Set(regions.map((r) => r.country))).sort();
+  // Entwurf und Warnung bei ungespeicherten Änderungen (Erstgespräch ist lang, oft unterwegs ausgefüllt)
+  const safety = useFormSafety(
+    `interview:${mandateId}`,
+    { notes, assess },
+    (v) => {
+      setNotes(v.notes);
+      setAssess(v.assess);
+    },
+    { enabled: canEdit },
+  );
 
   function save(thenProfile: boolean) {
     start(async () => {
       const r = await saveInterviewAction(mandateId, notes, assess);
       if (!r.ok) return setMsg({ ok: false, text: r.error });
+      safety.markSaved({ notes, assess });
       if (!thenProfile) return setMsg({ ok: true, text: "Erstgespräch gespeichert." });
 
       // Suchprofil aus den Antworten vorbefüllen (Konzept §8.14)
@@ -62,17 +75,14 @@ export function InterviewForm({ mandateId, initial, assessment, regions, canEdit
 
   const numPair = (k: string, labels: [string, string]) => {
     const v = get<{ min?: number | null; max?: number | null }>(k, {});
-    const on = (part: "min" | "max") => (e: React.ChangeEvent<HTMLInputElement>) => {
-      const d = e.target.value.replace(/[^\d]/g, "");
-      set(k, { ...v, [part]: d ? Number(d) : null });
-    };
+    const on = (part: "min" | "max") => (n: number | null) => set(k, { ...v, [part]: n });
     return (
       <div className="grid grid-cols-2 gap-3">
         <Field label={labels[0]}>
-          <Input inputMode="numeric" disabled={!canEdit} value={v.min ?? ""} onChange={on("min")} />
+          <NumberInput disabled={!canEdit} value={v.min ?? null} onValueChange={on("min")} />
         </Field>
         <Field label={labels[1]}>
-          <Input inputMode="numeric" disabled={!canEdit} value={v.max ?? ""} onChange={on("max")} />
+          <NumberInput disabled={!canEdit} value={v.max ?? null} onValueChange={on("max")} />
         </Field>
       </div>
     );
@@ -80,6 +90,7 @@ export function InterviewForm({ mandateId, initial, assessment, regions, canEdit
 
   return (
     <div className="space-y-6">
+      {safety.notice}
       {msg && <Notice tone={msg.ok ? "ok" : "danger"}>{msg.text}</Notice>}
       {INTERVIEW_QUESTIONS.map((q) => (
         <div key={q.key} className="rounded-2xl border border-line bg-surface p-4">

@@ -6,7 +6,7 @@ import { audit } from "@/lib/audit";
  * Abmelden nur per POST: GET-Links werden vom Browser bzw. Next.js vorab geladen und dürfen nichts verändern.
  *
  * Antwort ist eine kleine Seite statt einer Weiterleitung:
- * - leert die vom Service Worker gecachten Seiten (nicht den Offline-Puffer mit noch nicht gesendeten Kontakten)
+ * - leert die vom Service Worker gecachten Seiten und die Formular-Entwürfe (nicht den Offline-Puffer mit noch nicht gesendeten Kontakten)
  * - leitet relativ weiter, damit es unter jedem Hostnamen funktioniert (CSP form-action 'self' prüft auch Weiterleitungen)
  */
 export async function POST() {
@@ -19,6 +19,8 @@ export async function POST() {
 (async function () {
   try {
     if (self.caches) for (const k of await caches.keys()) if (k.indexOf("stay-pages-") === 0) await caches.delete(k);
+    // Formular-Entwürfe (können Kundendaten enthalten) vom Gerät löschen
+    for (const k of Object.keys(localStorage)) if (k.indexOf("stay-draft:") === 0) localStorage.removeItem(k);
   } catch (e) {}
   location.replace("/auth/login");
 })();

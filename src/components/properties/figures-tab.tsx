@@ -4,6 +4,7 @@ import { propertyFigures } from "@/lib/services/figures";
 import { YIELD_DEFAULTS } from "@/lib/yield";
 import { saveDossierInputsAction } from "@/app/(app)/objekte/actions";
 import { Card, CardTitle, Notice } from "@/components/ui/card";
+import { NumberInput } from "@/components/ui/number-input";
 import { Button, ButtonLink } from "@/components/ui/button";
 import { ActionForm } from "@/components/ui/action-form";
 import { Field, Input, Textarea } from "@/components/ui/field";
@@ -81,7 +82,7 @@ export async function FiguresTab({ property, mandateId, mandates, canEdit }: { p
               <Input name="revenueYear" defaultValue={property.revenueYear ?? ""} disabled={!canEdit} />
             </Field>
             <Field label="Betriebskosten p. a. (€)">
-              <Input name="opCostsYear" defaultValue={property.opCostsYear ?? ""} disabled={!canEdit} placeholder={`sonst ${YIELD_DEFAULTS.opCostsPctOfRevenue} % Umsatz`} />
+              <NumberInput name="opCostsYear" defaultValue={property.opCostsYear ?? null} disabled={!canEdit} placeholder={`sonst ${YIELD_DEFAULTS.opCostsPctOfRevenue} % Umsatz`} />
             </Field>
             <Field label="Verwaltung/Agentur (%)">
               <Input name="managementPct" defaultValue={property.managementPct ?? ""} disabled={!canEdit} placeholder={String(YIELD_DEFAULTS.managementPct)} />
@@ -96,7 +97,7 @@ export async function FiguresTab({ property, mandateId, mandates, canEdit }: { p
               <Input name="scenarioSpread" defaultValue={property.scenarioSpread != null ? property.scenarioSpread * 100 : ""} disabled={!canEdit} placeholder={String(YIELD_DEFAULTS.spread * 100)} />
             </Field>
             <Field label="Renovierungsbudget (€)" className="col-span-2">
-              <Input name="renovationBudget" defaultValue={property.renovationBudget ?? ""} disabled={!canEdit} />
+              <NumberInput name="renovationBudget" defaultValue={property.renovationBudget ?? null} disabled={!canEdit} />
             </Field>
           </div>
           <Field label="Stärken">

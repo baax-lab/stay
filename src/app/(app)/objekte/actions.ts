@@ -15,11 +15,11 @@ import { mergePrecheck, precheckStatus, precheckTemplate, type PrecheckItem, typ
 const schema = z.object({
   title: z.string().trim().min(2, "Titel fehlt").max(200),
   segment: z.enum(["FEWO", "APARTMENTHAUS", "PENSION_HOTEL"]),
-  country: z.string().length(2),
+  country: z.string().length(2, "Land fehlt"),
   region: z.string().min(2, "Region fehlt"),
   locality: z.string().trim().max(200).nullable(),
   address: z.string().trim().max(300).nullable(),
-  price: z.number().int().positive("Preis fehlt"),
+  price: z.number({ error: "Preis fehlt" }).int().positive("Preis fehlt"),
   currency: z.string().length(3).default("EUR"),
   units: z.number().int().nonnegative().nullable(),
   livingArea: z.number().int().nonnegative().nullable(),
@@ -42,7 +42,14 @@ const schema = z.object({
 
 export type PropertyFormInput = z.input<typeof schema>;
 
-export type SaveResult = { ok: true; id: string; duplicates: Array<{ id: string; title: string }>; matches: number; partnerWarning: string | null } | { ok: false; error: string };
+export type SaveResult = { ok: true; id: string; duplicates: Array<{ id: string; title: string }>; matches: number; partnerWarning: string | null } | { ok: false; error: string; fieldErrors?: Record<string, string> };
+
+/** Prüffehler je Feld, damit das Formular sie am Feld zeigt */
+function invalid(error: z.ZodError): { ok: false; error: string; fieldErrors: Record<string, string> } {
+  const fieldErrors: Record<string, string> = {};
+  for (const i of error.issues) fieldErrors[String(i.path[0] ?? "form")] ??= i.message;
+  return { ok: false, error: "Bitte die markierten Felder prüfen.", fieldErrors };
+}
 
 async function partnerWarning(partnerId: string | null): Promise<string | null> {
   if (!partnerId) return null;
@@ -53,7 +60,7 @@ async function partnerWarning(partnerId: string | null): Promise<string | null> 
 export async function createPropertyAction(input: PropertyFormInput): Promise<SaveResult> {
   const user = await requirePermission("createProperty");
   const parsed = schema.safeParse(input);
-  if (!parsed.success) return { ok: false, error: parsed.error.issues.map((i) => i.message).join(", ") };
+  if (!parsed.success) return invalid(parsed.error);
   const d = parsed.data;
   const data: PropertyInput = { ...d, knownSince: d.knownSince ? new Date(d.knownSince) : null };
   const { property, duplicates, matching } = await createProperty(data, user);
@@ -65,7 +72,7 @@ export async function createPropertyAction(input: PropertyFormInput): Promise<Sa
 export async function updatePropertyAction(id: string, input: PropertyFormInput): Promise<SaveResult> {
   const user = await requirePermission("editProperty");
   const parsed = schema.safeParse(input);
-  if (!parsed.success) return { ok: false, error: parsed.error.issues.map((i) => i.message).join(", ") };
+  if (!parsed.success) return invalid(parsed.error);
   const d = parsed.data;
   const { knownSince, knownSourceNote, ...rest } = d;
   const data: Partial<PropertyInput> = { ...rest };

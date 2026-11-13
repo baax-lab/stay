@@ -52,10 +52,12 @@ test("Lead bis Kauf: Umwandeln, GwG, Suchprofil, Objekt, Treffer, Vorstellung, A
   await expect(page.getByText("Status geändert.")).toBeVisible();
 
   // 3. Suchprofil pflegen: FeWo, ES, Mallorca, bis 900.000, Lizenz Pflicht, Wunsch Pool
+  // Vorbelegt aus dem Lead (Segment, Region Mallorca → Land Spanien, Budget 300 T€ – 1 Mio. €)
   await page.goto(`${mandateUrl}?tab=profil`);
-  await page.getByRole("checkbox", { name: "Ferienwohnung" }).click();
-  await page.getByRole("checkbox", { name: "Spanien" }).click();
-  await page.getByRole("checkbox", { name: "Mallorca" }).click();
+  await expect(page.getByRole("checkbox", { name: "Ferienwohnung" })).toHaveAttribute("aria-checked", "true");
+  await expect(page.getByRole("checkbox", { name: "Spanien" })).toHaveAttribute("aria-checked", "true");
+  await expect(page.getByRole("checkbox", { name: "Mallorca" })).toHaveAttribute("aria-checked", "true");
+  await expect(page.getByRole("textbox", { name: "Preis bis (€)" })).toHaveValue("1.000.000");
   await page.getByRole("textbox", { name: "Preis bis (€)" }).fill("900000");
   await page.locator("tr", { hasText: "Pool" }).getByRole("radio").nth(2).check();
   await page.getByRole("checkbox", { name: "Suchprofil aktiv" }).check();

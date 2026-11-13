@@ -5,8 +5,9 @@ import type { MandateStatus } from "@prisma/client";
 import { MANDATE_STATUS_LABEL, allowedTransitions, MAIN_FLOW } from "@/lib/mandates";
 import { changeStatusAction } from "@/app/(app)/auftraege/actions";
 import { ActionForm } from "@/components/ui/action-form";
+import { NumberInput } from "@/components/ui/number-input";
 import { Button } from "@/components/ui/button";
-import { Field, Input, Select, Textarea } from "@/components/ui/field";
+import { Field, Select, Textarea } from "@/components/ui/field";
 import { cn } from "@/lib/cn";
 
 type Presented = { propertyId: string; title: string; askingPrice: number };
@@ -79,7 +80,7 @@ export function StatusPanel({
                     </Select>
                   </Field>
                   <Field label="Kaufpreis (€)" required>
-                    <Input name="purchasePrice" inputMode="numeric" required placeholder="z. B. 1.900.000" />
+                    <NumberInput name="purchasePrice" required placeholder="z. B. 1.900.000" />
                   </Field>
                 </div>
               )}

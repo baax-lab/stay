@@ -11,6 +11,8 @@ import { createPropertyAction, updatePropertyAction, type PropertyFormInput, typ
 import { Button } from "@/components/ui/button";
 import { Checkbox, ChipGroup, Field, Input, Select, Textarea } from "@/components/ui/field";
 import { Notice } from "@/components/ui/card";
+import { NumberInput } from "@/components/ui/number-input";
+import { useFormSafety } from "@/components/ui/form-safety";
 import { COUNTRY_LABEL, type RegionOption } from "@/components/mandates/profile-form";
 
 export const OBJECT_SOURCE_LABEL: Record<ObjectSource, string> = { PARTNER: "Partnermakler", AGENTUR: "Agentur", PORTAL: "Portal", OFFMARKET: "Off-Market", DIREKT: "Direkt (Verkäuferkontakt)" };
@@ -46,21 +48,22 @@ export function PropertyForm({
 
   const countries = useMemo(() => Array.from(new Set(regions.map((r) => r.country))).sort(), [regions]);
   const set = <K extends keyof PropertyFormInput>(k: K, v: PropertyFormInput[K]) => setForm((f) => ({ ...f, [k]: v }));
-  const numeric = (k: "price" | "units" | "livingArea" | "adr" | "revenueYear" | "occupancyPct") => ({
-    value: form[k] ?? "",
-    inputMode: "decimal" as const,
+  type NumKey = "price" | "units" | "livingArea" | "adr" | "revenueYear" | "occupancyPct";
+  const numeric = (k: NumKey) => ({
+    value: (form[k] as number | null | undefined) ?? null,
+    onValueChange: (n: number | null) => set(k, n as never),
+    decimals: k === "occupancyPct" ? 1 : 0,
     disabled: !canEdit,
-    onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
-      const raw = e.target.value.replace(/[^\d,.]/g, "").replace(",", ".");
-      const n = raw === "" ? null : Number(raw);
-      set(k, (n === null || Number.isNaN(n) ? null : k === "occupancyPct" ? n : Math.round(n)) as never);
-    },
   });
+  // Entwurf und Warnung bei ungespeicherten Änderungen
+  const safety = useFormSafety(id ? `property:${id}` : "property:new", form, setForm, { enabled: canEdit });
+  const fieldError = (k: string) => (result && !result.ok ? result.fieldErrors?.[k] : undefined);
 
   function submit() {
     start(async () => {
       const r = id ? await updatePropertyAction(id, form) : await createPropertyAction(form);
       setResult(r);
+      if (r.ok) safety.markSaved(form);
       if (r.ok && !id) router.push(`/objekte/${r.id}?neu=1`);
     });
   }
@@ -70,6 +73,7 @@ export function PropertyForm({
 
   return (
     <div className="space-y-6">
+      {safety.notice}
       {result && !result.ok && <Notice tone="danger">{result.error}</Notice>}
       {result && result.ok && (
         <Notice tone="ok">
@@ -92,7 +96,7 @@ export function PropertyForm({
         </Notice>
       )}
 
-      <Field label="Titel" required>
+      <Field label="Titel" required error={fieldError("title")}>
         <Input value={form.title} disabled={!canEdit} onChange={(e) => set("title", e.target.value)} placeholder="z. B. FeWo mit Meerblick, Port de Pollença" />
       </Field>
 
@@ -101,7 +105,7 @@ export function PropertyForm({
       </Field>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="Land" required>
+        <Field label="Land" required error={fieldError("country")}>
           <Select value={form.country} disabled={!canEdit} onChange={(e) => { set("country", e.target.value); set("region", ""); }}>
             <option value="">–</option>
             {countries.map((c) => (
@@ -111,7 +115,7 @@ export function PropertyForm({
             ))}
           </Select>
         </Field>
-        <Field label="Region" required>
+        <Field label="Region" required error={fieldError("region")}>
           <Select value={form.region} disabled={!canEdit || !form.country} onChange={(e) => set("region", e.target.value)}>
             <option value="">–</option>
             {regions.filter((r) => r.country === form.country).map((r) => (
@@ -130,8 +134,8 @@ export function PropertyForm({
       </div>
 
       <div className="grid gap-4 sm:grid-cols-3">
-        <Field label="Angebotspreis" required>
-          <Input {...numeric("price")} placeholder="z. B. 850000" />
+        <Field label="Angebotspreis" required error={fieldError("price")}>
+          <NumberInput {...numeric("price")} placeholder="z. B. 850.000" />
         </Field>
         <Field label="Währung">
           <Select value={form.currency ?? "EUR"} disabled={!canEdit} onChange={(e) => set("currency", e.target.value)}>
@@ -141,28 +145,28 @@ export function PropertyForm({
           </Select>
         </Field>
         <Field label={isHotel ? "Zimmer" : "Einheiten"}>
-          <Input {...numeric("units")} />
+          <NumberInput {...numeric("units")} />
         </Field>
         <Field label="Wohnfläche (m²)">
-          <Input {...numeric("livingArea")} />
+          <NumberInput {...numeric("livingArea")} />
         </Field>
         {isFewo && (
           <>
             <Field label="Auslastung (%)">
-              <Input {...numeric("occupancyPct")} />
+              <NumberInput {...numeric("occupancyPct")} />
             </Field>
             <Field label="Ø Tagespreis (€)">
-              <Input {...numeric("adr")} />
+              <NumberInput {...numeric("adr")} />
             </Field>
           </>
         )}
         {isHotel && (
           <>
             <Field label="Jahresumsatz (€)">
-              <Input {...numeric("revenueYear")} />
+              <NumberInput {...numeric("revenueYear")} />
             </Field>
             <Field label="Auslastung (%)">
-              <Input {...numeric("occupancyPct")} />
+              <NumberInput {...numeric("occupancyPct")} />
             </Field>
           </>
         )}

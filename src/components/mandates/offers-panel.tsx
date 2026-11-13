@@ -1,6 +1,7 @@
 import type { Offer } from "@prisma/client";
 import { addOfferAction, respondOfferAction } from "@/app/(app)/auftraege/actions";
 import { ActionForm } from "@/components/ui/action-form";
+import { NumberInput } from "@/components/ui/number-input";
 import { Button } from "@/components/ui/button";
 import { Field, Input, Select, Textarea } from "@/components/ui/field";
 import { Badge } from "@/components/ui/badge";
@@ -51,7 +52,7 @@ export function OffersPanel({ mandateId, offers, presented, canEdit, bonusPct, b
                       </Select>
                     </Field>
                     <Field label="Gegenangebot (€)">
-                      <Input name="counterAmount" inputMode="numeric" />
+                      <NumberInput name="counterAmount" />
                     </Field>
                     <Button type="submit" size="sm">
                       Speichern
@@ -79,7 +80,7 @@ export function OffersPanel({ mandateId, offers, presented, canEdit, bonusPct, b
           </Field>
           <div className="grid grid-cols-2 gap-3">
             <Field label="Betrag (€)" required>
-              <Input name="amount" inputMode="numeric" required />
+              <NumberInput name="amount" required />
             </Field>
             <Field label="Datum" required>
               <Input type="date" name="madeAt" required defaultValue={new Date().toISOString().slice(0, 10)} />

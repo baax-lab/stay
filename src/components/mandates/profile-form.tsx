@@ -1,6 +1,8 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
+import { NumberInput } from "@/components/ui/number-input";
+import { useFormSafety } from "@/components/ui/form-safety";
 import type { Segment, UsageGoal } from "@prisma/client";
 import type { CriterionDef } from "@/lib/criteria";
 import { SEGMENT_LABEL, entries } from "@/lib/labels";
@@ -41,25 +43,26 @@ export function ProfileForm({ mandateId, initial, regions, canEdit, criteria }: 
     set("wishCriteria", weight > 0 ? [...others, { key, weight }] : others);
   }
 
+  // Entwurf und Warnung bei ungespeicherten Änderungen
+  const safety = useFormSafety(`profile:${mandateId}`, form, setForm, { enabled: canEdit });
+
   function submit() {
     start(async () => {
       const r = await saveProfileAction(mandateId, form);
       setMsg(r.ok ? { ok: true, text: r.message ?? "Gespeichert." } : { ok: false, text: r.error });
+      if (r.ok) safety.markSaved(form);
     });
   }
 
   const numInput = (k: "priceMin" | "priceMax" | "minUnits" | "maxUnits") => ({
-    value: form[k] ?? "",
-    onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
-      const v = e.target.value.replace(/[^\d]/g, "");
-      set(k, v ? Number(v) : null);
-    },
-    inputMode: "numeric" as const,
+    value: form[k] ?? null,
+    onValueChange: (n: number | null) => set(k, n as never),
     disabled: !canEdit,
   });
 
   return (
     <div className="space-y-6">
+      {safety.notice}
       {msg && <Notice tone={msg.ok ? "ok" : "danger"}>{msg.text}</Notice>}
 
       <Field label="Segmente" group>
@@ -91,20 +94,20 @@ export function ProfileForm({ mandateId, initial, regions, canEdit, criteria }: 
 
       <div className="grid gap-4 sm:grid-cols-2">
         <Field label="Preis von (€)">
-          <Input {...numInput("priceMin")} placeholder="optional" />
+          <NumberInput {...numInput("priceMin")} placeholder="optional" />
         </Field>
         <Field label="Preis bis (€)" required>
-          <Input {...numInput("priceMax")} />
+          <NumberInput {...numInput("priceMax")} />
         </Field>
         <Field label="Nutzungsziel" group>
           <ChipGroup name="Nutzungsziel" options={Object.entries(USAGE_GOAL_LABEL).map(([value, label]) => ({ value: value as UsageGoal, label }))} value={form.usageGoal} onChange={(v) => canEdit && set("usageGoal", v)} />
         </Field>
         <div className="grid grid-cols-2 gap-4">
           <Field label="Einheiten / Zimmer von">
-            <Input {...numInput("minUnits")} />
+            <NumberInput {...numInput("minUnits")} />
           </Field>
           <Field label="bis">
-            <Input {...numInput("maxUnits")} />
+            <NumberInput {...numInput("maxUnits")} />
           </Field>
         </div>
       </div>

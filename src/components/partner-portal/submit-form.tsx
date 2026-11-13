@@ -4,6 +4,7 @@ import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { submitPropertyAction } from "@/app/partner-zugang/[token]/actions";
 import { Button } from "@/components/ui/button";
+import { NumberInput } from "@/components/ui/number-input";
 import { Field, Input, Select, Textarea } from "@/components/ui/field";
 import { Notice } from "@/components/ui/card";
 
@@ -70,7 +71,7 @@ export function PartnerSubmitForm({ token, labels, refs, regions, segments, lice
         </Field>
         <div className="grid grid-cols-[1fr_100px] gap-2">
           <Field label={labels.f_price} required>
-            <Input name="price" inputMode="numeric" required />
+            <NumberInput name="price" required />
           </Field>
           <Field label={labels.f_currency}>
             <Select name="currency" defaultValue="EUR">

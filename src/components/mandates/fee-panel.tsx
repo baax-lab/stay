@@ -2,6 +2,7 @@ import type { FeeAgreement, FeeBand } from "@prisma/client";
 import { austriaCap, calculateFee, formatEur } from "@/lib/fees";
 import { saveFeeAction } from "@/app/(app)/auftraege/actions";
 import { ActionForm } from "@/components/ui/action-form";
+import { NumberInput } from "@/components/ui/number-input";
 import { Button } from "@/components/ui/button";
 import { Checkbox, Field, Input, Select, Textarea } from "@/components/ui/field";
 import { Notice } from "@/components/ui/card";
@@ -57,7 +58,7 @@ export function FeePanel({ mandateId, fee, bands, country, canEdit, trips = 0 }:
             <Input name="askingPrice" defaultValue={fee.askingPrice ?? ""} inputMode="numeric" disabled={!canEdit} />
           </Field>
           <Field label="Kaufpreis (€)">
-            <Input name="purchasePrice" defaultValue={fee.purchasePrice ?? ""} inputMode="numeric" disabled={!canEdit} />
+            <NumberInput name="purchasePrice" defaultValue={fee.purchasePrice ?? null} disabled={!canEdit} />
           </Field>
           <Field label="Rechnung gestellt am">
             <Input type="date" name="invoicedAt" defaultValue={d(fee.invoicedAt)} disabled={!canEdit} />

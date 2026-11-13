@@ -2,7 +2,7 @@ import * as React from "react";
 import { cn } from "@/lib/cn";
 
 const control =
-  "w-full rounded-md border border-line-strong/70 bg-surface-solid px-3 py-2 min-h-11 sm:min-h-9 text-ink placeholder:text-ink-3 transition-colors focus:border-brand focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/30 aria-[invalid=true]:border-danger disabled:cursor-not-allowed disabled:opacity-50";
+  "w-full rounded-md border border-line-strong/70 bg-surface-solid px-3 py-2 min-h-11 sm:min-h-9 text-ink placeholder:text-ink-3 transition-colors focus:border-brand focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/30 aria-[invalid=true]:border-danger user-invalid:border-danger user-invalid:ring-2 user-invalid:ring-danger/20 disabled:cursor-not-allowed disabled:opacity-50";
 
 export function Field({
   label,
