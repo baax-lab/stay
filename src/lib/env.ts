@@ -8,11 +8,6 @@ function req(name: string, fallback?: string): string {
   return v;
 }
 
-function path(value: string | undefined, fallback: string): string {
-  const v = (value || fallback).trim();
-  return v.startsWith("/") ? v : `/${v}`;
-}
-
 export const env = {
   /** Basis-URL, unter der der Server sich selbst erreicht (PDF-Rendering). */
   get internalUrl() {
@@ -26,49 +21,34 @@ export const env = {
     if (s.length < 32) throw new Error("SESSION_SECRET muss mindestens 32 Zeichen haben");
     return s;
   },
+  /** Baax Hub: Anmeldung (OpenID Connect) und API. Namen wie in docs/APP-ANBINDUNG.md des Hubs. */
   hub: {
     get url() {
-      return (process.env.HUB_URL ?? "").replace(/\/$/, "");
+      return (process.env.HUB_URL ?? "").trim().replace(/\/+$/, "");
     },
-    get loginPath() {
-      return process.env.HUB_LOGIN_PATH ?? "/sso/login";
+    get clientId() {
+      return process.env.HUB_CLIENT_ID || undefined;
     },
-    get jwtSecret() {
-      return process.env.HUB_JWT_SECRET || undefined;
+    get clientSecret() {
+      return process.env.HUB_CLIENT_SECRET || undefined;
     },
-    get jwksUrl() {
-      return process.env.HUB_JWKS_URL || undefined;
-    },
-    get issuer() {
-      return process.env.HUB_JWT_ISSUER || undefined;
-    },
-    get audience() {
-      return process.env.HUB_JWT_AUDIENCE || undefined;
-    },
-    get roleClaim() {
-      return process.env.HUB_ROLE_CLAIM || "role";
-    },
+    /** Basis der REST-API, Standard {HUB_URL}/api/v1 */
     get apiUrl() {
-      return (process.env.HUB_API_URL ?? "").replace(/\/$/, "");
+      const v = (process.env.HUB_API_URL ?? "").trim().replace(/\/+$/, "");
+      return v || (this.url ? `${this.url}/api/v1` : "");
     },
     get apiToken() {
       return process.env.HUB_API_TOKEN || undefined;
     },
-    /** Endpunkte der Hub-API (Annahme, anpassbar ohne Codeänderung) */
-    get contactsPath() {
-      return path(process.env.HUB_CONTACTS_PATH, "/contacts");
+    /** Token, mit dem der Hub /api/hub/status abfragt */
+    get statusToken() {
+      return process.env.HUB_STATUS_TOKEN || undefined;
     },
-    get tasksPath() {
-      return path(process.env.HUB_TASKS_PATH, "/tasks");
-    },
-    get appointmentsPath() {
-      return path(process.env.HUB_APPOINTMENTS_PATH, "/appointments");
-    },
-    /** Hub-Login konfiguriert (Secret oder JWKS vorhanden)? */
+    /** Anmeldung über den Hub eingerichtet? */
     get ssoConfigured() {
-      return Boolean(this.url && (this.jwtSecret || this.jwksUrl));
+      return Boolean(this.url && this.clientId && this.clientSecret);
     },
-    /** Hub-API für Kontakt-/Aufgabenübergabe konfiguriert? */
+    /** Hub-API für Kontakte und Ereignisse eingerichtet? */
     get apiConfigured() {
       return Boolean(this.apiUrl && this.apiToken);
     },

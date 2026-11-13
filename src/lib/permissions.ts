@@ -87,6 +87,9 @@ export function mapHubRole(input: unknown): Role | null {
     LEITUNG: "LEITUNG",
     GESCHAEFTSFUEHRUNG: "LEITUNG",
     MANAGER: "LEITUNG",
+    MANAGEMENT: "LEITUNG", // Baax Hub
+    TEAMLEAD: "MITARBEITER", // Baax Hub: Teamleitung ohne Honorare und Exporte
+    EMPLOYEE: "MITARBEITER", // Baax Hub
     MITARBEITER: "MITARBEITER",
     USER: "MITARBEITER",
     MEMBER: "MITARBEITER",

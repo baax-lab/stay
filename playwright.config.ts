@@ -25,7 +25,7 @@ export default defineConfig({
     command: `pnpm exec next dev --turbopack -p ${PORT}`,
     port: PORT,
     reuseExistingServer: !process.env.CI,
-    env: { ...process.env, APP_URL: `http://localhost:${PORT}`, AUTH_DEV_LOGIN: "true", NODE_ENV: "development", NEXT_DIST_DIR: ".next-e2e" } as Record<string, string>,
+    env: { ...process.env, APP_URL: `http://localhost:${PORT}`, AUTH_DEV_LOGIN: "true", HUB_URL: "", HUB_CLIENT_ID: "", HUB_CLIENT_SECRET: "", HUB_API_TOKEN: "", NODE_ENV: "development", NEXT_DIST_DIR: ".next-e2e" } as Record<string, string>,
     timeout: 120_000,
   },
 });

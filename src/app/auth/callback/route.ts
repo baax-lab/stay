@@ -1,26 +1,20 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { createSession, verifyHubToken, clientIp } from "@/lib/auth";
+import { clientIp, createSession, finishHubLogin, HubLoginError } from "@/lib/auth";
 import { audit } from "@/lib/audit";
-import { env } from "@/lib/env";
 
-/** Rücksprung vom Hub-Login: ?token=<JWT>&next=/pfad */
+/** Rücksprung vom Baax Hub: ?code=…&state=…[&iss=…] oder ?error=… */
 export async function GET(req: NextRequest) {
-  const token = req.nextUrl.searchParams.get("token");
-  const nextParam = req.nextUrl.searchParams.get("next") ?? "/";
-  const next = nextParam.startsWith("/") && !nextParam.startsWith("//") ? nextParam : "/";
-
-  if (!token) {
-    return NextResponse.redirect(new URL(`/auth/login?error=${encodeURIComponent("Kein Token vom Hub erhalten")}`, env.appUrl));
-  }
-
   try {
-    const user = await verifyHubToken(token);
+    const { user, target } = await finishHubLogin(req.nextUrl.searchParams);
     await createSession(user);
     await audit({ userId: user.id, action: "LOGIN", entity: "Session", meta: { via: "hub", role: user.role, name: user.name, email: user.email }, ip: await clientIp() });
-    return NextResponse.redirect(new URL(next, env.appUrl));
+    // relativ weiterleiten, damit es unter jedem Hostnamen funktioniert
+    return new NextResponse(null, { status: 303, headers: { location: target } });
   } catch (e) {
-    const msg = e instanceof Error ? e.message : "Login fehlgeschlagen";
-    await audit({ action: "LOGIN", entity: "Session", meta: { via: "hub", ok: false, error: msg }, ip: await clientIp() });
-    return NextResponse.redirect(new URL(`/auth/login?error=${encodeURIComponent("Hub-Login fehlgeschlagen: " + msg)}`, env.appUrl));
+    const code = e instanceof HubLoginError ? e.code : "failed";
+    const detail = e instanceof Error ? e.message : String(e);
+    if (code !== "access_denied" && code !== "login_required") console.error("Hub-Anmeldung fehlgeschlagen:", detail);
+    await audit({ action: "LOGIN", entity: "Session", meta: { via: "hub", ok: false, code, error: detail.slice(0, 300) }, ip: await clientIp() });
+    return new NextResponse(null, { status: 303, headers: { location: `/auth/login?error=${encodeURIComponent(code)}` } });
   }
 }

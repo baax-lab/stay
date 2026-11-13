@@ -12,7 +12,7 @@
 - Sprache im UI und in Kommentaren: Deutsch. Enum-Werte und Code: Englisch bzw. wie im Konzept.
 - Rechte immer serverseitig prüfen: `requirePermission()` in Server Actions und Route Handlern, `can.*` aus `src/lib/permissions.ts`.
 - Jede Änderung nach außen (Export, Versand, Hub) ins `AuditLog` (`src/lib/audit.ts`).
-- Hub-SSO und Hub-API sind Annahmen (`src/lib/auth.ts`, `src/lib/hub.ts`); bei Klärung der Schnittstelle nur dort anpassen.
+- Hub-Anbindung folgt `docs/SSO.md`, `docs/API.md`, `docs/APP-ANBINDUNG.md` im Repository `baax-lab/BaaxHub` (OIDC mit PKCE, Einstieg `/auth/hub`, API `/api/v1`). Reine Bausteine in `src/lib/oidc.ts`, Anmeldung in `src/lib/auth.ts`, API in `src/lib/hub.ts`. Der Hub hat keine Endpunkte für Aufgaben oder Termine: Aufgaben nur als `task` am Ereignis.
 - DSGVO-Regeln (Löschen, Anonymisieren, Aufbewahren) nur in `src/lib/privacy.ts`; Ausführung in `src/lib/services/privacy.ts`. Neue Tabellen mit Personenbezug dort in Suche, Export und Löschung aufnehmen.
 - Abmelden nur per POST (`/auth/logout`); keine Links mit Seiteneffekten, Next lädt Links in Produktion vorab.
 - Service Worker kommt aus `src/lib/sw-script.ts` (Route `/sw.js`, nur Produktion); neue öffentliche oder personenbezogene Pfade in dessen `NEVER`-Liste prüfen.

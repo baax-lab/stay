@@ -5,7 +5,7 @@ import { SESSION_COOKIE, verifySession } from "@/lib/session";
  * Alle Seiten außer den öffentlichen erfordern Hub-Login (Konzept §11).
  * Die eigentliche Rechteprüfung passiert zusätzlich serverseitig in jeder Action.
  */
-const PUBLIC_PREFIXES = ["/brand.css", "/interesse", "/auth/", "/api/public/", "/api/cron/", "/api/health", "/portal/", "/partner-zugang/", "/datenschutz"];
+const PUBLIC_PREFIXES = ["/api/hub/status", "/brand.css", "/interesse", "/auth/", "/api/public/", "/api/cron/", "/api/health", "/portal/", "/partner-zugang/", "/datenschutz"];
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;

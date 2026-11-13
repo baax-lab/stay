@@ -8,7 +8,7 @@ import type { Role } from "@prisma/client";
  */
 
 export const SESSION_COOKIE = "stay_session";
-export const SESSION_TTL_SECONDS = 12 * 60 * 60; // 12 Stunden
+export const SESSION_TTL_SECONDS = 8 * 60 * 60; // 8 Stunden, Vorgabe des Hubs (Sperren im Hub greifen spätestens dann)
 
 export type SessionUser = {
   id: string; // Hub-User-ID (sub)

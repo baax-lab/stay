@@ -62,11 +62,15 @@ Ohne konfigurierten Hub steht unter `/auth/dev` ein Entwickler-Login mit wählba
 
 ## Hub-Anbindung
 
-**Login (SSO):** `/auth/login` leitet zu `HUB_URL + HUB_LOGIN_PATH?redirect_uri=…/auth/callback`. Der Hub leitet mit `?token=<JWT>` zurück. Das Token wird mit `HUB_JWT_SECRET` (HS256) oder `HUB_JWKS_URL` geprüft; die Rolle kommt aus dem Claim `HUB_ROLE_CLAIM` (Standard `role`, String oder Array; erkannt werden admin, leitung, mitarbeiter, praktikant und gängige Aliase). Danach setzt Baax Stay ein eigenes Session-Cookie (12 h).
+Umgesetzt nach `docs/SSO.md`, `docs/API.md` und `docs/APP-ANBINDUNG.md` im Repository `baax-lab/BaaxHub`.
 
-**Kontakt- und Aufgabenübergabe:** `POST {HUB_API_URL}/contacts` und `POST {HUB_API_URL}/tasks` (Pfade über `HUB_*_PATH` änderbar) mit `Authorization: Bearer HUB_API_TOKEN` (Annahme, siehe `src/lib/hub.ts`). Ist die API nicht konfiguriert, bleibt jeder Lead auf `PENDING` und kann einzeln oder gesammelt nachgereicht werden.
+**Anmeldung (OpenID Connect):** Der Knopf „Anmelden“ an der App im Hub ruft den Anmelde-Einstieg `/auth/hub?iss=<HUB_URL>[&target_link_uri=…]` auf. Baax Stay startet die Anmeldung (Authorization Code mit PKCE S256, `state`, `nonce`), der Hub kommt ohne Abfrage mit einem Code auf `/auth/callback` zurück, das ID-Token (ES256, JWKS des Hubs) wird geprüft und eine eigene Sitzung (8 Stunden) angelegt. Verknüpft wird über `sub`. Rollen: `ADMIN` → Admin, `MANAGEMENT` → Leitung, `TEAMLEAD` und `EMPLOYEE` → Mitarbeiter, `intern: true` → Praktikant (außer Admin). Ohne Sitzung leitet jede Seite still über den Einstieg zum Hub und danach zurück; `access_denied` zeigt „Kein Zugang“.
 
-Beides sind Annahmen bis die Hub-Schnittstelle feststeht (offener Punkt im Konzept §14). Anpassungen betreffen nur `src/lib/auth.ts` und `src/lib/hub.ts`.
+**API:** Neue Leads werden über `POST /api/v1/contacts` als Kontakt angelegt (Dublette liefert den vorhandenen, `hubId` wird gespeichert); die Aufgabe „Nachfassen“ und alle weiteren Aufgaben (Kaufabwicklung, Nachgespräch, Laufzeitende, Besichtigungsanfrage) entstehen als Ereignis mit `task` über `POST /api/v1/events`. Reisen erscheinen als Ereignis „meeting“ in der Timeline. Ohne `HUB_API_TOKEN` bleibt jeder Lead auf „ausstehend“ und kann nachgereicht werden.
+
+**Für den Hub:** Status-Endpoint `GET /api/hub/status` (Bearer `HUB_STATUS_TOKEN`, nur Zahlen) und Sprung-Link `/kontakte/by-hub-id/{hubId}`. Welche Werte im Hub einzutragen sind, zeigt Einstellungen → Systemstatus.
+
+Code: `src/lib/oidc.ts` (reine Bausteine, getestet), `src/lib/auth.ts` (Anmeldung), `src/lib/hub.ts` (API).
 
 ## Fachlogik (reine Funktionen, getestet)
 

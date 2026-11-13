@@ -3,60 +3,147 @@ import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { createRemoteJWKSet } from "jose/jwks/remote";
 import { jwtVerify } from "jose/jwt/verify";
-import type { JWTPayload } from "jose";
+import { SignJWT } from "jose/jwt/sign";
 import type { Role } from "@prisma/client";
 import { env } from "./env";
 import { SESSION_COOKIE, SESSION_TTL_SECONDS, signSession, verifySession, type SessionUser } from "./session";
-import { assertCan, mapHubRole, type Permission } from "./permissions";
+import { assertCan, type Permission } from "./permissions";
+import { issuerMatches, pkceChallenge, randomToken, roleFromHubClaims, safeEqual } from "./oidc";
 
 /**
- * Hub-Login (SSO).
+ * Anmeldung über den Baax Hub (OpenID Connect, Authorization Code mit PKCE S256, state und nonce).
  *
- * Ablauf: /auth/login → Hub-Login-Seite (redirect_uri) → /auth/callback?token=<JWT>
- * Das Hub-Token wird hier geprüft (HS256 mit gemeinsamem Geheimnis oder JWKS),
- * die Rolle aus dem Claim gelesen und ein eigenes Session-Cookie gesetzt.
- *
- * Erwartete Claims im Hub-Token: sub (User-ID), name, email, role (String oder Array).
- * Claim-Name für die Rolle ist über HUB_ROLE_CLAIM konfigurierbar.
+ * Ablauf (Third-Party Initiated Login, docs/SSO.md im Hub):
+ *   Hub-Knopf „Anmelden“ → /auth/hub?iss=…&target_link_uri=… → Hub /oauth/authorize
+ *   → /auth/callback?code=…&state=… → Code gegen Tokens tauschen, ID-Token (ES256) prüfen → eigenes Session-Cookie.
+ * Rolle aus den Claims role/intern, Verknüpfung über sub (nie über die E-Mail).
  */
 
-export function hubLoginUrl(next?: string): string {
-  const cb = new URL("/auth/callback", env.appUrl);
-  if (next) cb.searchParams.set("next", next);
-  const url = new URL(env.hub.loginPath, env.hub.url);
-  url.searchParams.set("redirect_uri", cb.toString());
-  url.searchParams.set("client", "baax-stay");
+const FLOW_COOKIE = "stay_oidc";
+const FLOW_ISSUER = "baax-stay-oidc";
+
+export class HubLoginError extends Error {
+  constructor(public code: string, message?: string) {
+    super(message ?? code);
+    this.name = "HubLoginError";
+  }
+}
+
+type Discovery = { issuer: string; authorization_endpoint: string; token_endpoint: string; jwks_uri: string };
+let discoveryCache: { at: number; url: string; doc: Discovery } | undefined;
+let jwksCache: { uri: string; set: ReturnType<typeof createRemoteJWKSet> } | undefined;
+
+async function discovery(): Promise<Discovery> {
+  if (discoveryCache && discoveryCache.url === env.hub.url && Date.now() - discoveryCache.at < 3600_000) return discoveryCache.doc;
+  const res = await fetch(`${env.hub.url}/.well-known/openid-configuration`, { signal: AbortSignal.timeout(10_000) });
+  if (!res.ok) throw new HubLoginError("discovery", `Discovery antwortete ${res.status}`);
+  const doc = (await res.json()) as Discovery;
+  if (!issuerMatches(doc.issuer, env.hub.url)) throw new HubLoginError("discovery", "Issuer passt nicht zu HUB_URL");
+  discoveryCache = { at: Date.now(), url: env.hub.url, doc };
+  return doc;
+}
+
+function flowKey() {
+  return new TextEncoder().encode(env.sessionSecret);
+}
+
+export function hubCallbackUrl(): string {
+  return `${env.appUrl}/auth/callback`;
+}
+
+/** Einstieg für die Anmeldeseite: still über den eigenen Anmelde-Einstieg zum Hub (nur Team-App, erlaubt laut Hub). */
+export function hubEntryUrl(target: string): string {
+  return `/auth/hub?iss=${encodeURIComponent(env.hub.url)}&target_link_uri=${encodeURIComponent(env.appUrl + target)}`;
+}
+
+/** Anmeldung beim Hub starten: state, nonce und PKCE im kurzlebigen, signierten Cookie; liefert die Authorize-Adresse. */
+export async function startHubLogin(target: string): Promise<string> {
+  if (!env.hub.ssoConfigured) throw new HubLoginError("not_configured");
+  const d = await discovery();
+  const state = randomToken();
+  const nonce = randomToken();
+  const verifier = randomToken(48);
+  const flow = await new SignJWT({ state, nonce, verifier, target })
+    .setProtectedHeader({ alg: "HS256" })
+    .setIssuer(FLOW_ISSUER)
+    .setIssuedAt()
+    .setExpirationTime("10m")
+    .sign(flowKey());
+  (await cookies()).set(FLOW_COOKIE, flow, { httpOnly: true, sameSite: "lax", secure: env.appUrl.startsWith("https://"), path: "/auth", maxAge: 600 });
+
+  const url = new URL(d.authorization_endpoint);
+  url.search = new URLSearchParams({
+    response_type: "code",
+    client_id: env.hub.clientId!,
+    redirect_uri: hubCallbackUrl(),
+    scope: "openid profile email",
+    state,
+    nonce,
+    code_challenge: await pkceChallenge(verifier),
+    code_challenge_method: "S256",
+  }).toString();
   return url.toString();
 }
 
-let jwks: ReturnType<typeof createRemoteJWKSet> | undefined;
+/** Rücksprung vom Hub auswerten. Wirft HubLoginError mit Code für die Anmeldeseite. */
+export async function finishHubLogin(params: URLSearchParams): Promise<{ user: SessionUser; target: string }> {
+  const store = await cookies();
+  const raw = store.get(FLOW_COOKIE)?.value;
+  store.delete({ name: FLOW_COOKIE, path: "/auth" });
 
-export async function verifyHubToken(token: string): Promise<SessionUser> {
-  const opts = {
-    issuer: env.hub.issuer,
-    audience: env.hub.audience,
-    clockTolerance: 30,
-  };
-
-  let payload: JWTPayload;
-  if (env.hub.jwksUrl) {
-    jwks ??= createRemoteJWKSet(new URL(env.hub.jwksUrl));
-    payload = (await jwtVerify(token, jwks, opts)).payload;
-  } else if (env.hub.jwtSecret) {
-    payload = (await jwtVerify(token, new TextEncoder().encode(env.hub.jwtSecret), opts)).payload;
-  } else {
-    throw new Error("Hub-Login ist nicht konfiguriert (HUB_JWT_SECRET oder HUB_JWKS_URL fehlt)");
+  const error = params.get("error");
+  if (error) throw new HubLoginError(error);
+  if (!raw) throw new HubLoginError("expired", "Anmeldevorgang abgelaufen oder in einem anderen Browser gestartet");
+  let flow: { state: string; nonce: string; verifier: string; target: string };
+  try {
+    flow = (await jwtVerify(raw, flowKey(), { issuer: FLOW_ISSUER })).payload as unknown as typeof flow;
+  } catch {
+    throw new HubLoginError("expired");
   }
+  if (!safeEqual(params.get("state") ?? "", flow.state)) throw new HubLoginError("state", "state passt nicht");
 
-  if (!payload.sub) throw new Error("Hub-Token ohne sub");
-  const role = mapHubRole(payload[env.hub.roleClaim] ?? payload.roles);
-  if (!role) throw new Error("Hub-Token enthält keine bekannte Rolle");
+  const d = await discovery();
+  const iss = params.get("iss");
+  if (iss && !issuerMatches(iss, d.issuer)) throw new HubLoginError("issuer", "Rücksprung von fremdem Aussteller");
+  const code = params.get("code");
+  if (!code) throw new HubLoginError("no_code");
+
+  const res = await fetch(d.token_endpoint, {
+    method: "POST",
+    headers: { "content-type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({
+      grant_type: "authorization_code",
+      code,
+      redirect_uri: hubCallbackUrl(),
+      code_verifier: flow.verifier,
+      client_id: env.hub.clientId!,
+      client_secret: env.hub.clientSecret!,
+    }),
+    signal: AbortSignal.timeout(10_000),
+  });
+  const tokens = (await res.json().catch(() => ({}))) as { id_token?: string; error?: string; error_description?: string };
+  if (!res.ok || !tokens.id_token) throw new HubLoginError(tokens.error ?? "token", `Token-Abruf: ${tokens.error ?? res.status}${tokens.error_description ? ` (${tokens.error_description})` : ""}`);
+
+  if (!jwksCache || jwksCache.uri !== d.jwks_uri) jwksCache = { uri: d.jwks_uri, set: createRemoteJWKSet(new URL(d.jwks_uri)) };
+  let claims: Record<string, unknown>;
+  try {
+    claims = (await jwtVerify(tokens.id_token, jwksCache.set, { issuer: d.issuer, audience: env.hub.clientId, algorithms: ["ES256"], clockTolerance: 30 })).payload;
+  } catch (e) {
+    throw new HubLoginError("id_token", `ID-Token ungültig: ${e instanceof Error ? e.message : e}`);
+  }
+  if (claims.nonce !== flow.nonce) throw new HubLoginError("nonce", "nonce passt nicht");
+  if (typeof claims.sub !== "string" || !claims.sub) throw new HubLoginError("id_token", "ID-Token ohne sub");
+  const role = roleFromHubClaims(claims);
+  if (!role) throw new HubLoginError("role", `Unbekannte Rolle im Hub: ${String(claims.role)}`);
 
   return {
-    id: payload.sub,
-    name: typeof payload.name === "string" ? payload.name : "",
-    email: typeof payload.email === "string" ? payload.email : "",
-    role,
+    user: {
+      id: claims.sub,
+      name: typeof claims.name === "string" ? claims.name : "",
+      email: typeof claims.email === "string" ? claims.email : "",
+      role,
+    },
+    target: flow.target || "/",
   };
 }
 

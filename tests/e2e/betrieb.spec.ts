@@ -115,7 +115,7 @@ test("Rechtstexte, Hausfarbe, Verbindungstests, Abmelden", async ({ page }, test
   // Ohne Konfiguration melden die Tests klar, was fehlt
   await page.goto("/einstellungen");
   await page.getByRole("button", { name: "Hub-Verbindung testen" }).click();
-  await expect(page.getByText("HUB_API_URL oder HUB_API_TOKEN fehlt.")).toBeVisible();
+  await expect(page.getByText("HUB_URL fehlt.")).toBeVisible();
   await page.getByRole("button", { name: "SMTP-Anmeldung testen" }).click();
   await expect(page.getByText("SMTP_HOST fehlt.")).toBeVisible();
 

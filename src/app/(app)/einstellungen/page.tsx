@@ -203,6 +203,10 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
               <dd>{env.hub.apiConfigured ? <Badge tone="ok">konfiguriert</Badge> : <Badge tone="warn">nicht konfiguriert – Leads bleiben „ausstehend“</Badge>}</dd>
             </div>
             <div className="flex items-center justify-between">
+              <dt>Hub-Status (Kachel im Hub)</dt>
+              <dd>{env.hub.statusToken ? <Badge tone="ok">HUB_STATUS_TOKEN gesetzt</Badge> : <Badge tone="warn">HUB_STATUS_TOKEN fehlt</Badge>}</dd>
+            </div>
+            <div className="flex items-center justify-between">
               <dt>SMTP-Versand</dt>
               <dd>{env.mailConfigured ? <Badge tone="ok">konfiguriert</Badge> : <Badge tone="warn">nicht konfiguriert – Mails werden nur protokolliert</Badge>}</dd>
             </div>
@@ -228,8 +232,20 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
               <dd>{env.devLoginEnabled ? <Badge tone="danger">aktiv</Badge> : <Badge tone="ok">aus</Badge>}</dd>
             </div>
           </dl>
-          <div className="mt-4 text-xs text-muted">
-            Hub-Endpunkte: {env.hub.apiUrl || "–"} · Kontakte {env.hub.contactsPath} · Aufgaben {env.hub.tasksPath} · Termine {env.hub.appointmentsPath}
+          <div className="mt-4 rounded-xl bg-canvas p-3 text-xs">
+            <div className="mb-2 font-semibold text-petrol">Im Baax Hub eintragen (Apps → Baax Stay)</div>
+            <dl className="grid gap-1 sm:grid-cols-[auto_1fr] sm:gap-x-3">
+              <dt className="text-muted">Adresse der App</dt>
+              <dd className="break-all font-mono">{env.appUrl}</dd>
+              <dt className="text-muted">Anmelde-Einstieg</dt>
+              <dd className="break-all font-mono">{env.appUrl}/auth/hub</dd>
+              <dt className="text-muted">Rücksprung-Adresse</dt>
+              <dd className="break-all font-mono">{env.appUrl}/auth/callback</dd>
+              <dt className="text-muted">Status-Endpoint</dt>
+              <dd className="break-all font-mono">{env.appUrl}/api/hub/status</dd>
+              <dt className="text-muted">Sprung zum Kontakt</dt>
+              <dd className="break-all font-mono">{env.appUrl}/kontakte/by-hub-id/{"{hubId}"}</dd>
+            </dl>
           </div>
           <div className="mt-4 flex flex-col gap-2">
             <ActionButton action={testHub}>Hub-Verbindung testen</ActionButton>

@@ -47,7 +47,7 @@ In `.env.production` mindestens ausfüllen:
 | --- | --- |
 | `APP_URL` | `https://stay.baax.de` |
 | `POSTGRES_PASSWORD`, `SESSION_SECRET`, `CRON_SECRET` | je `openssl rand -hex 32` (keine Sonderzeichen, sonst bricht die Datenbank-Adresse) |
-| `HUB_*` | sobald die Hub-Schnittstelle feststeht; ohne Hub bleibt Login gesperrt und Leads bleiben „ausstehend“ |
+| `HUB_URL`, `HUB_CLIENT_ID`, `HUB_CLIENT_SECRET`, `HUB_API_TOKEN`, `HUB_STATUS_TOKEN` | aus dem Hub, siehe „Anmeldung über den Hub“ unten; ohne sie ist keine Anmeldung möglich und Leads bleiben „ausstehend“ |
 | `SMTP_*`, `MAIL_SIGNATURE_HTML` | Versand; ohne SMTP wird nichts gesendet, nur protokolliert |
 | `BRAND_COLOR` | exakter Hex-Wert Baax-Cyan, wirkt ohne Neubau |
 | `STAY_PROXY_MODE` | `port` (Variante A) oder `network` (Variante B) |
@@ -136,7 +136,23 @@ Im Staging SMTP leer lassen oder ein Testpostfach eintragen, damit keine Mail an
 
 Läuft auf dem Server Coolify, kann Baax Stay dort als „Docker Compose“-Ressource aus dem Repository angelegt werden: `docker-compose.yml` als Compose-Datei, die Variablen aus `deploy/env.production.example` in der Oberfläche setzen, Domain auf den Dienst `app` Port 3000. Die Dateien unter `deploy/compose.*.yml` und `stay.sh` werden dann nicht gebraucht; Backups übernimmt der Dienst `backup` oder Coolifys eigene Datenbanksicherung.
 
-## 9. Checkliste vor dem Go-live
+## 9. Anmeldung über den Hub
+
+Im Hub unter **Apps** die App „Baax Stay“ anlegen bzw. öffnen und eintragen (die Werte zeigt auch Baax Stay unter Einstellungen → Systemstatus):
+
+| Im Hub | Wert |
+| --- | --- |
+| Adresse der App | `https://stay.baax.de` |
+| Anmeldung über den Hub → Anmelde-Einstieg | `https://stay.baax.de/auth/hub` |
+| Anmeldung über den Hub → Rücksprung-Adresse | `https://stay.baax.de/auth/callback` |
+| Anmeldung über den Hub → wer darf rein | Vorschlag: Bereich Baax Immobilien, Praktikanten erlaubt (sie bekommen in Stay nur Praktikanten-Rechte) |
+| Prüfung → Status-Endpoint und Token | `https://stay.baax.de/api/hub/status`, Token = `HUB_STATUS_TOKEN` |
+| Sprung zum Kontakt | `https://stay.baax.de/kontakte/by-hub-id/{hubId}` |
+| Einstellungen → API-Zugänge | Name „Baax Stay“, Schreibrechte ja |
+
+Zurück in `.env.production`: `HUB_CLIENT_ID`, `HUB_CLIENT_SECRET` (wird im Hub nur einmal angezeigt), `HUB_API_TOKEN` (beginnt mit `bhub_`) und `HUB_STATUS_TOKEN` (selbst erzeugen mit `openssl rand -hex 32` und im Hub an der App ins Feld „Token“ eintragen). Danach `deploy/stay.sh production up`.
+
+## 10. Checkliste vor dem Go-live
 
 - [ ] Server geprüft (Abschnitt 1), Variante gewählt, Port bzw. Netz frei
 - [ ] `.env.production` vollständig, `chmod 600`, Geheimnisse zufällig erzeugt
