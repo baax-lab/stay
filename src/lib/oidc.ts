@@ -58,6 +58,9 @@ export function roleFromHubClaims(claims: { role?: unknown; intern?: unknown }):
 export function hubErrorMessage(error: string | null | undefined): string {
   if (error === "access_denied") return "Kein Zugang zu Baax Stay. Bitte bei der Leitung melden.";
   if (error === "login_required") return "Bitte zuerst im Baax Hub anmelden.";
+  if (error === "not_configured") return "Anmeldung über den Hub ist in Baax Stay noch nicht eingerichtet (HUB_CLIENT_ID, HUB_CLIENT_SECRET).";
+  if (error === "discovery") return "Baax Stay erreicht den Hub nicht. Bitte HUB_URL prüfen.";
+  if (error === "invalid_client") return "Der Hub kennt Baax Stay nicht: Client-ID oder Geheimnis passen nicht.";
   return "Anmeldung über den Hub fehlgeschlagen. Bitte Baax Stay erneut über den Hub öffnen.";
 }
 

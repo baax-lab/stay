@@ -24,7 +24,8 @@ DC=(docker compose -p "$PROJECT" --env-file "$ENVFILE" "${FILES[@]}")
 case "$CMD" in
   up)      "${DC[@]}" up -d --build ;;
   down)    "${DC[@]}" down ;;
-  logs)    "${DC[@]}" logs -f --tail=200 "$@" ;;
+  # fortlaufend nur im Terminal; weitergeleitet (z. B. an grep) nur die letzten Zeilen, damit der Befehl endet
+  logs)    if [ -t 1 ]; then "${DC[@]}" logs -f --tail=200 "$@"; else "${DC[@]}" logs --tail=200 --no-log-prefix "$@"; fi ;;
   ps)      "${DC[@]}" ps ;;
   update)
     git pull --ff-only
