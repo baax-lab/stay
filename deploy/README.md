@@ -46,7 +46,7 @@ In `.env.production` mindestens ausfüllen:
 | Variable | Inhalt |
 | --- | --- |
 | `APP_URL` | `https://stay.baax.de` |
-| `POSTGRES_PASSWORD`, `SESSION_SECRET`, `CRON_SECRET` | je `openssl rand -base64 48` |
+| `POSTGRES_PASSWORD`, `SESSION_SECRET`, `CRON_SECRET` | je `openssl rand -hex 32` (keine Sonderzeichen, sonst bricht die Datenbank-Adresse) |
 | `HUB_*` | sobald die Hub-Schnittstelle feststeht; ohne Hub bleibt Login gesperrt und Leads bleiben „ausstehend“ |
 | `SMTP_*`, `MAIL_SIGNATURE_HTML` | Versand; ohne SMTP wird nichts gesendet, nur protokolliert |
 | `BRAND_COLOR` | exakter Hex-Wert Baax-Cyan, wirkt ohne Neubau |
