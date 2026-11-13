@@ -28,7 +28,7 @@ function Stars({ value, onChange, disabled, label }: { value: number | null; onC
           aria-label={`${label}: ${n}`}
           disabled={disabled}
           onClick={() => onChange(value === n ? null : n)}
-          className={cn("h-11 w-11 rounded-full border text-base font-semibold transition-colors", value != null && n <= value ? "border-brand bg-brand text-petrol" : "border-line bg-surface text-muted")}
+          className={cn("h-11 w-11 rounded-full border text-base font-semibold transition-colors", value != null && n <= value ? "border-brand bg-brand text-on-brand" : "border-line bg-surface text-muted")}
         >
           {n}
         </button>
@@ -79,7 +79,7 @@ export function InspectionEditor({ id, initial, locked }: { id: string; initial:
         <div className="mb-2 mt-4 text-sm font-medium text-petrol">Empfehlung</div>
         <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Empfehlung">
           {REC.map(([v, label]) => (
-            <button key={v} type="button" role="radio" aria-checked={s.recommendation === v} disabled={locked} onClick={() => setS({ ...s, recommendation: v })} className={cn("rounded-full border px-4 py-2.5 text-sm font-medium", s.recommendation === v ? "border-brand bg-brand text-petrol" : "border-line bg-surface")}>
+            <button key={v} type="button" role="radio" aria-checked={s.recommendation === v} disabled={locked} onClick={() => setS({ ...s, recommendation: v })} className={cn("rounded-md border px-4 py-2.5 text-sm font-medium", s.recommendation === v ? "border-brand bg-brand text-on-brand" : "border-line bg-surface")}>
               {label}
             </button>
           ))}

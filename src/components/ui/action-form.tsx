@@ -70,10 +70,10 @@ export function ActionButton({
   const [pending, start] = useTransition();
   const [msg, setMsg] = useState<string | null>(null);
   const styles = {
-    primary: "bg-brand text-petrol hover:bg-brand-strong hover:text-white",
-    secondary: "bg-surface text-petrol border border-line hover:border-brand hover:bg-brand-soft",
-    ghost: "text-petrol hover:bg-brand-soft",
-    danger: "bg-danger-soft text-danger hover:bg-danger hover:text-white",
+    primary: "border border-transparent bg-brand text-on-brand hover:bg-brand-strong hover:text-white",
+    secondary: "border border-line-strong/60 bg-surface-solid text-ink hover:bg-brand-soft",
+    ghost: "border border-transparent text-muted hover:bg-surface-2 hover:text-ink",
+    danger: "border border-transparent bg-danger text-white hover:opacity-90",
   };
   return (
     <span className="inline-flex flex-wrap items-center gap-2">
@@ -87,7 +87,7 @@ export function ActionButton({
             setMsg(r.ok ? (r.message ?? null) : r.error);
           });
         }}
-        className={cn("inline-flex h-9 items-center justify-center rounded-full px-3.5 text-sm font-medium transition-colors disabled:opacity-50", styles[variant], className)}
+        className={cn("inline-flex h-8 items-center justify-center rounded-md px-3 text-[13px] font-medium transition-colors disabled:opacity-50", styles[variant], className)}
       >
         {pending ? "…" : children}
       </button>

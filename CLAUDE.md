@@ -16,7 +16,7 @@
 - DSGVO-Regeln (Löschen, Anonymisieren, Aufbewahren) nur in `src/lib/privacy.ts`; Ausführung in `src/lib/services/privacy.ts`. Neue Tabellen mit Personenbezug dort in Suche, Export und Löschung aufnehmen.
 - Abmelden nur per POST (`/auth/logout`); keine Links mit Seiteneffekten, Next lädt Links in Produktion vorab.
 - Service Worker kommt aus `src/lib/sw-script.ts` (Route `/sw.js`, nur Produktion); neue öffentliche oder personenbezogene Pfade in dessen `NEVER`-Liste prüfen.
-- Hausfarbe nur über `BRAND_COLOR` (`/brand.css`), Rechtstexte über Setting `legal`.
+- Gestaltung wie der Baax Hub: Tokens nur in `src/app/globals.css` (`brand` = Baax-Cyan, Schrift darauf immer `text-on-brand`; Links und Cyan-Text auf hellem Grund `text-brand-strong`; `surface` = Milchglas, `surface-solid` = Formularfelder). Karten und Tabellen über `.glass rounded-2xl`, Tabellenköpfe `.eyebrow`, Schrift Inter über `@fontsource/inter`. Primärfarbe zur Laufzeit über `BRAND_COLOR` (`/brand.css`), Rechtstexte über Setting `legal`.
 - Betrieb auf geteiltem Docker-Server: `deploy/README.md`, `deploy/stay.sh`. Keine festen Containernamen, keine Host-Ports im Basis-Compose, Datenbank als `stay-db` ansprechen.
 - Befehle: `pnpm dev`, `pnpm test` (Vitest), `pnpm test:e2e` (Playwright, braucht DB), `pnpm db:migrate`, `pnpm db:seed`, `pnpm build`.
 - Nach jedem Schritt: lauffähig, getestet, committet.

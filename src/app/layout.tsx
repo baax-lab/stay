@@ -1,4 +1,9 @@
 import type { Metadata, Viewport } from "next";
+// Inter wie im Baax Hub, selbst gehostet (keine Anfragen an Google)
+import "@fontsource/inter/400.css";
+import "@fontsource/inter/500.css";
+import "@fontsource/inter/600.css";
+import "@fontsource/inter/700.css";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -11,7 +16,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#19b5d4",
+  themeColor: "#0cc0df",
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",

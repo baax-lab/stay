@@ -140,10 +140,10 @@ export default async function MandatePage({ params, searchParams }: { params: Pr
 
       <nav className="mb-4 flex gap-1 overflow-x-auto pb-1">
         {TABS.filter(([k]) => k !== "honorar" || canFees).map(([k, label]) => (
-          <Link key={k} href={`/auftraege/${mandate.id}?tab=${k}`} className={cn("whitespace-nowrap rounded-full px-3.5 py-1.5 text-sm font-medium", tab === k ? "bg-brand text-petrol" : "bg-surface text-ink border border-line hover:border-brand")}>
+          <Link key={k} href={`/auftraege/${mandate.id}?tab=${k}`} className={cn("whitespace-nowrap rounded-md px-3.5 py-1.5 text-sm font-medium", tab === k ? "bg-brand text-on-brand" : "bg-surface text-ink border border-line hover:border-brand")}>
             {label}
-            {k === "treffer" && openMatches > 0 && <span className="ml-1 rounded-full bg-petrol/10 px-1.5 text-xs">{openMatches}</span>}
-            {k === "kandidaten" && openCandidates > 0 && <span className="ml-1 rounded-full bg-petrol/10 px-1.5 text-xs">{openCandidates}</span>}
+            {k === "treffer" && openMatches > 0 && <span className="ml-1 rounded-md bg-petrol/10 px-1.5 text-xs">{openMatches}</span>}
+            {k === "kandidaten" && openCandidates > 0 && <span className="ml-1 rounded-md bg-petrol/10 px-1.5 text-xs">{openCandidates}</span>}
           </Link>
         ))}
       </nav>

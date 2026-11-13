@@ -25,7 +25,7 @@ export default async function PartnerAccessPage({ params, searchParams }: { para
         <Logo size={30} />
         <nav className="flex gap-1 text-sm">
           {PARTNER_LANGS.map((l) => (
-            <Link key={l} href={`/partner-zugang/${token}?lang=${l}`} className={`rounded-full px-2.5 py-1 font-medium ${lang === l ? "bg-brand text-petrol" : "text-muted hover:text-petrol"}`} hrefLang={l}>
+            <Link key={l} href={`/partner-zugang/${token}?lang=${l}`} className={`rounded-md px-2.5 py-1 font-medium ${lang === l ? "bg-brand text-on-brand" : "text-muted hover:text-petrol"}`} hrefLang={l}>
               {l.toUpperCase()}
             </Link>
           ))}

@@ -27,7 +27,7 @@ export function RegionTags({ value, onChange, options }: { value: string[]; onCh
     <div className="rounded-xl border border-line bg-surface p-2">
       <div className="flex flex-wrap gap-1.5">
         {value.map((v) => (
-          <button key={v} type="button" onClick={() => onChange(value.filter((x) => x !== v))} className="inline-flex items-center gap-1 rounded-full bg-brand-soft px-3 py-1 text-sm text-petrol" aria-label={`${v} entfernen`}>
+          <button key={v} type="button" onClick={() => onChange(value.filter((x) => x !== v))} className="inline-flex items-center gap-1 rounded-md bg-brand-soft px-3 py-1 text-sm text-petrol" aria-label={`${v} entfernen`}>
             {v} <span aria-hidden>×</span>
           </button>
         ))}
@@ -47,7 +47,7 @@ export function RegionTags({ value, onChange, options }: { value: string[]; onCh
       {suggestions.length > 0 && (
         <div className="mt-2 flex flex-wrap gap-1.5 border-t border-line pt-2">
           {suggestions.map((s) => (
-            <button key={s.key} type="button" onClick={() => add(s.name)} className={cn("rounded-full border border-line px-3 py-1 text-xs text-ink hover:border-brand hover:bg-brand-soft")}>
+            <button key={s.key} type="button" onClick={() => add(s.name)} className={cn("rounded-md border border-line px-3 py-1 text-xs text-ink hover:border-brand hover:bg-brand-soft")}>
               {s.name} <span className="text-muted">{s.country}</span>
             </button>
           ))}

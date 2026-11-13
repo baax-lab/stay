@@ -15,10 +15,10 @@ export async function DocumentFromTemplate({ kind, entityId, canSave }: { kind: 
       <div className="flex flex-wrap gap-2" data-testid={`template-${kind}`}>
         {langs.map((l) => (
           <span key={l} className="inline-flex flex-wrap gap-2">
-            <a href={`/vorlage/${kind}/${entityId}?lang=${l}`} target="_blank" rel="noreferrer" className="inline-flex h-9 items-center rounded-full border border-line bg-surface px-3.5 text-sm">
+            <a href={`/vorlage/${kind}/${entityId}?lang=${l}`} target="_blank" rel="noreferrer" className="inline-flex h-9 items-center rounded-md border border-line bg-surface px-3.5 text-sm">
               Vorschau {l.toUpperCase()}
             </a>
-            <a href={`/api/pdf/vorlage/${kind}/${entityId}?lang=${l}`} className="inline-flex h-9 items-center rounded-full bg-brand px-3.5 text-sm font-medium text-petrol">
+            <a href={`/api/pdf/vorlage/${kind}/${entityId}?lang=${l}`} className="inline-flex h-9 items-center rounded-md bg-brand px-3.5 text-sm font-medium text-on-brand">
               PDF {l.toUpperCase()}
             </a>
             {kind === "SUCHAUFTRAG" && canSave && <ActionButton action={saveMandateDocumentFromTemplateAction.bind(null, entityId, l)}>Als Dokument ablegen ({l.toUpperCase()})</ActionButton>}

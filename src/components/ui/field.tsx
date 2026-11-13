@@ -2,7 +2,7 @@ import * as React from "react";
 import { cn } from "@/lib/cn";
 
 const control =
-  "w-full rounded-xl border border-line bg-surface px-4 py-3 text-ink placeholder:text-muted/70 focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30 disabled:bg-canvas";
+  "w-full rounded-md border border-line-strong/70 bg-surface-solid px-3 py-2 min-h-11 sm:min-h-9 text-ink placeholder:text-ink-3 transition-colors focus:border-brand focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/30 aria-[invalid=true]:border-danger disabled:cursor-not-allowed disabled:opacity-50";
 
 export function Field({
   label,
@@ -25,7 +25,7 @@ export function Field({
   const Wrapper: React.ElementType = group ? "div" : "label";
   return (
     <Wrapper className={cn("block", className)}>
-      <span className="mb-1.5 flex items-baseline justify-between text-sm font-medium text-petrol">
+      <span className="mb-1.5 flex items-baseline justify-between text-[13px] font-medium text-ink">
         <span>
           {label}
           {required && (
@@ -61,7 +61,7 @@ export function Textarea({ className, ...props }: React.ComponentProps<"textarea
 
 export function Select({ className, children, ...props }: React.ComponentProps<"select">) {
   return (
-    <select className={cn(control, "appearance-none bg-no-repeat pr-10", className)} style={{ backgroundImage: "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%235d6f76' stroke-width='2'><path d='m6 9 6 6 6-6'/></svg>\")", backgroundPosition: "right 0.9rem center" }} {...props}>
+    <select className={cn(control, "appearance-none bg-no-repeat pr-10", className)} style={{ backgroundImage: "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2352636c' stroke-width='2'><path d='m6 9 6 6 6-6'/></svg>\")", backgroundPosition: "right 0.9rem center" }} {...props}>
       {children}
     </select>
   );
@@ -73,8 +73,8 @@ export function Checkbox({
   ...props
 }: React.InputHTMLAttributes<HTMLInputElement> & { label: React.ReactNode }) {
   return (
-    <label className={cn("flex cursor-pointer items-start gap-3 rounded-xl border border-line bg-surface px-4 py-3", className)}>
-      <input type="checkbox" className="mt-1 h-5 w-5 shrink-0 accent-brand-strong" {...props} />
+    <label className={cn("flex cursor-pointer items-start gap-3 rounded-md border border-line-strong/60 bg-surface-solid px-3 py-2.5", className)}>
+      <input type="checkbox" className="mt-0.5 h-5 w-5 shrink-0 accent-brand" {...props} />
       <span className="text-sm text-ink">{label}</span>
     </label>
   );
@@ -107,8 +107,8 @@ export function ChipGroup<T extends string>({
             aria-checked={active}
             onClick={() => onChange(o.value)}
             className={cn(
-              "rounded-full border px-4 py-2.5 text-sm font-medium transition-colors",
-              active ? "border-brand bg-brand text-petrol" : "border-line bg-surface text-ink hover:border-brand",
+              "rounded-md border px-3.5 py-2 text-sm font-medium transition-colors",
+              active ? "border-transparent bg-brand text-on-brand" : "border-line-strong/60 bg-surface-solid text-ink hover:bg-brand-soft",
             )}
           >
             {o.label}

@@ -26,10 +26,10 @@ export async function FiguresTab({ property, mandateId, mandates, canEdit }: { p
                 <ButtonLink href={`/dossier/${property.id}${q("en")}`} size="sm" variant="secondary" target="_blank">
                   Dossier EN
                 </ButtonLink>
-                <a href={`/api/pdf/dossier/${property.id}${q("de")}`} className="inline-flex h-9 items-center rounded-full bg-brand px-3.5 text-sm font-medium text-petrol">
+                <a href={`/api/pdf/dossier/${property.id}${q("de")}`} className="inline-flex h-9 items-center rounded-md bg-brand px-3.5 text-sm font-medium text-on-brand">
                   PDF DE
                 </a>
-                <a href={`/api/pdf/dossier/${property.id}${q("en")}`} className="inline-flex h-9 items-center rounded-full bg-brand px-3.5 text-sm font-medium text-petrol">
+                <a href={`/api/pdf/dossier/${property.id}${q("en")}`} className="inline-flex h-9 items-center rounded-md bg-brand px-3.5 text-sm font-medium text-on-brand">
                   PDF EN
                 </a>
               </div>
@@ -46,11 +46,11 @@ export async function FiguresTab({ property, mandateId, mandates, canEdit }: { p
           {mandates.length > 0 && (
             <div className="mb-3 flex flex-wrap items-center gap-2 text-xs">
               <span className="text-muted">Honorar aus:</span>
-              <Link href={`/objekte/${property.id}?tab=kosten`} className={`rounded-full px-2.5 py-1 ${!mandateId ? "bg-brand text-petrol" : "bg-canvas"}`}>
+              <Link href={`/objekte/${property.id}?tab=kosten`} className={`rounded-md px-2.5 py-1 ${!mandateId ? "bg-brand text-on-brand" : "bg-canvas"}`}>
                 Staffel
               </Link>
               {mandates.map((m) => (
-                <Link key={m.id} href={`/objekte/${property.id}?tab=kosten&m=${m.id}`} className={`rounded-full px-2.5 py-1 ${mandateId === m.id ? "bg-brand text-petrol" : "bg-canvas"}`}>
+                <Link key={m.id} href={`/objekte/${property.id}?tab=kosten&m=${m.id}`} className={`rounded-md px-2.5 py-1 ${mandateId === m.id ? "bg-brand text-on-brand" : "bg-canvas"}`}>
                   {m.title}
                 </Link>
               ))}

@@ -3,7 +3,8 @@
  * helle Fläche und die kräftige Variante abgeleitet, damit nur ein Wert gepflegt wird.
  */
 
-export const DEFAULT_BRAND = "#19b5d4";
+/** Primärfarbe Baax-Cyan wie im Hub; BRAND_COLOR ersetzt sie. Schrift darauf ist dunkel (on-brand). */
+export const DEFAULT_BRAND = "#0cc0df";
 
 export function parseHex(input: string | null | undefined): string | null {
   const v = (input ?? "").trim().toLowerCase();

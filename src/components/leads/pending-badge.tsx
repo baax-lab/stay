@@ -11,7 +11,7 @@ export function PendingBadge() {
     <Link
       href="/leads/neu"
       className={
-        "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium " +
+        "inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium " +
         (online ? "bg-warn-soft text-warn" : "bg-danger-soft text-danger")
       }
     >

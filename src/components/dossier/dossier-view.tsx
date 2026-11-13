@@ -72,7 +72,7 @@ export function DossierView({ d, lang, photoUrl, print = false }: { d: DossierDa
               <h3 className="mb-1 mt-4 text-xs font-semibold uppercase tracking-wide text-muted">{t(lang, "dossier.features")}</h3>
               <div className="flex flex-wrap gap-1.5">
                 {d.features.map((f) => (
-                  <span key={f} className="rounded-full border border-line px-2.5 py-0.5 text-xs">
+                  <span key={f} className="rounded-md border border-line px-2.5 py-0.5 text-xs">
                     {f}
                   </span>
                 ))}

@@ -14,7 +14,7 @@ export function PortalShell({ token, lang, path = "", children }: { token: strin
           </Link>
           <nav className="flex items-center gap-1 text-sm" aria-label={t(lang, "common.language")}>
             {(["de", "en"] as const).map((l) => (
-              <Link key={l} href={`${base}?lang=${l}`} className={`rounded-full px-3 py-1 font-medium ${lang === l ? "bg-brand text-petrol" : "text-muted hover:text-petrol"}`} hrefLang={l}>
+              <Link key={l} href={`${base}?lang=${l}`} className={`rounded-md px-3 py-1 font-medium ${lang === l ? "bg-brand text-on-brand" : "text-muted hover:text-petrol"}`} hrefLang={l}>
                 {l.toUpperCase()}
               </Link>
             ))}

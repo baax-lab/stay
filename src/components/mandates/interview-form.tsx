@@ -117,7 +117,7 @@ export function InterviewForm({ mandateId, initial, assessment, regions, canEdit
                       const others = list.filter((x) => x.key !== c.key);
                       set("wish", next ? [...others, { key: c.key, weight: next }] : others);
                     }}
-                    className={"rounded-full border px-3 py-1.5 text-sm " + (w ? "border-brand bg-brand text-petrol" : "border-line bg-surface")}
+                    className={"rounded-md border px-3 py-1.5 text-sm " + (w ? "border-brand bg-brand text-on-brand" : "border-line bg-surface")}
                   >
                     {c.label}
                     {w ? ` · ${w}` : ""}

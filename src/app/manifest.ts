@@ -11,7 +11,7 @@ export default function manifest(): MetadataRoute.Manifest {
     description: "Lead-Erfassung und Suchaufträge – Baax Immobilien GmbH",
     start_url: "/leads/neu",
     display: "standalone",
-    background_color: "#f4f8f9",
+    background_color: "#f3f6f8",
     theme_color: parseHex(env.brandColor) ?? DEFAULT_BRAND,
     lang: "de",
     icons: [

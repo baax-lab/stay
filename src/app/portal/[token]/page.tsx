@@ -50,7 +50,7 @@ export default async function PortalPage({ params, searchParams }: { params: Pro
           <h2 className="mb-4 font-semibold text-petrol">{t(lang, "portal.timeline")}</h2>
           <ol className="grid gap-2 sm:grid-cols-3 lg:grid-cols-3">
             {MAIN_FLOW.slice(0, 8).map((s, i) => (
-              <li key={s} className={cn("flex items-center gap-2 rounded-xl px-3 py-2 text-sm", i < currentIdx && "bg-ok-soft text-ok", i === currentIdx && "bg-brand font-semibold text-petrol", i > currentIdx && "bg-canvas text-muted")} aria-current={i === currentIdx ? "step" : undefined}>
+              <li key={s} className={cn("flex items-center gap-2 rounded-xl px-3 py-2 text-sm", i < currentIdx && "bg-ok-soft text-ok", i === currentIdx && "bg-brand font-semibold text-on-brand", i > currentIdx && "bg-canvas text-muted")} aria-current={i === currentIdx ? "step" : undefined}>
                 <span className="grid h-5 w-5 place-items-center rounded-full bg-white/60 text-xs">{i < currentIdx ? "✓" : i + 1}</span>
                 {t(lang, `status.${s}`)}
               </li>
@@ -70,7 +70,7 @@ export default async function PortalPage({ params, searchParams }: { params: Pro
               // eslint-disable-next-line @next/next/no-img-element
               <img src={`/portal/${token}/foto/${m.ownerPhotoFileId}`} alt="" className="h-16 w-16 rounded-full object-cover" />
             ) : (
-              <span className="grid h-16 w-16 place-items-center rounded-full bg-brand text-xl font-semibold text-petrol">{(m.ownerName ?? "B").slice(0, 1)}</span>
+              <span className="grid h-16 w-16 place-items-center rounded-full bg-brand text-xl font-semibold text-on-brand">{(m.ownerName ?? "B").slice(0, 1)}</span>
             )}
             <div className="text-sm">
               <div className="font-medium text-petrol">{m.ownerName ?? t(lang, "common.brand")}</div>

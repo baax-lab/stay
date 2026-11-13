@@ -10,12 +10,12 @@ import { audit } from "./audit";
  */
 
 const DEFAULT_SIGNATURE = `
-<table cellpadding="0" cellspacing="0" style="font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#0e3a47;margin-top:24px">
-  <tr><td style="border-left:3px solid #19b5d4;padding-left:12px">
+<table cellpadding="0" cellspacing="0" style="font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#0f1a20;margin-top:24px">
+  <tr><td style="border-left:3px solid #0cc0df;padding-left:12px">
     <strong>Baax Immobilien GmbH</strong><br>
     Suchmakler für touristisch genutzte Immobilien<br>
-    <a href="https://www.baax.de" style="color:#0b94b0">www.baax.de</a> · mail@baax.de<br>
-    <span style="color:#5d6f76">Geschäftsführer: Maximilian Schmitzberger · Sitz und Handelsregister gemäß Impressum</span>
+    <a href="https://www.baax.de" style="color:#0a9cb6">www.baax.de</a> · mail@baax.de<br>
+    <span style="color:#52636c">Geschäftsführer: Maximilian Schmitzberger · Sitz und Handelsregister gemäß Impressum</span>
   </td></tr>
 </table>`;
 

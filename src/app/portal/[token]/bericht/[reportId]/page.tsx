@@ -22,7 +22,7 @@ export default async function PortalReportPage({ params, searchParams }: { param
         <Link href={`/portal/${token}?lang=${lang}`} className="text-sm text-muted hover:text-petrol">
           ← {t(lang, "common.back")}
         </Link>
-        <a href={`/portal/${token}/pdf/bericht/${reportId}?lang=${lang}`} className="rounded-full bg-petrol px-4 py-2 text-sm font-medium text-white">
+        <a href={`/portal/${token}/pdf/bericht/${reportId}?lang=${lang}`} className="rounded-md bg-petrol px-4 py-2 text-sm font-medium text-white">
           {t(lang, "common.download_pdf")}
         </a>
       </div>

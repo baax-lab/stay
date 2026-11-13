@@ -33,13 +33,13 @@ export default async function DossierPage({ params, searchParams }: { params: Pr
             ← Objekt
           </Link>
           <div className="flex gap-2 text-sm">
-            <Link href={`/dossier/${id}?lang=de${q}`} className={`rounded-full px-3 py-1 ${lang === "de" ? "bg-brand text-petrol" : "bg-surface"}`}>
+            <Link href={`/dossier/${id}?lang=de${q}`} className={`rounded-md px-3 py-1 ${lang === "de" ? "bg-brand text-on-brand" : "bg-surface"}`}>
               DE
             </Link>
-            <Link href={`/dossier/${id}?lang=en${q}`} className={`rounded-full px-3 py-1 ${lang === "en" ? "bg-brand text-petrol" : "bg-surface"}`}>
+            <Link href={`/dossier/${id}?lang=en${q}`} className={`rounded-md px-3 py-1 ${lang === "en" ? "bg-brand text-on-brand" : "bg-surface"}`}>
               EN
             </Link>
-            <a href={`/api/pdf/dossier/${id}?lang=${lang}${q}`} className="rounded-full bg-petrol px-3 py-1 text-white">
+            <a href={`/api/pdf/dossier/${id}?lang=${lang}${q}`} className="rounded-md bg-petrol px-3 py-1 text-white">
               PDF
             </a>
           </div>

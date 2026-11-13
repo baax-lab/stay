@@ -59,8 +59,8 @@ export default async function MandatesPage({ searchParams }: { searchParams: Pro
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <form className="flex gap-2" action="/auftraege">
           {sp.view && <input type="hidden" name="view" value={sp.view} />}
-          <input name="q" defaultValue={sp.q ?? ""} placeholder="Titel oder Käufer…" className="h-10 rounded-full border border-line bg-surface px-4 text-sm" />
-          <select name="status" defaultValue={sp.status ?? ""} className="h-10 rounded-full border border-line bg-surface px-3 text-sm">
+          <input name="q" defaultValue={sp.q ?? ""} placeholder="Titel oder Käufer…" className="h-10 rounded-md border border-line bg-surface px-4 text-sm" />
+          <select name="status" defaultValue={sp.status ?? ""} className="h-10 rounded-md border border-line bg-surface px-3 text-sm">
             <option value="">Status: alle</option>
             {columns.map((s) => (
               <option key={s} value={s}>
@@ -68,11 +68,11 @@ export default async function MandatesPage({ searchParams }: { searchParams: Pro
               </option>
             ))}
           </select>
-          <select name="owner" defaultValue={sp.owner ?? ""} className="h-10 rounded-full border border-line bg-surface px-3 text-sm">
+          <select name="owner" defaultValue={sp.owner ?? ""} className="h-10 rounded-md border border-line bg-surface px-3 text-sm">
             <option value="">Alle Verantwortlichen</option>
             <option value="me">Meine</option>
           </select>
-          <button className="h-10 rounded-full border border-line bg-surface px-4 text-sm font-medium text-petrol">Filtern</button>
+          <button className="h-10 rounded-md border border-line bg-surface px-4 text-sm font-medium text-petrol">Filtern</button>
         </form>
         <SavedViews scope="auftraege" current={new URLSearchParams(Object.entries(sp).filter(([, v]) => v) as [string, string][]).toString()} />
       </div>

@@ -69,9 +69,9 @@ async function trim(cache) {
 
 function offlineResponse() {
   const body = '<!doctype html><html lang="de"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Offline · Baax Stay</title>' +
-    '<body style="font-family:system-ui,sans-serif;color:#0e3a47;background:#f4f8f9;padding:32px;max-width:480px;margin:auto">' +
+    '<body style="font-family:system-ui,sans-serif;color:#0f1a20;background:#f3f6f8;padding:32px;max-width:480px;margin:auto">' +
     '<h1 style="font-size:22px">Keine Verbindung</h1><p>Diese Seite braucht Netz. Kontakte erfassen geht weiter: sie werden auf dem Gerät gespeichert und automatisch übertragen, sobald wieder Netz da ist.</p>' +
-    '<p><a href="/leads/neu" style="display:inline-block;background:#19b5d4;color:#0e3a47;padding:12px 20px;border-radius:999px;text-decoration:none;font-weight:600">Kontakt erfassen</a></p></body></html>';
+    '<p><a href="/leads/neu" style="display:inline-block;background:#0cc0df;color:#062a33;padding:12px 20px;border-radius:8px;text-decoration:none;font-weight:600">Kontakt erfassen</a></p></body></html>';
   return new Response(body, { status: 503, headers: { "content-type": "text/html; charset=utf-8" } });
 }
 

@@ -57,7 +57,7 @@ export function PrecheckPanel({ propertyId, precheck, canEdit, segmentCountry }:
                       {(Object.keys(STATUS_LABEL) as Array<keyof typeof STATUS_LABEL>).map((s) => (
                         <label key={s} className="cursor-pointer">
                           <input type="radio" name={`status:${i.key}`} value={s} defaultChecked={i.status === s} disabled={!canEdit} className="peer sr-only" />
-                          <span className="inline-block rounded-full border border-line px-2.5 py-1 text-xs peer-checked:border-brand peer-checked:bg-brand peer-checked:text-petrol">{STATUS_LABEL[s]}</span>
+                          <span className="inline-block rounded-md border border-line px-2.5 py-1 text-xs peer-checked:border-brand peer-checked:bg-brand peer-checked:text-on-brand">{STATUS_LABEL[s]}</span>
                         </label>
                       ))}
                     </div>

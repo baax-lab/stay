@@ -57,8 +57,8 @@ export default async function PropertiesPage({ searchParams }: { searchParams: P
 
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <form action="/objekte" className="flex flex-wrap gap-2">
-          <input name="q" defaultValue={sp.q ?? ""} placeholder="Titel, Ort, Quelle…" className="h-10 rounded-full border border-line bg-surface px-4 text-sm" />
-          <select name="segment" defaultValue={sp.segment ?? ""} className="h-10 rounded-full border border-line bg-surface px-3 text-sm">
+          <input name="q" defaultValue={sp.q ?? ""} placeholder="Titel, Ort, Quelle…" className="h-10 rounded-md border border-line bg-surface px-4 text-sm" />
+          <select name="segment" defaultValue={sp.segment ?? ""} className="h-10 rounded-md border border-line bg-surface px-3 text-sm">
             <option value="">Segment: alle</option>
             {entries(SEGMENT_LABEL).map(([k, v]) => (
               <option key={k} value={k}>
@@ -66,13 +66,13 @@ export default async function PropertiesPage({ searchParams }: { searchParams: P
               </option>
             ))}
           </select>
-          <select name="country" defaultValue={sp.country ?? ""} className="h-10 rounded-full border border-line bg-surface px-3 text-sm">
+          <select name="country" defaultValue={sp.country ?? ""} className="h-10 rounded-md border border-line bg-surface px-3 text-sm">
             <option value="">Land: alle</option>
             {countries.map((c) => (
               <option key={c}>{c}</option>
             ))}
           </select>
-          <select name="region" defaultValue={sp.region ?? ""} className="h-10 rounded-full border border-line bg-surface px-3 text-sm">
+          <select name="region" defaultValue={sp.region ?? ""} className="h-10 rounded-md border border-line bg-surface px-3 text-sm">
             <option value="">Region: alle</option>
             {regions.filter((r) => !sp.country || r.country === sp.country).map((r) => (
               <option key={r.key} value={r.key}>
@@ -80,7 +80,7 @@ export default async function PropertiesPage({ searchParams }: { searchParams: P
               </option>
             ))}
           </select>
-          <select name="availability" defaultValue={sp.availability ?? ""} className="h-10 rounded-full border border-line bg-surface px-3 text-sm">
+          <select name="availability" defaultValue={sp.availability ?? ""} className="h-10 rounded-md border border-line bg-surface px-3 text-sm">
             <option value="">Verfügbarkeit: alle</option>
             {(Object.keys(AVAILABILITY_LABEL) as Availability[]).map((k) => (
               <option key={k} value={k}>
@@ -88,8 +88,8 @@ export default async function PropertiesPage({ searchParams }: { searchParams: P
               </option>
             ))}
           </select>
-          <input name="priceMax" defaultValue={sp.priceMax ?? ""} placeholder="Preis bis" inputMode="numeric" className="h-10 w-28 rounded-full border border-line bg-surface px-4 text-sm" />
-          <button className="h-10 rounded-full border border-line bg-surface px-4 text-sm font-medium text-petrol">Filtern</button>
+          <input name="priceMax" defaultValue={sp.priceMax ?? ""} placeholder="Preis bis" inputMode="numeric" className="h-10 w-28 rounded-md border border-line bg-surface px-4 text-sm" />
+          <button className="h-10 rounded-md border border-line bg-surface px-4 text-sm font-medium text-petrol">Filtern</button>
         </form>
         <SavedViews scope="objekte" current={new URLSearchParams(Object.entries(sp).filter(([, v]) => v) as [string, string][]).toString()} />
       </div>

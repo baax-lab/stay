@@ -244,7 +244,8 @@ export function LeadForm({ defaultSource, defaultSourceDetail, regionOptions }: 
         </div>
       )}
 
-      <div className="sticky bottom-20 z-10 pt-2 md:static">
+      {/* Speichern bleibt auf dem Handy über der unteren Navigation sichtbar, mit eigener Fläche */}
+      <div className="sticky bottom-[calc(env(safe-area-inset-bottom,0px)+4.25rem)] z-10 -mx-4 border-t border-line bg-canvas/95 px-4 pt-3 pb-2 backdrop-blur md:static md:mx-0 md:border-0 md:bg-transparent md:p-0">
         <Button type="submit" size="lg" disabled={busy}>
           {busy ? "Speichere…" : "Speichern und nächsten Kontakt"}
         </Button>

@@ -13,7 +13,7 @@ export function InspectionPhotoUpload({ id }: { id: string }) {
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   return (
     <div className="space-y-2">
-      <label className="flex h-14 w-full cursor-pointer items-center justify-center gap-2 rounded-full bg-brand text-base font-medium text-petrol">
+      <label className="flex h-14 w-full cursor-pointer items-center justify-center gap-2 rounded-md bg-brand text-base font-medium text-on-brand">
         {pending ? "Lade hoch…" : "Foto aufnehmen oder auswählen"}
         <input
           ref={ref}

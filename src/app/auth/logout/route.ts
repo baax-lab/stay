@@ -14,7 +14,7 @@ export async function POST() {
   await destroySession();
   if (user) await audit({ userId: user.id, action: "LOGOUT", entity: "Session" });
   const html = `<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Abgemeldet · Baax Stay</title><meta http-equiv="refresh" content="3;url=/auth/login"></head>
-<body style="font-family:system-ui,sans-serif;color:#0e3a47;padding:32px">Abgemeldet. <a href="/auth/login">Weiter zur Anmeldung</a>
+<body style="font-family:system-ui,sans-serif;color:#0f1a20;background:#f3f6f8;padding:32px">Abgemeldet. <a href="/auth/login">Weiter zur Anmeldung</a>
 <script>
 (async function () {
   try {

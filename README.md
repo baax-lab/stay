@@ -134,13 +134,12 @@ Anleitung für den vorhandenen Docker-Server (Varianten mit Host-Proxy oder Prox
 - `Dockerfile` baut ein Standalone-Image mit Chromium (PDF), nur Produktionsabhängigkeiten, Healthcheck auf `/api/health`; `docker-entrypoint.sh` führt `prisma migrate deploy` und den idempotenten Seed aus.
 - `docker-compose.yml`: App, PostgreSQL, Cron und Backup als Projekt `baax-stay`, ohne veröffentlichte Ports, mit Speicher- und Loggrenzen.
 - Uploads liegen auf dem Volume `/app/uploads` (Nextcloud/WebDAV ist offener Punkt).
-- Hausfarbe über `BRAND_COLOR` (zur Laufzeit über `/brand.css`, kein Neubau nötig).
+- Gestaltung wie der Baax Hub: Inter, Baax-Cyan `#0cc0df` als Primärfarbe (Schrift darauf dunkel), Milchglas-Flächen, Cyan-Schimmer im Hintergrund; Druck und PDF ohne Glas. Primärfarbe zur Laufzeit über `BRAND_COLOR` änderbar (`/brand.css`).
 
 ## Offene Punkte vor Veröffentlichung
 
 - Hub-Endpunkte und Token-Format bestätigen (siehe oben); Pfade über `HUB_CONTACTS_PATH`, `HUB_TASKS_PATH`, `HUB_APPOINTMENTS_PATH` anpassbar
 - SMTP-Zugang und HTML-Signatur der GmbH (`MAIL_SIGNATURE_HTML`) eintragen
-- Exakten Hex-Wert Baax-Cyan als `BRAND_COLOR` eintragen (Standard in `src/app/globals.css` bei Gelegenheit nachziehen)
 - Honorarstaffel-Startwerte unter `/einstellungen/honorar` festlegen
 - Regionsregeln (Vermietung, Zweitwohnsitz) unter `/einstellungen/regionen` als Kurztext pflegen
 - Checklisten der Kaufabwicklung (`src/lib/checklists.ts`) mit Partnern vor Ort abstimmen

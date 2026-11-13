@@ -32,48 +32,67 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const mobileItems = items.filter((i) => ["/", "/leads/neu", "/leads", "/auftraege", "/objekte"].includes(i.href));
 
   return (
-    <div className="min-h-dvh md:grid md:grid-cols-[240px_1fr]">
+    <div className="flex min-h-dvh md:gap-3 md:p-3 print:block print:p-0">
       <ServiceWorkerRegister />
-      <aside className="hidden border-r border-line bg-surface p-4 md:sticky md:top-0 md:flex md:h-dvh md:flex-col">
-        <Link href="/" className="mb-6 px-2 pt-1">
+      <aside className="glass sticky top-3 hidden h-[calc(100dvh-24px)] w-[236px] shrink-0 flex-col rounded-2xl px-3 py-4 md:flex print:hidden">
+        <Link href="/" className="mb-5 px-2.5 pt-1">
           <Logo />
         </Link>
-        <SideNav items={items} />
-        <div className="mt-auto space-y-3 px-2 text-sm">
+        <form action="/suche" method="get" role="search" className="mb-5">
+          <input
+            type="search"
+            name="q"
+            aria-label="Überall suchen"
+            placeholder="Suchen …"
+            className="h-9 w-full rounded-md border border-line-strong/60 bg-surface-solid/80 px-3 text-sm placeholder:text-ink-3 focus:border-brand focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/30"
+          />
+        </form>
+        <div className="-mx-1 flex-1 overflow-y-auto px-1">
+          <SideNav items={items} />
+        </div>
+        <div className="mt-3 space-y-2 border-t border-line pt-3">
           {event.active && (
-            <div className="rounded-xl bg-brand-soft px-3 py-2 text-xs text-petrol">
+            <div className="rounded-lg bg-brand-soft px-2.5 py-2 text-[12px] text-brand-strong">
               <div className="font-semibold">Aktives Event</div>
               <div>{event.sourceDetail || event.source}</div>
             </div>
           )}
-          <div>
-            <div className="truncate font-medium text-petrol">{user.name || user.email}</div>
-            <div className="text-xs text-muted">{ROLE_LABEL[user.role]}</div>
+          <PendingBadge />
+          <div className="flex items-center gap-2.5 px-1">
+            <span className="grid size-8 shrink-0 place-items-center rounded-full bg-brand-soft text-[12px] font-semibold text-brand-strong" aria-hidden>
+              {(user.name || user.email || "?").split(/\s+/).map((w) => w[0]).slice(0, 2).join("").toUpperCase()}
+            </span>
+            <div className="min-w-0 flex-1">
+              <div className="truncate text-[13px] font-medium">{user.name || user.email}</div>
+              <div className="truncate text-[11px] text-ink-3">{ROLE_LABEL[user.role]}</div>
+            </div>
+            {/* Formular statt Link: Links werden in Produktion vorab geladen und würden sonst abmelden */}
+            <form action="/auth/logout" method="post">
+              <button type="submit" className="rounded-md px-1.5 py-1 text-[11px] text-ink-3 hover:bg-surface-2 hover:text-ink" title="Abmelden">
+                Abmelden
+              </button>
+            </form>
           </div>
-          {/* Formular statt Link: Links werden in Produktion vorab geladen und würden sonst abmelden */}
-          <form action="/auth/logout" method="post">
-            <button type="submit" className="text-xs text-muted hover:text-petrol">
-              Abmelden
-            </button>
-          </form>
         </div>
       </aside>
 
-      <div className="flex min-h-dvh flex-col">
-        <header className="sticky top-0 z-20 flex items-center justify-between border-b border-line bg-surface/95 px-4 py-3 backdrop-blur md:hidden">
+      <div className="flex min-h-dvh min-w-0 flex-1 flex-col md:min-h-0">
+        <header className="glass sticky top-0 z-20 flex items-center justify-between rounded-none border-x-0 border-t-0 px-4 py-2.5 md:hidden print:hidden">
           <Link href="/">
-            <Logo size={28} />
+            <Logo />
           </Link>
           <div className="flex items-center gap-3">
             <PendingBadge />
             <form action="/auth/logout" method="post">
-              <button type="submit" className="text-xs text-muted" aria-label={`Abmelden (${user.name || "Konto"})`} title="Abmelden">
-                {user.name?.split(" ")[0] || "Konto"} · Abmelden
+              <button type="submit" className="text-[13px] text-muted" aria-label={`Abmelden (${user.name || "Konto"})`} title="Abmelden">
+                Abmelden
               </button>
             </form>
           </div>
         </header>
-        <main className="mx-auto w-full max-w-6xl flex-1 px-4 pb-28 pt-5 md:px-8 md:pb-10 md:pt-8">{children}</main>
+        <main className="min-w-0 flex-1 px-4 pt-6 pb-28 md:px-9 md:py-7 print:p-0">
+          <div className="mx-auto max-w-6xl print:max-w-none">{children}</div>
+        </main>
         <BottomNav items={mobileItems} />
       </div>
     </div>

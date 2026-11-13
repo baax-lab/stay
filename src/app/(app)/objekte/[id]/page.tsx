@@ -128,7 +128,7 @@ export default async function PropertyPage({ params, searchParams }: { params: P
 
       <nav className="mb-4 flex gap-1 overflow-x-auto">
         {tabs.map(([k, label]) => (
-          <Link key={k} href={`/objekte/${id}?tab=${k}`} className={cn("whitespace-nowrap rounded-full px-3.5 py-1.5 text-sm font-medium", tab === k ? "bg-brand text-petrol" : "border border-line bg-surface text-ink hover:border-brand")}>
+          <Link key={k} href={`/objekte/${id}?tab=${k}`} className={cn("whitespace-nowrap rounded-md px-3.5 py-1.5 text-sm font-medium", tab === k ? "bg-brand text-on-brand" : "border border-line bg-surface text-ink hover:border-brand")}>
             {label}
           </Link>
         ))}
@@ -223,7 +223,7 @@ export default async function PropertyPage({ params, searchParams }: { params: P
           <CardTitle
             action={
               canEdit ? (
-                <Link href={`/besichtigungen/neu?property=${property.id}`} className="inline-flex h-9 items-center rounded-full bg-brand px-3.5 text-sm font-medium text-petrol">
+                <Link href={`/besichtigungen/neu?property=${property.id}`} className="inline-flex h-9 items-center rounded-md bg-brand px-3.5 text-sm font-medium text-on-brand">
                   Besichtigung protokollieren
                 </Link>
               ) : undefined

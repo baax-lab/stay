@@ -11,44 +11,55 @@ export function useIsActive() {
   return (item: NavItem) => (item.exact ? pathname === item.href : pathname === item.href || pathname.startsWith(item.href + "/"));
 }
 
+/** Seitenleiste wie im Baax Hub: nur Text, aktiver Punkt weiß hinterlegt. */
 export function SideNav({ items }: { items: NavItem[] }) {
   const isActive = useIsActive();
   return (
-    <nav className="flex flex-col gap-1">
-      {items.map((item) => (
-        <Link
-          key={item.href}
-          href={item.href}
-          className={cn(
-            "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors",
-            isActive(item) ? "bg-brand text-petrol" : "text-ink hover:bg-brand-soft",
-          )}
-        >
-          <span className="h-5 w-5 shrink-0 [&>svg]:h-5 [&>svg]:w-5">{item.icon}</span>
-          {item.label}
-        </Link>
-      ))}
+    <nav aria-label="Hauptnavigation">
+      <ul className="flex flex-col gap-px">
+        {items.map((item) => {
+          const active = isActive(item);
+          return (
+            <li key={item.href}>
+              <Link
+                href={item.href}
+                aria-current={active ? "page" : undefined}
+                className={cn(
+                  "flex items-center rounded-lg px-2.5 py-2 text-[15px] transition-colors",
+                  active ? "bg-surface-solid font-medium text-ink shadow-sm" : "text-muted hover:bg-white/50 hover:text-ink",
+                )}
+              >
+                {item.label}
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
     </nav>
   );
 }
 
+/** Untere Navigation am Handy: mit Symbolen, damit man sie auf der Messe mit dem Daumen trifft. */
 export function BottomNav({ items }: { items: NavItem[] }) {
   const isActive = useIsActive();
   return (
-    <nav className="safe-bottom fixed inset-x-0 bottom-0 z-30 flex justify-around border-t border-line bg-surface/95 px-2 pt-2 backdrop-blur md:hidden">
-      {items.map((item) => (
-        <Link
-          key={item.href}
-          href={item.href}
-          className={cn(
-            "flex min-w-16 flex-col items-center gap-0.5 rounded-xl px-2 py-1 text-[11px] font-medium",
-            isActive(item) ? "text-brand-strong" : "text-muted",
-          )}
-        >
-          <span className="h-6 w-6 [&>svg]:h-6 [&>svg]:w-6">{item.icon}</span>
-          {item.label}
-        </Link>
-      ))}
+    <nav aria-label="Hauptnavigation" className="glass safe-bottom fixed inset-x-0 bottom-0 z-30 flex rounded-none border-x-0 border-b-0 pt-1 md:hidden print:hidden">
+      {items.map((item) => {
+        const active = isActive(item);
+        return (
+          <Link
+            key={item.href}
+            href={item.href}
+            aria-current={active ? "page" : undefined}
+            className={cn("flex flex-1 flex-col items-center gap-1 py-1.5 text-xs font-medium", active ? "text-brand-strong" : "text-muted")}
+          >
+            <span className="h-5 w-5 [&>svg]:h-5 [&>svg]:w-5" aria-hidden>
+              {item.icon}
+            </span>
+            {item.label}
+          </Link>
+        );
+      })}
     </nav>
   );
 }

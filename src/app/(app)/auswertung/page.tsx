@@ -41,17 +41,17 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
             ["alle", "gesamt"],
           ] as const
         ).map(([v, label]) => (
-          <Link key={v} href={v ? `/auswertung?preset=${v}` : "/auswertung"} className={`rounded-full px-3 py-1.5 ${(sp.preset ?? "") === v && !sp.from && !sp.to ? "bg-brand text-petrol" : "border border-line bg-surface"}`}>
+          <Link key={v} href={v ? `/auswertung?preset=${v}` : "/auswertung"} className={`rounded-md px-3 py-1.5 ${(sp.preset ?? "") === v && !sp.from && !sp.to ? "bg-brand text-on-brand" : "border border-line bg-surface"}`}>
             {label}
           </Link>
         ))}
         <label className="ml-2 text-xs text-muted">
-          von <input type="date" name="from" defaultValue={sp.from ?? ""} className="ml-1 h-9 rounded-full border border-line bg-surface px-3" />
+          von <input type="date" name="from" defaultValue={sp.from ?? ""} className="ml-1 h-9 rounded-md border border-line bg-surface px-3" />
         </label>
         <label className="text-xs text-muted">
-          bis <input type="date" name="to" defaultValue={sp.to ?? ""} className="ml-1 h-9 rounded-full border border-line bg-surface px-3" />
+          bis <input type="date" name="to" defaultValue={sp.to ?? ""} className="ml-1 h-9 rounded-md border border-line bg-surface px-3" />
         </label>
-        <button className="h-9 rounded-full border border-line bg-surface px-4 font-medium text-petrol">Anwenden</button>
+        <button className="h-9 rounded-md border border-line bg-surface px-4 font-medium text-petrol">Anwenden</button>
       </form>
 
       <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-4">

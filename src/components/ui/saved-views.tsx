@@ -30,7 +30,7 @@ export function SavedViews({ scope, current }: { scope: string; current: string 
   return (
     <div className="flex flex-wrap items-center gap-2">
       {views.map((v) => (
-        <span key={v.id} className="inline-flex items-center overflow-hidden rounded-full border border-line bg-surface text-xs">
+        <span key={v.id} className="inline-flex items-center overflow-hidden rounded-md border border-line bg-surface text-xs">
           <Link href={`${pathname}?${v.query}`} className="px-3 py-1.5 font-medium text-petrol hover:bg-brand-soft">
             {v.name}
           </Link>
@@ -51,8 +51,8 @@ export function SavedViews({ scope, current }: { scope: string; current: string 
       ))}
       {current && (
         <span className="inline-flex items-center gap-1">
-          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Ansicht speichern als…" className="h-8 rounded-full border border-line bg-surface px-3 text-xs" onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), save())} />
-          <button type="button" disabled={pending || !name.trim()} onClick={save} className="h-8 rounded-full bg-brand-soft px-3 text-xs font-medium text-petrol disabled:opacity-50">
+          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Ansicht speichern als…" className="h-8 rounded-md border border-line bg-surface px-3 text-xs" onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), save())} />
+          <button type="button" disabled={pending || !name.trim()} onClick={save} className="h-8 rounded-md bg-brand-soft px-3 text-xs font-medium text-petrol disabled:opacity-50">
             Speichern
           </button>
         </span>

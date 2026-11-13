@@ -35,13 +35,13 @@ export default async function ReportEditPage({ params, searchParams }: { params:
         action={
           <div className="flex flex-wrap items-center gap-2">
             {report.status === "FREIGEGEBEN" ? <Badge tone="ok">freigegeben</Badge> : <Badge tone="warn">Entwurf</Badge>}
-            <a href={`/bericht/${report.id}?lang=de`} target="_blank" className="rounded-full border border-line bg-surface px-3 py-1.5 text-sm" rel="noreferrer">
+            <a href={`/bericht/${report.id}?lang=de`} target="_blank" className="rounded-md border border-line bg-surface px-3 py-1.5 text-sm" rel="noreferrer">
               Vorschau DE
             </a>
-            <a href={`/bericht/${report.id}?lang=en`} target="_blank" className="rounded-full border border-line bg-surface px-3 py-1.5 text-sm" rel="noreferrer">
+            <a href={`/bericht/${report.id}?lang=en`} target="_blank" className="rounded-md border border-line bg-surface px-3 py-1.5 text-sm" rel="noreferrer">
               Vorschau EN
             </a>
-            <a href={`/api/pdf/bericht/${report.id}?lang=${lang}`} className="rounded-full bg-petrol px-3 py-1.5 text-sm text-white">
+            <a href={`/api/pdf/bericht/${report.id}?lang=${lang}`} className="rounded-md bg-petrol px-3 py-1.5 text-sm text-white">
               PDF
             </a>
           </div>

@@ -42,9 +42,9 @@ export default async function PartnersPage({ searchParams }: { searchParams: Pro
         }
       />
       <form action="/partner" className="mb-4 flex gap-2">
-        <input name="q" defaultValue={sp.q ?? ""} placeholder="Name, Firma…" className="h-10 rounded-full border border-line bg-surface px-4 text-sm" />
-        <input name="country" defaultValue={sp.country ?? ""} placeholder="Land (ES)" maxLength={2} className="h-10 w-24 rounded-full border border-line bg-surface px-4 text-sm uppercase" />
-        <button className="h-10 rounded-full border border-line bg-surface px-4 text-sm font-medium text-petrol">Filtern</button>
+        <input name="q" defaultValue={sp.q ?? ""} placeholder="Name, Firma…" className="h-10 rounded-md border border-line bg-surface px-4 text-sm" />
+        <input name="country" defaultValue={sp.country ?? ""} placeholder="Land (ES)" maxLength={2} className="h-10 w-24 rounded-md border border-line bg-surface px-4 text-sm uppercase" />
+        <button className="h-10 rounded-md border border-line bg-surface px-4 text-sm font-medium text-petrol">Filtern</button>
       </form>
       <Table>
         <thead>

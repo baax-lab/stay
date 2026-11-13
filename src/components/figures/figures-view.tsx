@@ -5,7 +5,7 @@ import { cn } from "@/lib/cn";
 /** Darstellung von Ampel, Gesamtkosten und Rendite – identisch intern, im Portal und im Dossier. */
 
 export const LIGHT_COLOR: Record<string, string> = { GRUEN: "bg-ok", GELB: "bg-warn", ROT: "bg-danger", GRAU: "bg-muted" };
-const LIGHT_HEX: Record<string, string> = { GRUEN: "#1f8a4c", GELB: "#b7791f", ROT: "#b4322e", GRAU: "#5d6f76" };
+const LIGHT_HEX: Record<string, string> = { GRUEN: "#1f9d6b", GELB: "#c17f0c", ROT: "#d64545", GRAU: "#52636c" };
 
 export function LicenseBlock({ f, lang, print = false }: { f: PropertyFigures; lang: Lang; print?: boolean }) {
   return (

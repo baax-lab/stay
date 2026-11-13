@@ -15,9 +15,9 @@ export default async function ImportPage() {
       <Link href="/objekte" className="text-sm text-muted hover:text-petrol">← Zurück</Link>
       <PageHeader title="Objekte importieren" subtitle="CSV hochladen, Spalten zuordnen, Vorschau mit Dubletten prüfen, speichern. Nur Leitung und Admin; der Import wird protokolliert." />
       <div className="mb-4 flex gap-2 text-sm">
-        <Link href="/leads/import" className="rounded-full border border-line px-3 py-1 ">Leads</Link>
-        <Link href="/objekte/import" className="rounded-full border border-line px-3 py-1">Objekte</Link>
-        <Link href="/partner/import" className="rounded-full border border-line px-3 py-1">Partner</Link>
+        <Link href="/leads/import" className="rounded-md border border-line px-3 py-1 ">Leads</Link>
+        <Link href="/objekte/import" className="rounded-md border border-line px-3 py-1">Objekte</Link>
+        <Link href="/partner/import" className="rounded-md border border-line px-3 py-1">Partner</Link>
       </div>
       <Card>
         <CsvImport scope="objekte" />

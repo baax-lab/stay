@@ -39,7 +39,7 @@ export function StatusPanel({
           const idx = MAIN_FLOW.indexOf(status === "PAUSIERT" ? (statusBeforePause ?? "ERSTGESPRAECH") : status);
           const state = i < idx ? "done" : i === idx ? "current" : "todo";
           return (
-            <li key={s} className={cn("rounded-full px-2.5 py-1 text-xs font-medium", state === "done" && "bg-ok-soft text-ok", state === "current" && "bg-brand text-petrol", state === "todo" && "bg-canvas text-muted")}>
+            <li key={s} className={cn("rounded-md px-2.5 py-1 text-xs font-medium", state === "done" && "bg-ok-soft text-ok", state === "current" && "bg-brand text-on-brand", state === "todo" && "bg-canvas text-muted")}>
               {MANDATE_STATUS_LABEL[s]}
             </li>
           );

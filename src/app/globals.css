@@ -1,66 +1,156 @@
 @import "tailwindcss";
 
 /*
-  Baax Stay – Farben.
-  --brand ist Baax-Cyan (exakten Hex-Wert aus Logo/Baax Match übernehmen, siehe offene Punkte).
-  Schrift auf Cyan steht in Petrol (#0E3A47), nicht in Weiß.
+  Baax Stay – Gestaltung wie der Baax Hub: ruhige Sans-Schrift (Inter), Primärfarbe Baax-Cyan #0cc0df,
+  klare Flächen, Milchglas. Alle Markenwerte stehen hier an einer Stelle.
+  Die Token-Namen bleiben (brand, petrol, ink …), damit alle Seiten sie weiter nutzen:
+    brand        = Primärfarbe (Knöpfe, Marke); Schrift darauf immer on-brand (dunkel, Kontrast)
+    brand-strong = Links und Cyan-Text auf hellem Grund
+    petrol / ink = Text, muted = Nebentext
+    surface      = Milchglas (Karten), surface-solid = Formularfelder und Popups
+  BRAND_COLOR ersetzt zur Laufzeit die Primärfarbe (/brand.css).
 */
 :root {
-  --brand: #19b5d4;
-  --brand-soft: #e3f7fb;
-  --brand-strong: #0b94b0;
-  --petrol: #0e3a47;
-  --ink: #1b2a30;
-  --muted: #5d6f76;
-  --line: #dfe7ea;
-  --surface: #ffffff;
-  --canvas: #f4f8f9;
-  --ok: #1f8a4c;
-  --ok-soft: #e4f5ea;
-  --warn: #b7791f;
-  --warn-soft: #fdf1dc;
-  --danger: #b4322e;
-  --danger-soft: #fbe6e5;
+  /* Flächen */
+  --canvas: #f3f6f8;
+  --surface: rgba(255, 255, 255, 0.72);
+  --surface-solid: #ffffff;
+  --surface-2: rgba(15, 26, 32, 0.045);
+  --glass-edge: rgba(255, 255, 255, 0.65);
+  --glass-shadow: 0 10px 40px -12px rgba(15, 26, 32, 0.12);
+
+  /* Text */
+  --ink: #0f1a20;
+  --petrol: #0f1a20;
+  --muted: #52636c;
+  --ink-3: #8a979f;
+
+  /* Linien */
+  --line: rgba(15, 26, 32, 0.08);
+  --line-strong: rgba(15, 26, 32, 0.18);
+
+  /* Marke */
+  --brand: #0cc0df;
+  --brand-strong: #0a9cb6;
+  --on-brand: #062a33;
+  --brand-soft: rgba(12, 192, 223, 0.14);
+  --brand-wash-1: rgba(12, 192, 223, 0.2);
+  --brand-wash-2: rgba(12, 192, 223, 0.1);
+
+  /* Signale */
+  --ok: #1f9d6b;
+  --warn: #c17f0c;
+  --danger: #d64545;
+  --ok-soft: rgba(31, 157, 107, 0.12);
+  --warn-soft: rgba(193, 127, 12, 0.12);
+  --danger-soft: rgba(214, 69, 69, 0.12);
 }
 
 @theme inline {
-  --color-brand: var(--brand);
-  --color-brand-soft: var(--brand-soft);
-  --color-brand-strong: var(--brand-strong);
-  --color-petrol: var(--petrol);
-  --color-ink: var(--ink);
-  --color-muted: var(--muted);
-  --color-line: var(--line);
-  --color-surface: var(--surface);
   --color-canvas: var(--canvas);
+  --color-surface: var(--surface);
+  --color-surface-solid: var(--surface-solid);
+  --color-surface-2: var(--surface-2);
+  --color-ink: var(--ink);
+  --color-petrol: var(--petrol);
+  --color-muted: var(--muted);
+  --color-ink-3: var(--ink-3);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-brand: var(--brand);
+  --color-brand-strong: var(--brand-strong);
+  --color-brand-soft: var(--brand-soft);
+  --color-on-brand: var(--on-brand);
   --color-ok: var(--ok);
   --color-ok-soft: var(--ok-soft);
   --color-warn: var(--warn);
   --color-warn-soft: var(--warn-soft);
   --color-danger: var(--danger);
   --color-danger-soft: var(--danger-soft);
-  --radius-xl: 1rem;
-  --radius-2xl: 1.25rem;
-  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  /* Radien wie im Hub: Bedienelemente 8 px, innere Kästen 12 px, Karten 16 px */
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 12px;
+  --radius-2xl: 16px;
+  --font-sans: "Inter", "Helvetica Neue", Arial, sans-serif;
 }
 
-html {
-  color-scheme: light;
+@layer base {
+  * {
+    border-color: var(--line);
+  }
+
+  html {
+    color-scheme: light;
+  }
+
+  body {
+    color: var(--ink);
+    font-family: var(--font-sans);
+    font-size: 14px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    background-color: var(--canvas);
+    background-image:
+      radial-gradient(1100px 560px at 8% -12%, var(--brand-wash-1), transparent 62%),
+      radial-gradient(800px 480px at 100% 0%, var(--brand-wash-2), transparent 58%);
+    background-attachment: fixed;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-weight: 600;
+    letter-spacing: -0.015em;
+  }
+
+  :focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--brand) 60%, transparent);
+    outline-offset: 2px;
+  }
+
+  input,
+  select,
+  textarea,
+  button {
+    font: inherit;
+  }
+
+  input[type="checkbox"],
+  input[type="radio"] {
+    accent-color: var(--brand);
+  }
 }
 
-body {
-  background: var(--canvas);
-  color: var(--ink);
-  font-family: var(--font-sans);
-  -webkit-font-smoothing: antialiased;
+/* Milchglas-Panel (Karten, Tabellen, Seitenleiste) */
+.glass {
+  background: var(--surface);
+  -webkit-backdrop-filter: blur(20px) saturate(1.4);
+  backdrop-filter: blur(20px) saturate(1.4);
+  border: 1px solid var(--glass-edge);
+  box-shadow: var(--glass-shadow);
 }
 
-/* Große Trefferflächen auf dem Handy */
-input,
-select,
-textarea,
-button {
-  font: inherit;
+/* Kleine Kapitälchen-Beschriftung für Abschnitte und Tabellenköpfe */
+.eyebrow {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  font-weight: 600;
+}
+
+/* Große Kennzahl */
+.figure {
+  font-size: 2rem;
+  line-height: 1;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+}
+
+@utility tabular {
+  font-variant-numeric: tabular-nums;
 }
 
 @media (max-width: 640px) {
@@ -73,4 +163,18 @@ button {
 
 .safe-bottom {
   padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 0.75rem);
+}
+
+/* Druck und PDF (Dossier, Berichte, Vorlagen): weiß, ohne Glas und Schimmer */
+@media print {
+  body {
+    background: #fff;
+  }
+  .glass {
+    background: #fff;
+    box-shadow: none;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    border-color: #e3e7ea;
+  }
 }

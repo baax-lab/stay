@@ -27,13 +27,13 @@ export default async function ReportPage({ params, searchParams }: { params: Pro
             ← Bericht bearbeiten
           </Link>
           <div className="flex gap-2 text-sm">
-            <Link href={`/bericht/${id}?lang=de`} className={`rounded-full px-3 py-1 ${lang === "de" ? "bg-brand text-petrol" : "bg-surface"}`}>
+            <Link href={`/bericht/${id}?lang=de`} className={`rounded-md px-3 py-1 ${lang === "de" ? "bg-brand text-on-brand" : "bg-surface"}`}>
               DE
             </Link>
-            <Link href={`/bericht/${id}?lang=en`} className={`rounded-full px-3 py-1 ${lang === "en" ? "bg-brand text-petrol" : "bg-surface"}`}>
+            <Link href={`/bericht/${id}?lang=en`} className={`rounded-md px-3 py-1 ${lang === "en" ? "bg-brand text-on-brand" : "bg-surface"}`}>
               EN
             </Link>
-            <a href={`/api/pdf/bericht/${id}?lang=${lang}`} className="rounded-full bg-petrol px-3 py-1 text-white">
+            <a href={`/api/pdf/bericht/${id}?lang=${lang}`} className="rounded-md bg-petrol px-3 py-1 text-white">
               PDF
             </a>
           </div>

@@ -70,17 +70,17 @@ export function profileTextHtml(t: ProfileText, intro?: string | null): string {
   const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;");
   return `${intro ? `<p>${esc(intro).replace(/\n/g, "<br>")}</p>` : ""}<p>${esc(t.intro)}</p>
 <table cellpadding="6" cellspacing="0" style="border-collapse:collapse;font-size:14px">
-${t.lines.map(([k, v]) => `<tr><td style="border-bottom:1px solid #dfe7ea;color:#5d6f76;white-space:nowrap;vertical-align:top">${esc(k)}</td><td style="border-bottom:1px solid #dfe7ea">${esc(v)}</td></tr>`).join("\n")}
+${t.lines.map(([k, v]) => `<tr><td style="border-bottom:1px solid #e3e7ea;color:#52636c;white-space:nowrap;vertical-align:top">${esc(k)}</td><td style="border-bottom:1px solid #e3e7ea">${esc(v)}</td></tr>`).join("\n")}
 </table><p>${esc(t.outro)}</p>`;
 }
 
 export function profilePdfHtml(t: ProfileText, intro?: string | null): string {
   return `<!doctype html><html><head><meta charset="utf-8"><style>
 body{font-family:Arial,Helvetica,sans-serif;color:#1b2a30;font-size:12.5px}
-h1{color:#0e3a47;font-size:20px;border-bottom:3px solid #19b5d4;padding-bottom:8px}
-.brand{color:#19b5d4;font-weight:bold;font-size:14px;margin-bottom:24px}
-td{padding:6px 8px;border-bottom:1px solid #dfe7ea;vertical-align:top} td:first-child{color:#5d6f76;white-space:nowrap}
-.foot{margin-top:32px;font-size:10px;color:#5d6f76}
+h1{color:#0f1a20;font-size:20px;border-bottom:3px solid #0cc0df;padding-bottom:8px}
+.brand{color:#0a9cb6;font-weight:bold;font-size:14px;margin-bottom:24px}
+td{padding:6px 8px;border-bottom:1px solid #e3e7ea;vertical-align:top} td:first-child{color:#52636c;white-space:nowrap}
+.foot{margin-top:32px;font-size:10px;color:#52636c}
 </style></head><body><div class="brand">Baax Immobilien GmbH · Baax Stay</div><h1>${t.title}</h1>${profileTextHtml(t, intro)}
 <div class="foot">Baax Immobilien GmbH · www.baax.de · mail@baax.de</div></body></html>`;
 }

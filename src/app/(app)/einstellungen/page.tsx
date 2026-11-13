@@ -123,19 +123,19 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
       )}
 
       <div className="mb-4 flex flex-wrap gap-2">
-        <Link href="/einstellungen/honorar" className="rounded-full border border-line bg-surface px-4 py-2 text-sm font-medium text-petrol hover:border-brand">Honorarstaffel</Link>
-        <Link href="/einstellungen/regionen" className="rounded-full border border-line bg-surface px-4 py-2 text-sm font-medium text-petrol hover:border-brand">Regionen und Vermietungsregeln</Link>
-        <Link href="/einstellungen/nebenkosten" className="rounded-full border border-line bg-surface px-4 py-2 text-sm font-medium text-petrol hover:border-brand">Kaufnebenkosten</Link>
-        <Link href="/einstellungen/kriterien" className="rounded-full border border-line bg-surface px-4 py-2 text-sm font-medium text-petrol hover:border-brand">Kriterienkatalog</Link>
-        <Link href="/einstellungen/vorlagen" className="rounded-full border border-line bg-surface px-4 py-2 text-sm font-medium text-petrol hover:border-brand">Vorlagen</Link>
-        <Link href="/einstellungen/wechselkurse" className="rounded-full border border-line bg-surface px-4 py-2 text-sm font-medium text-petrol hover:border-brand">Wechselkurse</Link>
-        <Link href="/leads/import" className="rounded-full border border-line bg-surface px-4 py-2 text-sm font-medium text-petrol hover:border-brand">CSV-Import</Link>
-        <Link href="/einstellungen/texte" className="rounded-full border border-line bg-surface px-4 py-2 text-sm font-medium text-petrol hover:border-brand">Rechtstexte</Link>
+        <Link href="/einstellungen/honorar" className="rounded-md border border-line bg-surface px-4 py-2 text-sm font-medium text-petrol hover:border-brand">Honorarstaffel</Link>
+        <Link href="/einstellungen/regionen" className="rounded-md border border-line bg-surface px-4 py-2 text-sm font-medium text-petrol hover:border-brand">Regionen und Vermietungsregeln</Link>
+        <Link href="/einstellungen/nebenkosten" className="rounded-md border border-line bg-surface px-4 py-2 text-sm font-medium text-petrol hover:border-brand">Kaufnebenkosten</Link>
+        <Link href="/einstellungen/kriterien" className="rounded-md border border-line bg-surface px-4 py-2 text-sm font-medium text-petrol hover:border-brand">Kriterienkatalog</Link>
+        <Link href="/einstellungen/vorlagen" className="rounded-md border border-line bg-surface px-4 py-2 text-sm font-medium text-petrol hover:border-brand">Vorlagen</Link>
+        <Link href="/einstellungen/wechselkurse" className="rounded-md border border-line bg-surface px-4 py-2 text-sm font-medium text-petrol hover:border-brand">Wechselkurse</Link>
+        <Link href="/leads/import" className="rounded-md border border-line bg-surface px-4 py-2 text-sm font-medium text-petrol hover:border-brand">CSV-Import</Link>
+        <Link href="/einstellungen/texte" className="rounded-md border border-line bg-surface px-4 py-2 text-sm font-medium text-petrol hover:border-brand">Rechtstexte</Link>
         {can.viewAuditLog(user.role) && (
-          <Link href="/einstellungen/protokoll" className="rounded-full border border-line bg-surface px-4 py-2 text-sm font-medium text-petrol hover:border-brand">Protokoll</Link>
+          <Link href="/einstellungen/protokoll" className="rounded-md border border-line bg-surface px-4 py-2 text-sm font-medium text-petrol hover:border-brand">Protokoll</Link>
         )}
         {can.handlePrivacyRequests(user.role) && (
-          <Link href="/einstellungen/datenschutz" className="rounded-full border border-line bg-surface px-4 py-2 text-sm font-medium text-petrol hover:border-brand">Datenschutz-Anfragen</Link>
+          <Link href="/einstellungen/datenschutz" className="rounded-md border border-line bg-surface px-4 py-2 text-sm font-medium text-petrol hover:border-brand">Datenschutz-Anfragen</Link>
         )}
       </div>
 
@@ -215,7 +215,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
               <dd>{env.cronSecret ? <Badge tone="ok">CRON_SECRET gesetzt</Badge> : <Badge tone="warn">CRON_SECRET fehlt</Badge>}</dd>
             </div>
             <div className="flex items-center justify-between">
-              <dt>Hausfarbe (BRAND_COLOR)</dt>
+              <dt>Primärfarbe (BRAND_COLOR)</dt>
               <dd>
                 {parseHex(env.brandColor) ? (
                   <span className="inline-flex items-center gap-2 text-xs">
@@ -223,7 +223,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
                     {parseHex(env.brandColor)}
                   </span>
                 ) : (
-                  <Badge tone="warn">{env.brandColor ? "ungültig, Standard aktiv" : "Platzhalter #19b5d4"}</Badge>
+                  <Badge tone="warn">{env.brandColor ? "ungültig, Standard aktiv" : "Standard (Baax-Cyan #0cc0df)"}</Badge>
                 )}
               </dd>
             </div>

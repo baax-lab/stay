@@ -53,7 +53,7 @@ export function MatchesTable({ mandateId, matches, canEdit, canApprove }: { mand
         </p>
         <div className="flex gap-1">
           {(["offen", "alle"] as const).map((f) => (
-            <button key={f} type="button" onClick={() => setFilter(f)} className={cn("rounded-full px-3 py-1 text-xs font-medium", filter === f ? "bg-brand text-petrol" : "bg-canvas text-muted")}>
+            <button key={f} type="button" onClick={() => setFilter(f)} className={cn("rounded-md px-3 py-1 text-xs font-medium", filter === f ? "bg-brand text-on-brand" : "bg-canvas text-muted")}>
               {f === "offen" ? "Offene" : "Alle"}
             </button>
           ))}
